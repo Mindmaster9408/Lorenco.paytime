@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="af">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll Items - IRP5 Compliant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+
+        .category-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #e0e0e0;
+        }
+        .category-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .category-icon {
+            font-size: 32px;
+        }
+        .category-title h2 {
+            color: #333;
+            font-size: 22px;
+        }
+        .category-title p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .item-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .item-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+        .item-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        .item-title {
+            flex: 1;
+        }
+        .item-code {
+            font-size: 12px;
+            font-weight: 700;
+            color: #667eea;
+            background: #e7eaff;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .item-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-top: 5px;
+        }
+        .item-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+        .item-detail {
+            font-size: 13px;
+        }
+        .item-detail-label {
+            color: #666;
+            font-weight: 600;
+        }
+        .item-detail-value {
+            color: #333;
+            margin-top: 3px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+        .badge-taxable { background: #28a745; color: white; }
+        .badge-non-taxable { background: #6c757d; color: white; }
+        .badge-uif { background: #17a2b8; color: white; }
+        .badge-no-uif { background: #e0e0e0; color: #666; }
+        .badge-fixed { background: #667eea; color: white; }
+        .badge-percentage { background: #fd7e14; color: white; }
+        .badge-balance { background: #20c997; color: white; }
+        .badge-hours { background: #6610f2; color: white; }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 13px;
+            flex: 1;
+        }
+        .irp5-code {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ffc107;
+            color: #333;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .modal-content {
+            background: white;
+            max-width: 700px;
+            margin: 50px auto;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            color: #667eea;
+            font-size: 24px;
+        }
+        .close-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .modal-body {
+            padding: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>💰 Payroll Items (IRP5 Compliant)</h1>
+                <div><strong>Maatskappy:</strong> <span id="companyName">-</span></div>
+            </div>
+            <button class="btn btn-secondary" onclick="goBack()">← Terug</button>
+        </div>
+
+        <!-- INCOME SECTION -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-title">
+                    <div class="category-icon">💵</div>
+                    <div>
+                        <h2>Income (Inkomste)</h2>
+                        <p>IRP5 Codes 3801-3810 | Basic Salary, Bonuses, Commission, etc.</p>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="openAddItemModal('income')">+ Voeg Income By</button>
+            </div>
+            <div id="incomeItems" class="items-grid"></div>
+        </div>
+
+        <!-- ALLOWANCES SECTION -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-title">
+                    <div class="category-icon">🚗</div>
+                    <div>
+                        <h2>Allowances (Toelaes)</h2>
+                        <p>IRP5 Codes 3701-3715 | Travel, Housing, Subsistence, etc.</p>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="openAddItemModal('allowance')">+ Voeg Allowance By</button>
+            </div>
+            <div id="allowanceItems" class="items-grid"></div>
+        </div>
+
+        <!-- DEDUCTIONS SECTION -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-title">
+                    <div class="category-icon">➖</div>
+                    <div>
+                        <h2>Deductions (Aftrekkings)</h2>
+                        <p>IRP5 Codes 4001-4024 | Medical Aid, Pension, Loans, etc.</p>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="openAddItemModal('deduction')">+ Voeg Deduction By</button>
+            </div>
+            <div id="deductionItems" class="items-grid"></div>
+        </div>
+
+        <!-- EMPLOYER CONTRIBUTIONS SECTION -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-title">
+                    <div class="category-icon">🏢</div>
+                    <div>
+                        <h2>Employer Contributions (Werkgewer Bydraes)</h2>
+                        <p>IRP5 Codes 4474-4493 | Pension (Employer), UIF (Employer), etc.</p>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="openAddItemModal('employer_contribution')">+ Voeg Contribution By</button>
+            </div>
+            <div id="employerContributionItems" class="items-grid"></div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Item Modal -->
+    <div id="itemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Voeg Payroll Item By</h2>
+                <button class="close-btn" onclick="closeItemModal()">Sluit</button>
+            </div>
+            <div class="modal-body">
+                <form id="itemForm" onsubmit="saveItem(event)">
+                    <input type="hidden" id="itemId">
+                    <input type="hidden" id="itemType">
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Item Kode *</label>
+                            <input type="text" id="itemCode" required placeholder="bv. BONUS01">
+                        </div>
+                        <div class="form-group">
+                            <label>IRP5 Kode</label>
+                            <input type="text" id="irp5Code" placeholder="bv. 3802" maxlength="4">
+                            <small style="color: #666;">Sien SARS IRP5/IT3(a) kodes</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Item Naam *</label>
+                        <input type="text" id="itemName" required placeholder="bv. Performance Bonus">
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Kategorie *</label>
+                            <select id="itemCategory" required>
+                                <option value="">Kies...</option>
+                                <option value="fixed">Fixed Amount (Vaste Bedrag)</option>
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="increasing_balance">Increasing Balance (Loan Gegee)</option>
+                                <option value="decreasing_balance">Decreasing Balance (Loan Terugbetaal)</option>
+                                <option value="hours_based">Hours Based (Ure)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Default Bedrag/Persentasie</label>
+                            <input type="number" id="defaultAmount" step="0.01" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Belasbaar?</label>
+                            <select id="isTaxable">
+                                <option value="1">Ja</option>
+                                <option value="0">Nee</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Affect UIF?</label>
+                            <select id="affectsUif">
+                                <option value="1">Ja</option>
+                                <option value="0">Nee</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeItemModal()">Kanselleer</button>
+                        <button type="submit" class="btn btn-success">💾 Stoor</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let token = localStorage.getItem('token');
+        let selectedCompanyId = localStorage.getItem('selectedCompanyId');
+        let selectedCompanyName = localStorage.getItem('selectedCompanyName');
+        let currentItems = [];
+
+        if (!token || !selectedCompanyId) {
+            window.location.href = 'employee-management.html';
+        }
+
+        document.getElementById('companyName').textContent = selectedCompanyName || '-';
+
+        function goBack() {
+            window.location.href = 'employee-management.html';
+        }
+
+        async function loadItems() {
+            try {
+                const response = await fetch(`${API_URL}/payroll-items/items?company_id=${selectedCompanyId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Fout met laai van items');
+                }
+
+                currentItems = result.items;
+                displayItemsByCategory();
+
+            } catch (error) {
+                alert('Fout met laai van items: ' + error.message);
+            }
+        }
+
+        function displayItemsByCategory() {
+            const categories = {
+                income: document.getElementById('incomeItems'),
+                allowance: document.getElementById('allowanceItems'),
+                deduction: document.getElementById('deductionItems'),
+                employer_contribution: document.getElementById('employerContributionItems')
+            };
+
+            // Clear all
+            Object.values(categories).forEach(el => el.innerHTML = '');
+
+            // Group items
+            const grouped = {
+                income: currentItems.filter(i => i.item_type === 'income'),
+                allowance: currentItems.filter(i => i.item_type === 'allowance'),
+                deduction: currentItems.filter(i => i.item_type === 'deduction'),
+                employer_contribution: currentItems.filter(i => i.item_type === 'employer_contribution')
+            };
+
+            // Display each category
+            Object.keys(grouped).forEach(type => {
+                if (grouped[type].length === 0) {
+                    categories[type].innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <p>Geen items in hierdie kategorie nie</p>
+                        </div>
+                    `;
+                } else {
+                    categories[type].innerHTML = grouped[type].map(item => createItemCard(item)).join('');
+                }
+            });
+        }
+
+        function createItemCard(item) {
+            const categoryBadge = getCategoryBadge(item.category);
+            const taxBadge = item.is_taxable ? '<span class="badge badge-taxable">Taxable</span>' : '<span class="badge badge-non-taxable">Non-Tax</span>';
+            const uifBadge = item.affects_uif ? '<span class="badge badge-uif">UIF</span>' : '<span class="badge badge-no-uif">No UIF</span>';
+            const irp5Badge = item.irp5_code ? `<div class="irp5-code">IRP5: ${item.irp5_code}</div>` : '';
+            const systemTag = item.is_system_item ? '<small style="color: #999;">(System Item)</small>' : '';
+
+            return `
+                <div class="item-card">
+                    ${irp5Badge}
+                    <div class="item-card-header">
+                        <div class="item-title">
+                            <div class="item-code">${item.item_code}</div>
+                            <div class="item-name">${item.item_name} ${systemTag}</div>
+                        </div>
+                    </div>
+                    <div class="item-details">
+                        <div class="item-detail">
+                            <div class="item-detail-label">Kategorie</div>
+                            <div class="item-detail-value">${categoryBadge}</div>
+                        </div>
+                        <div class="item-detail">
+                            <div class="item-detail-label">Default Amount</div>
+                            <div class="item-detail-value">${item.default_amount ? 'R ' + parseFloat(item.default_amount).toFixed(2) : '-'}</div>
+                        </div>
+                        <div class="item-detail">
+                            <div class="item-detail-label">Tax & UIF</div>
+                            <div class="item-detail-value">${taxBadge} ${uifBadge}</div>
+                        </div>
+                    </div>
+                    ${!item.is_system_item ? `
+                    <div class="item-actions">
+                        <button class="btn btn-small" onclick="editItem(${item.id})">✏️ Edit</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteItem(${item.id})">🗑️ Delete</button>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function getCategoryBadge(category) {
+            const badges = {
+                'fixed': '<span class="badge badge-fixed">Fixed</span>',
+                'percentage': '<span class="badge badge-percentage">Percentage</span>',
+                'increasing_balance': '<span class="badge badge-balance">Increasing</span>',
+                'decreasing_balance': '<span class="badge badge-balance">Decreasing</span>',
+                'hours_based': '<span class="badge badge-hours">Hours</span>'
+            };
+            return badges[category] || category;
+        }
+
+        function openAddItemModal(type) {
+            document.getElementById('modalTitle').textContent = `Voeg ${getTypeName(type)} By`;
+            document.getElementById('itemForm').reset();
+            document.getElementById('itemId').value = '';
+            document.getElementById('itemType').value = type;
+            document.getElementById('itemModal').style.display = 'block';
+        }
+
+        function closeItemModal() {
+            document.getElementById('itemModal').style.display = 'none';
+        }
+
+        function getTypeName(type) {
+            const names = {
+                'income': 'Income Item',
+                'allowance': 'Allowance',
+                'deduction': 'Deduction',
+                'employer_contribution': 'Employer Contribution'
+            };
+            return names[type] || type;
+        }
+
+        async function editItem(id) {
+            const item = currentItems.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('modalTitle').textContent = 'Wysig Payroll Item';
+            document.getElementById('itemId').value = item.id;
+            document.getElementById('itemType').value = item.item_type;
+            document.getElementById('itemCode').value = item.item_code;
+            document.getElementById('itemName').value = item.item_name;
+            document.getElementById('irp5Code').value = item.irp5_code || '';
+            document.getElementById('itemCategory').value = item.category;
+            document.getElementById('defaultAmount').value = item.default_amount || '';
+            document.getElementById('isTaxable').value = item.is_taxable ? '1' : '0';
+            document.getElementById('affectsUif').value = item.affects_uif ? '1' : '0';
+
+            document.getElementById('itemModal').style.display = 'block';
+        }
+
+        async function saveItem(event) {
+            event.preventDefault();
+
+            const itemId = document.getElementById('itemId').value;
+            const data = {
+                company_id: selectedCompanyId,
+                item_code: document.getElementById('itemCode').value,
+                item_name: document.getElementById('itemName').value,
+                item_type: document.getElementById('itemType').value,
+                category: document.getElementById('itemCategory').value,
+                irp5_code: document.getElementById('irp5Code').value || null,
+                default_amount: parseFloat(document.getElementById('defaultAmount').value) || 0,
+                is_taxable: parseInt(document.getElementById('isTaxable').value),
+                affects_uif: parseInt(document.getElementById('affectsUif').value)
+            };
+
+            try {
+                const url = itemId
+                    ? `${API_URL}/payroll-items/items/${itemId}`
+                    : `${API_URL}/payroll-items/items`;
+
+                const method = itemId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Fout met stoor');
+                }
+
+                alert('✅ Item suksesvol gestoor!');
+                closeItemModal();
+                loadItems();
+
+            } catch (error) {
+                alert('Fout met stoor: ' + error.message);
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('Is jy seker jy wil hierdie item verwyder?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/payroll-items/items/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Fout met verwyder');
+                }
+
+                alert('✅ Item verwyder!');
+                loadItems();
+
+            } catch (error) {
+                alert('Fout met verwyder: ' + error.message);
+            }
+        }
+
+        // Load items on page load
+        loadItems();
+    </script>
+</body>
+</html>

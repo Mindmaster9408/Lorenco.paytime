@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="af">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Werknemer Detail</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .employee-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .info-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 15px 30px;
+            background: white;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .section-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .section-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .salary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .salary-item:hover {
+            background: #e3f2fd;
+        }
+        .salary-item.editable {
+            border-left: 3px solid #667eea;
+        }
+        .salary-label {
+            font-size: 14px;
+            color: #555;
+        }
+        .salary-value {
+            font-weight: 600;
+            color: #333;
+        }
+        .btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .input-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: end;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .checkbox input[type="checkbox"] {
+            width: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+        }
+        td {
+            font-size: 14px;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .action-btns {
+            display: flex;
+            gap: 5px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .modal-content {
+            background: white;
+            max-width: 600px;
+            margin: 50px auto;
+            border-radius: 15px;
+            padding: 30px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+        .modal-header h3 {
+            color: #667eea;
+            margin: 0;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-regular {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .badge-current {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        .total-row {
+            border-top: 2px solid #667eea;
+            font-weight: 700;
+            background: #f0f4ff !important;
+        }
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+        }
+        .collapsible:hover {
+            background: #e8eaf6;
+        }
+        .collapsed-content {
+            display: none;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .expanded .collapsed-content {
+            display: block;
+        }
+        .note-item {
+            background: #fff9c4;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #fbc02d;
+        }
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .note-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .note-text {
+            color: #333;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h1 id="employeeName">Werknemer Detail</h1>
+                <button class="btn" onclick="goBackToEmployeeList()" style="background: #667eea; color: white;">← Terug na Werknemers</button>
+            </div>
+            <div class="employee-info">
+                <div class="info-item">
+                    <div class="info-label">Werknemernr</div>
+                    <div class="info-value" id="employeeNumber">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Posisie</div>
+                    <div class="info-value" id="employeePosition">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Departement</div>
+                    <div class="info-value" id="employeeDepartment">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">ID Nommer</div>
+                    <div class="info-value" id="employeeId">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Datum van Geboorte</div>
+                    <div class="info-value" id="employeeDOB">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Betaalmetode</div>
+                    <div class="info-value" id="employeePayMethod">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('payroll')">💰 Payroll</button>
+            <button class="tab" onclick="switchTab('edit')">✏️ Edit Info</button>
+            <button class="tab" onclick="switchTab('leave')">🏖️ Leave</button>
+            <button class="tab" onclick="switchTab('notes')">📝 Notes</button>
+        </div>
+
+        <!-- PAYROLL TAB -->
+        <div id="payroll-tab" class="tab-content active">
+            <div class="card">
+                <h3>Payroll vir Periode: <select id="payPeriod" onchange="loadPayrollData()"></select></h3>
+
+                <div class="section-grid">
+                    <!-- REGULAR INPUTS -->
+                    <div class="section">
+                        <div class="section-title">
+                            <span>📅 Regular Inputs (Maandeliks)</span>
+                            <button class="btn btn-sm btn-success" onclick="openAddRegularInput()">+ Voeg By</button>
+                        </div>
+
+                        <div class="salary-item editable" onclick="editBasicSalary()">
+                            <span class="salary-label">Basic Salary</span>
+                            <span class="salary-value" id="basicSalary">R 0.00</span>
+                        </div>
+                        <div class="salary-item editable" onclick="editAllowance('housing')">
+                            <span class="salary-label">Housing Allowance</span>
+                            <span class="salary-value" id="housingAllowance">R 0.00</span>
+                        </div>
+                        <div class="salary-item editable" onclick="editAllowance('travel')">
+                            <span class="salary-label">Travel Allowance</span>
+                            <span class="salary-value" id="travelAllowance">R 0.00</span>
+                        </div>
+                        <div class="salary-item editable" onclick="editAllowance('phone')">
+                            <span class="salary-label">Phone Allowance</span>
+                            <span class="salary-value" id="phoneAllowance">R 0.00</span>
+                        </div>
+
+                        <div id="regularInputsList" style="margin-top: 10px;"></div>
+                    </div>
+
+                    <!-- CURRENT INPUTS -->
+                    <div class="section">
+                        <div class="section-title">
+                            <span>📊 Current Inputs (Hierdie Maand)</span>
+                            <button class="btn btn-sm btn-success" onclick="openAddCurrentInput()">+ Voeg By</button>
+                        </div>
+
+                        <div id="currentInputsList">
+                            <p style="color: #999; font-size: 14px;">Geen current inputs vir hierdie periode nie</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADDITIONAL HOURS SECTION -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="checkbox">
+                        <input type="checkbox" id="showAdditionalHours" onchange="toggleAdditionalHours()">
+                        <label for="showAdditionalHours" style="margin: 0;">Betaal vir Addisionele Ure</label>
+                    </div>
+
+                    <div id="additionalHoursSection" style="display: none; margin-top: 15px;">
+                        <!-- OVERTIME -->
+                        <div class="section collapsible" onclick="toggleSection(this)">
+                            <div class="section-title">
+                                ⏰ Overtime
+                                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddOvertime()">+ Voeg By</button>
+                            </div>
+                            <div class="collapsed-content">
+                                <div id="overtimeList"></div>
+                            </div>
+                        </div>
+
+                        <!-- SHORT TIME -->
+                        <div class="section collapsible" onclick="toggleSection(this)" style="margin-top: 15px;">
+                            <div class="section-title">
+                                ⏱️ Short Time
+                                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddShortTime()">+ Voeg By</button>
+                            </div>
+                            <div class="collapsed-content">
+                                <div id="shortTimeList"></div>
+                            </div>
+                        </div>
+
+                        <!-- PAID AT DIFFERENT RATE -->
+                        <div class="section collapsible" onclick="toggleSection(this)" style="margin-top: 15px;">
+                            <div class="section-title">
+                                💵 Paid at Different Rate
+                                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddMultiRate()">+ Voeg By</button>
+                            </div>
+                            <div class="collapsed-content">
+                                <div id="multiRateList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAYROLL SUMMARY -->
+                <div class="card" style="margin-top: 20px; background: linear-gradient(135deg, #f0f4ff 0%, #e8eaf6 100%);">
+                    <h3>💰 Payroll Opsomming</h3>
+                    <table>
+                        <tr>
+                            <td><strong>Gross Salary:</strong></td>
+                            <td style="text-align: right;"><strong id="totalGross">R 0.00</strong></td>
+                        </tr>
+                        <tr>
+                            <td>PAYE:</td>
+                            <td style="text-align: right;" id="totalPAYE">R 0.00</td>
+                        </tr>
+                        <tr>
+                            <td>UIF:</td>
+                            <td style="text-align: right;" id="totalUIF">R 0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Pension:</td>
+                            <td style="text-align: right;" id="totalPension">R 0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Medical Aid:</td>
+                            <td style="text-align: right;" id="totalMedical">R 0.00</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td><strong>NET SALARY:</strong></td>
+                            <td style="text-align: right;"><strong id="totalNet" style="font-size: 18px; color: #28a745;">R 0.00</strong></td>
+                        </tr>
+                    </table>
+                    <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="calculatePayslip()">Bereken Payslip</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- EDIT INFO TAB -->
+        <div id="edit-tab" class="tab-content">
+            <div class="card">
+                <h3>Werknemer Inligting</h3>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                    <div>
+                        <h4 style="color: #667eea; margin-bottom: 10px;">Persoonlike Inligting</h4>
+                        <div class="info-item">
+                            <div class="info-label">Volle Naam</div>
+                            <div class="info-value" id="editFullName">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">ID Nommer</div>
+                            <div class="info-value" id="editIdNumber">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Datum van Geboorte</div>
+                            <div class="info-value" id="editDOB">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Geslag</div>
+                            <div class="info-value" id="editGender">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">E-pos</div>
+                            <div class="info-value" id="editEmail">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Telefoon</div>
+                            <div class="info-value" id="editPhone">-</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="color: #667eea; margin-bottom: 10px;">Werk Inligting</h4>
+                        <div class="info-item">
+                            <div class="info-label">Werknemernommer</div>
+                            <div class="info-value" id="editEmpNumber">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Pos Titel</div>
+                            <div class="info-value" id="editJobTitle">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Departement</div>
+                            <div class="info-value" id="editDepartment">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Datum Aangestel</div>
+                            <div class="info-value" id="editDateAppointed">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Betaalmetode</div>
+                            <div class="info-value" id="editPayMethod">-</div>
+                        </div>
+                        <div class="info-item" id="editBankInfo" style="display: none;">
+                            <div class="info-label">Bank Besonderhede</div>
+                            <div class="info-value" id="editBankDetails">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h4 style="color: #667eea; margin-bottom: 10px;">Adres Inligting</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                        <div class="info-item">
+                            <div class="info-label">Residensiële Adres</div>
+                            <div class="info-value" id="editResAddress">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Posadres</div>
+                            <div class="info-value" id="editPostalAddress">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="openEditEmployeeModal()">Wysig Inligting</button>
+                    <button class="btn" onclick="window.location.href='employee-management.html'">Terug na Employee Management</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEAVE TAB -->
+        <div id="leave-tab" class="tab-content">
+            <div class="card">
+                <h3>Leave Management</h3>
+                <p>Verlof bestuur sal binnekort beskikbaar wees...</p>
+            </div>
+        </div>
+
+        <!-- NOTES TAB -->
+        <div id="notes-tab" class="tab-content">
+            <div class="card">
+                <h3>Payroll Notes vir <span id="notesCurrentPeriod">-</span></h3>
+                <div class="form-group">
+                    <label>Voeg Note by:</label>
+                    <textarea id="newNote" rows="3" placeholder="Tik jou note hier..."></textarea>
+                </div>
+                <button class="btn btn-success" onclick="addNote()">Stoor Note</button>
+                <div id="notesList" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Edit Employee Info Modal -->
+    <div id="editEmployeeModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>Wysig Werknemer Inligting</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('editEmployeeModal')">Sluit</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                <div class="form-group">
+                    <label>Voornaam</label>
+                    <input type="text" id="editFirstName">
+                </div>
+                <div class="form-group">
+                    <label>Van</label>
+                    <input type="text" id="editLastName">
+                </div>
+                <div class="form-group">
+                    <label>E-pos</label>
+                    <input type="email" id="editEmailInput">
+                </div>
+                <div class="form-group">
+                    <label>Telefoon</label>
+                    <input type="tel" id="editPhoneInput">
+                </div>
+                <div class="form-group">
+                    <label>Pos Titel</label>
+                    <input type="text" id="editJobTitleInput">
+                </div>
+                <div class="form-group">
+                    <label>Departement</label>
+                    <input type="text" id="editDepartmentInput">
+                </div>
+                <div class="form-group">
+                    <label>Datum Aangestel</label>
+                    <input type="date" id="editDateAppointedInput">
+                </div>
+                <div class="form-group">
+                    <label>Betaalmetode</label>
+                    <select id="editPayMethodInput">
+                        <option value="EFT">EFT</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Cheque">Cheque</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <h4 style="color: #667eea; margin-bottom: 10px;">Adres Inligting</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div class="form-group">
+                        <label>Residensiële Adres Lyn 1</label>
+                        <input type="text" id="editResLine1">
+                    </div>
+                    <div class="form-group">
+                        <label>Residensiële Adres Lyn 2</label>
+                        <input type="text" id="editResLine2">
+                    </div>
+                    <div class="form-group">
+                        <label>Stad</label>
+                        <input type="text" id="editResCity">
+                    </div>
+                    <div class="form-group">
+                        <label>Provinsie</label>
+                        <input type="text" id="editResProvince">
+                    </div>
+                    <div class="form-group">
+                        <label>Poskode</label>
+                        <input type="text" id="editResPostalCode">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-success" style="margin-top: 15px; width: 100%;" onclick="saveEmployeeInfo()">Stoor Wysigings</button>
+        </div>
+    </div>
+
+    <!-- Edit Basic Salary Modal -->
+    <div id="editBasicModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Wysig Basic Salary</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('editBasicModal')">Sluit</button>
+            </div>
+            <div class="form-group">
+                <label>Basic Salary (pm)</label>
+                <input type="number" id="editBasicValue" step="0.01">
+            </div>
+            <button class="btn btn-success" onclick="saveBasicSalary()">Stoor</button>
+        </div>
+    </div>
+
+    <!-- Add Regular Input Modal -->
+    <div id="addRegularModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Voeg Regular Input By</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('addRegularModal')">Sluit</button>
+            </div>
+            <div class="form-group">
+                <label>Tipe</label>
+                <select id="regularInputType">
+                    <option value="allowance">Allowance</option>
+                    <option value="deduction">Deduction</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Beskrywing</label>
+                <input type="text" id="regularInputDesc">
+            </div>
+            <div class="form-group">
+                <label>Bedrag (pm)</label>
+                <input type="number" id="regularInputAmount" step="0.01">
+            </div>
+            <button class="btn btn-success" onclick="saveRegularInput()">Stoor</button>
+        </div>
+    </div>
+
+    <!-- Add Current Input Modal -->
+    <div id="addCurrentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Voeg Current Input By</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('addCurrentModal')">Sluit</button>
+            </div>
+            <div class="form-group">
+                <label>Tipe</label>
+                <select id="currentInputType">
+                    <option value="bonus">Bonus</option>
+                    <option value="commission">Commission</option>
+                    <option value="allowance">Allowance</option>
+                    <option value="deduction">Deduction</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Beskrywing</label>
+                <input type="text" id="currentInputDesc">
+            </div>
+            <div class="form-group">
+                <label>Bedrag</label>
+                <input type="number" id="currentInputAmount" step="0.01">
+            </div>
+            <button class="btn btn-success" onclick="saveCurrentInput()">Stoor</button>
+        </div>
+    </div>
+
+    <!-- Add Overtime Modal -->
+    <div id="addOvertimeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Voeg Overtime By</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('addOvertimeModal')">Sluit</button>
+            </div>
+            <div class="form-group">
+                <label>Datum</label>
+                <input type="date" id="overtimeDate">
+            </div>
+            <div class="form-group">
+                <label>Ure</label>
+                <input type="number" id="overtimeHours" step="0.5">
+            </div>
+            <div class="form-group">
+                <label>Tarief Multiplier</label>
+                <select id="overtimeRate">
+                    <option value="1.5">1.5x (Time and a half)</option>
+                    <option value="2.0">2.0x (Double time)</option>
+                    <option value="2.5">2.5x</option>
+                    <option value="3.0">3.0x (Triple time)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Beskrywing</label>
+                <input type="text" id="overtimeDesc">
+            </div>
+            <button class="btn btn-success" onclick="saveOvertime()">Stoor</button>
+        </div>
+    </div>
+
+    <!-- Add Short Time Modal -->
+    <div id="addShortTimeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Voeg Short Time By</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('addShortTimeModal')">Sluit</button>
+            </div>
+            <div class="form-group">
+                <label>Datum</label>
+                <input type="date" id="shortTimeDate">
+            </div>
+            <div class="form-group">
+                <label>Ure Gemis</label>
+                <input type="number" id="shortTimeHours" step="0.5">
+            </div>
+            <div class="form-group">
+                <label>Rede</label>
+                <input type="text" id="shortTimeReason">
+            </div>
+            <button class="btn btn-success" onclick="saveShortTime()">Stoor</button>
+        </div>
+    </div>
+
+    <!-- Add Multi-Rate Hours Modal -->
+    <div id="addMultiRateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Voeg Paid at Different Rate By</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('addMultiRateModal')">Sluit</button>
+            </div>
+            <div class="form-group">
+                <label>Datum</label>
+                <input type="date" id="multiRateDate">
+            </div>
+            <div class="form-group">
+                <label>Ure</label>
+                <input type="number" id="multiRateHours" step="0.5">
+            </div>
+            <div class="form-group">
+                <label>Tarief per Uur (R)</label>
+                <input type="number" id="multiRatePerHour" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Tarief Beskrywing (bv. "Bookkeeper Rate")</label>
+                <input type="text" id="multiRateDesc">
+            </div>
+            <div class="form-group">
+                <label>Job Code / Kliënt Verwysing (opsioneel)</label>
+                <input type="text" id="multiRateJobCode">
+            </div>
+            <button class="btn btn-success" onclick="saveMultiRate()">Stoor</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let token = localStorage.getItem('token');
+        let currentEmployeeId = null;
+        let currentEmployee = null;
+        let currentPayPeriod = null;
+        let currentSalaryData = null;
+
+        // Get employee ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        currentEmployeeId = urlParams.get('id');
+
+        if (!currentEmployeeId || !token) {
+            window.location.href = 'employee-management.html';
+        }
+
+        function goBackToEmployeeList() {
+            // Navigate back to employee management, preserving the session
+            window.location.href = 'employee-management.html#employees';
+        }
+
+        async function init() {
+            await loadEmployeeInfo();
+            generatePayPeriods();
+            currentPayPeriod = document.getElementById('payPeriod').value;
+            await loadPayrollData();
+        }
+
+        async function loadEmployeeInfo() {
+            try {
+                const response = await fetch(`${API_URL}/hr/employees/${currentEmployeeId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const result = await response.json();
+                currentEmployee = result.employee;
+
+                // Header info
+                document.getElementById('employeeName').textContent =
+                    `${currentEmployee.first_name} ${currentEmployee.last_name}`;
+                document.getElementById('employeeNumber').textContent = currentEmployee.employee_number || '-';
+                document.getElementById('employeePosition').textContent =
+                    currentEmployee.job_title || currentEmployee.position || '-';
+                document.getElementById('employeeDepartment').textContent = currentEmployee.department || '-';
+                document.getElementById('employeeId').textContent = currentEmployee.id_number || '-';
+                document.getElementById('employeeDOB').textContent =
+                    currentEmployee.date_of_birth ? new Date(currentEmployee.date_of_birth).toLocaleDateString('af-ZA') : '-';
+                document.getElementById('employeePayMethod').textContent = currentEmployee.payment_method || 'EFT';
+
+                // Edit Info tab
+                document.getElementById('editFullName').textContent =
+                    `${currentEmployee.first_name} ${currentEmployee.last_name}`;
+                document.getElementById('editIdNumber').textContent = currentEmployee.id_number || '-';
+                document.getElementById('editDOB').textContent =
+                    currentEmployee.date_of_birth ? new Date(currentEmployee.date_of_birth).toLocaleDateString('af-ZA') : '-';
+                document.getElementById('editGender').textContent = currentEmployee.gender || '-';
+                document.getElementById('editEmail').textContent = currentEmployee.email || '-';
+                document.getElementById('editPhone').textContent = currentEmployee.phone || '-';
+                document.getElementById('editEmpNumber').textContent = currentEmployee.employee_number || '-';
+                document.getElementById('editJobTitle').textContent =
+                    currentEmployee.job_title || currentEmployee.position || '-';
+                document.getElementById('editDepartment').textContent = currentEmployee.department || '-';
+                document.getElementById('editDateAppointed').textContent =
+                    currentEmployee.date_appointed ? new Date(currentEmployee.date_appointed).toLocaleDateString('af-ZA') : '-';
+                document.getElementById('editPayMethod').textContent = currentEmployee.payment_method || 'EFT';
+
+                // Bank info
+                if (currentEmployee.payment_method === 'EFT' && currentEmployee.bank_name) {
+                    document.getElementById('editBankInfo').style.display = 'block';
+                    document.getElementById('editBankDetails').textContent =
+                        `${currentEmployee.bank_name} - ${currentEmployee.account_number || 'N/A'} (${currentEmployee.account_type || 'N/A'})`;
+                }
+
+                // Address info
+                const resAddress = [
+                    currentEmployee.residential_address_line1,
+                    currentEmployee.residential_address_line2,
+                    currentEmployee.residential_city,
+                    currentEmployee.residential_province,
+                    currentEmployee.residential_postal_code
+                ].filter(Boolean).join(', ');
+                document.getElementById('editResAddress').textContent = resAddress || '-';
+
+                const postalAddress = [
+                    currentEmployee.postal_address_line1,
+                    currentEmployee.postal_address_line2,
+                    currentEmployee.postal_city,
+                    currentEmployee.postal_province,
+                    currentEmployee.postal_postal_code
+                ].filter(Boolean).join(', ');
+                document.getElementById('editPostalAddress').textContent =
+                    currentEmployee.postal_same_as_residential ? 'Selfde as residensieel' : (postalAddress || '-');
+
+            } catch (error) {
+                console.error('Error loading employee:', error);
+                alert('Fout met laai van werknemer');
+            }
+        }
+
+        function generatePayPeriods() {
+            const select = document.getElementById('payPeriod');
+            const now = new Date();
+
+            // Generate last 12 months + current + next month
+            for (let i = -12; i <= 1; i++) {
+                const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const value = `${year}-${month}`;
+                const label = new Date(year, month - 1).toLocaleDateString('af-ZA', { year: 'numeric', month: 'long' });
+
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                if (i === 0) option.selected = true;
+                select.appendChild(option);
+            }
+        }
+
+        async function loadPayrollData() {
+            currentPayPeriod = document.getElementById('payPeriod').value;
+            document.getElementById('notesCurrentPeriod').textContent =
+                new Date(currentPayPeriod + '-01').toLocaleDateString('af-ZA', { year: 'numeric', month: 'long' });
+
+            await loadPayrollSummary();
+            await loadNotes();
+        }
+
+        async function loadPayrollSummary() {
+            try {
+                const response = await fetch(
+                    `${API_URL}/payroll-inputs/employees/${currentEmployeeId}/payroll-summary?pay_period=${currentPayPeriod}`,
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                );
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentSalaryData = result.salary; // Store for editing
+                    displayPayrollSummary(result);
+                }
+
+            } catch (error) {
+                console.error('Error loading payroll summary:', error);
+            }
+        }
+
+        function displayPayrollSummary(data) {
+            // Display base salary
+            const salary = data.salary || {};
+            document.getElementById('basicSalary').textContent =
+                'R ' + parseFloat(salary.basic_salary || 0).toFixed(2);
+            document.getElementById('housingAllowance').textContent =
+                'R ' + parseFloat(salary.housing_allowance || 0).toFixed(2);
+            document.getElementById('travelAllowance').textContent =
+                'R ' + parseFloat(salary.travel_allowance || 0).toFixed(2);
+            document.getElementById('phoneAllowance').textContent =
+                'R ' + parseFloat(salary.phone_allowance || 0).toFixed(2);
+
+            // Display regular inputs
+            let regularHtml = '';
+            (data.regularInputs || []).forEach(input => {
+                regularHtml += `
+                    <div class="salary-item" style="border-left: 3px solid #4caf50;">
+                        <span class="salary-label">${input.description} <span class="badge badge-regular">Regular</span></span>
+                        <span class="salary-value">R ${parseFloat(input.amount || 0).toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('regularInputsList').innerHTML = regularHtml || '';
+
+            // Display current inputs
+            let currentHtml = '';
+            (data.currentInputs || []).forEach(input => {
+                currentHtml += `
+                    <div class="salary-item" style="border-left: 3px solid #ff9800;">
+                        <span class="salary-label">${input.description} <span class="badge badge-current">Current</span></span>
+                        <div>
+                            <span class="salary-value">R ${parseFloat(input.amount || 0).toFixed(2)}</span>
+                            <button class="btn btn-sm btn-danger" onclick="deleteCurrentInput(${input.id})">×</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('currentInputsList').innerHTML = currentHtml ||
+                '<p style="color: #999; font-size: 14px;">Geen current inputs vir hierdie periode nie</p>';
+
+            // Display overtime
+            displayOvertimeList(data.overtime || []);
+
+            // Display short time
+            displayShortTimeList(data.shortTime || []);
+
+            // Display multi-rate
+            displayMultiRateList(data.multiRate || []);
+        }
+
+        function displayOvertimeList(records) {
+            if (records.length === 0) {
+                document.getElementById('overtimeList').innerHTML =
+                    '<p style="color: #999;">Geen overtime nie</p>';
+                return;
+            }
+
+            let html = '<table style="font-size: 13px;"><tr><th>Datum</th><th>Ure</th><th>Rate</th><th>Aksie</th></tr>';
+            records.forEach(rec => {
+                html += `
+                    <tr>
+                        <td>${new Date(rec.date_worked).toLocaleDateString('af-ZA')}</td>
+                        <td>${rec.hours}h</td>
+                        <td>${rec.rate_multiplier}x</td>
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteOvertime(${rec.id})">×</button></td>
+                    </tr>
+                `;
+            });
+            html += '</table>';
+            document.getElementById('overtimeList').innerHTML = html;
+        }
+
+        function displayShortTimeList(records) {
+            if (records.length === 0) {
+                document.getElementById('shortTimeList').innerHTML =
+                    '<p style="color: #999;">Geen short time nie</p>';
+                return;
+            }
+
+            let html = '<table style="font-size: 13px;"><tr><th>Datum</th><th>Ure Gemis</th><th>Rede</th><th>Aksie</th></tr>';
+            records.forEach(rec => {
+                html += `
+                    <tr>
+                        <td>${new Date(rec.date).toLocaleDateString('af-ZA')}</td>
+                        <td>${rec.hours_missed}h</td>
+                        <td>${rec.reason || '-'}</td>
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteShortTime(${rec.id})">×</button></td>
+                    </tr>
+                `;
+            });
+            html += '</table>';
+            document.getElementById('shortTimeList').innerHTML = html;
+        }
+
+        function displayMultiRateList(records) {
+            if (records.length === 0) {
+                document.getElementById('multiRateList').innerHTML =
+                    '<p style="color: #999;">Geen different rate hours nie</p>';
+                return;
+            }
+
+            let html = '<table style="font-size: 13px;"><tr><th>Datum</th><th>Ure</th><th>Tarief</th><th>Beskrywing</th><th>Aksie</th></tr>';
+            records.forEach(rec => {
+                html += `
+                    <tr>
+                        <td>${new Date(rec.date_worked).toLocaleDateString('af-ZA')}</td>
+                        <td>${rec.hours}h</td>
+                        <td>R${rec.rate_per_hour}/h</td>
+                        <td>${rec.rate_description || '-'}</td>
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteMultiRate(${rec.id})">×</button></td>
+                    </tr>
+                `;
+            });
+            html += '</table>';
+            document.getElementById('multiRateList').innerHTML = html;
+        }
+
+        async function loadNotes() {
+            try {
+                const response = await fetch(
+                    `${API_URL}/payroll-inputs/employees/${currentEmployeeId}/notes?pay_period=${currentPayPeriod}`,
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                );
+
+                const result = await response.json();
+
+                if (result.notes && result.notes.length > 0) {
+                    let html = '';
+                    result.notes.forEach(note => {
+                        html += `
+                            <div class="note-item">
+                                <div class="note-header">
+                                    <div class="note-meta">
+                                        <strong>${note.created_by_name || 'Unknown'}</strong> •
+                                        ${new Date(note.created_at).toLocaleString('af-ZA')}
+                                    </div>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteNote(${note.id})">×</button>
+                                </div>
+                                <div class="note-text">${note.note}</div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('notesList').innerHTML = html;
+                } else {
+                    document.getElementById('notesList').innerHTML =
+                        '<p style="color: #999;">Geen notes vir hierdie periode nie</p>';
+                }
+
+            } catch (error) {
+                console.error('Error loading notes:', error);
+            }
+        }
+
+        async function addNote() {
+            const note = document.getElementById('newNote').value.trim();
+
+            if (!note) {
+                alert('Tik asseblief \'n note');
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `${API_URL}/payroll-inputs/employees/${currentEmployeeId}/notes`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            pay_period: currentPayPeriod,
+                            note: note
+                        })
+                    }
+                );
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('newNote').value = '';
+                    await loadNotes();
+                } else {
+                    alert('Fout: ' + result.error);
+                }
+
+            } catch (error) {
+                alert('Fout met stoor van note: ' + error.message);
+            }
+        }
+
+        async function deleteNote(id) {
+            if (!confirm('Is jy seker jy wil hierdie note verwyder?')) return;
+
+            try {
+                await fetch(`${API_URL}/payroll-inputs/notes/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                await loadNotes();
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        function switchTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tab + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function toggleAdditionalHours() {
+            const checked = document.getElementById('showAdditionalHours').checked;
+            document.getElementById('additionalHoursSection').style.display = checked ? 'block' : 'none';
+        }
+
+        function toggleSection(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Modal functions
+        function openAddRegularInput() { openModal('addRegularModal'); }
+        function openAddCurrentInput() { openModal('addCurrentModal'); }
+        function openAddOvertime() {
+            openModal('addOvertimeModal');
+            document.getElementById('overtimeDate').value = new Date().toISOString().split('T')[0];
+        }
+        function openAddShortTime() {
+            openModal('addShortTimeModal');
+            document.getElementById('shortTimeDate').value = new Date().toISOString().split('T')[0];
+        }
+        function openAddMultiRate() {
+            openModal('addMultiRateModal');
+            document.getElementById('multiRateDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        async function saveRegularInput() {
+            const data = {
+                input_type: document.getElementById('regularInputType').value,
+                description: document.getElementById('regularInputDesc').value,
+                amount: parseFloat(document.getElementById('regularInputAmount').value),
+                effective_from: new Date().toISOString().split('T')[0]
+            };
+
+            try {
+                await fetch(`${API_URL}/payroll-inputs/employees/${currentEmployeeId}/regular-inputs`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                closeModal('addRegularModal');
+                await loadPayrollData();
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        async function saveCurrentInput() {
+            const data = {
+                input_type: document.getElementById('currentInputType').value,
+                description: document.getElementById('currentInputDesc').value,
+                amount: parseFloat(document.getElementById('currentInputAmount').value),
+                pay_period: currentPayPeriod
+            };
+
+            try {
+                await fetch(`${API_URL}/payroll-inputs/employees/${currentEmployeeId}/current-inputs`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                closeModal('addCurrentModal');
+                await loadPayrollData();
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        async function saveOvertime() {
+            const data = {
+                date_worked: document.getElementById('overtimeDate').value,
+                hours: parseFloat(document.getElementById('overtimeHours').value),
+                rate_multiplier: parseFloat(document.getElementById('overtimeRate').value),
+                description: document.getElementById('overtimeDesc').value,
+                pay_period: currentPayPeriod
+            };
+
+            try {
+                await fetch(`${API_URL}/payroll-inputs/employees/${currentEmployeeId}/overtime`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                closeModal('addOvertimeModal');
+                await loadPayrollData();
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        async function saveShortTime() {
+            const data = {
+                date: document.getElementById('shortTimeDate').value,
+                hours_missed: parseFloat(document.getElementById('shortTimeHours').value),
+                reason: document.getElementById('shortTimeReason').value,
+                pay_period: currentPayPeriod
+            };
+
+            try {
+                await fetch(`${API_URL}/payroll-inputs/employees/${currentEmployeeId}/short-time`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                closeModal('addShortTimeModal');
+                await loadPayrollData();
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        async function saveMultiRate() {
+            const data = {
+                date_worked: document.getElementById('multiRateDate').value,
+                hours: parseFloat(document.getElementById('multiRateHours').value),
+                rate_per_hour: parseFloat(document.getElementById('multiRatePerHour').value),
+                rate_description: document.getElementById('multiRateDesc').value,
+                job_code: document.getElementById('multiRateJobCode').value,
+                pay_period: currentPayPeriod
+            };
+
+            try {
+                await fetch(`${API_URL}/payroll-inputs/employees/${currentEmployeeId}/multi-rate`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                closeModal('addMultiRateModal');
+                await loadPayrollData();
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        async function deleteCurrentInput(id) {
+            if (!confirm('Verwyder hierdie input?')) return;
+            try {
+                await fetch(`${API_URL}/payroll-inputs/current-inputs/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                await loadPayrollData();
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        async function deleteOvertime(id) {
+            if (!confirm('Verwyder hierdie overtime record?')) return;
+            try {
+                await fetch(`${API_URL}/payroll-inputs/overtime/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                await loadPayrollData();
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        async function deleteShortTime(id) {
+            if (!confirm('Verwyder hierdie short time record?')) return;
+            try {
+                await fetch(`${API_URL}/payroll-inputs/short-time/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                await loadPayrollData();
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        async function deleteMultiRate(id) {
+            if (!confirm('Verwyder hierdie multi-rate record?')) return;
+            try {
+                await fetch(`${API_URL}/payroll-inputs/multi-rate/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                await loadPayrollData();
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        async function calculatePayslip() {
+            alert('Payslip berekening sal binnekort beskikbaar wees...');
+        }
+
+        // Edit salary functions
+        function editBasicSalary() {
+            // Allow editing even if no salary structure exists yet
+            const currentValue = currentSalaryData ? (currentSalaryData.basic_salary || 0) : 0;
+            document.getElementById('editBasicValue').value = currentValue;
+            openModal('editBasicModal');
+        }
+
+        function editAllowance(type) {
+            alert(`Wysig ${type} allowance sal binnekort beskikbaar wees via salary structures`);
+        }
+
+        async function saveBasicSalary() {
+            const newValue = parseFloat(document.getElementById('editBasicValue').value);
+
+            if (!newValue || newValue <= 0) {
+                alert('Voer asseblief \'n geldige bedrag in');
+                return;
+            }
+
+            try {
+                // Update salary structure
+                const response = await fetch(
+                    `${API_URL}/payroll/employees/${currentEmployeeId}/salary`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            basic_salary: newValue,
+                            housing_allowance: currentSalaryData?.housing_allowance || 0,
+                            travel_allowance: currentSalaryData?.travel_allowance || 0,
+                            phone_allowance: currentSalaryData?.phone_allowance || 0,
+                            other_allowances: currentSalaryData?.other_allowances || 0,
+                            pension_percentage: currentSalaryData?.pension_percentage || 0,
+                            medical_aid_amount: currentSalaryData?.medical_aid_amount || 0,
+                            other_deductions: currentSalaryData?.other_deductions || 0,
+                            pay_frequency: currentSalaryData?.pay_frequency || 'monthly',
+                            effective_date: new Date().toISOString().split('T')[0]
+                        })
+                    }
+                );
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    alert('Basic salary updated!');
+                    closeModal('editBasicModal');
+                    await loadPayrollData();
+                } else {
+                    alert('Fout: ' + (result.error || 'Unknown error'));
+                }
+
+            } catch (error) {
+                alert('Fout met update: ' + error.message);
+            }
+        }
+
+        // Edit employee info functions
+        function openEditEmployeeModal() {
+            if (!currentEmployee) {
+                alert('Laai eers die werknemer se data');
+                return;
+            }
+
+            // Populate form fields with current employee data
+            document.getElementById('editFirstName').value = currentEmployee.first_name || '';
+            document.getElementById('editLastName').value = currentEmployee.last_name || '';
+            document.getElementById('editEmailInput').value = currentEmployee.email || '';
+            document.getElementById('editPhoneInput').value = currentEmployee.phone || '';
+            document.getElementById('editJobTitleInput').value = currentEmployee.job_title || currentEmployee.position || '';
+            document.getElementById('editDepartmentInput').value = currentEmployee.department || '';
+            document.getElementById('editDateAppointedInput').value = currentEmployee.date_appointed || '';
+            document.getElementById('editPayMethodInput').value = currentEmployee.payment_method || 'EFT';
+
+            // Address fields
+            document.getElementById('editResLine1').value = currentEmployee.residential_address_line1 || '';
+            document.getElementById('editResLine2').value = currentEmployee.residential_address_line2 || '';
+            document.getElementById('editResCity').value = currentEmployee.residential_city || '';
+            document.getElementById('editResProvince').value = currentEmployee.residential_province || '';
+            document.getElementById('editResPostalCode').value = currentEmployee.residential_postal_code || '';
+
+            openModal('editEmployeeModal');
+        }
+
+        async function saveEmployeeInfo() {
+            try {
+                const updatedData = {
+                    first_name: document.getElementById('editFirstName').value,
+                    last_name: document.getElementById('editLastName').value,
+                    email: document.getElementById('editEmailInput').value,
+                    phone: document.getElementById('editPhoneInput').value,
+                    job_title: document.getElementById('editJobTitleInput').value,
+                    department: document.getElementById('editDepartmentInput').value,
+                    date_appointed: document.getElementById('editDateAppointedInput').value,
+                    payment_method: document.getElementById('editPayMethodInput').value,
+                    residential_address_line1: document.getElementById('editResLine1').value,
+                    residential_address_line2: document.getElementById('editResLine2').value,
+                    residential_city: document.getElementById('editResCity').value,
+                    residential_province: document.getElementById('editResProvince').value,
+                    residential_postal_code: document.getElementById('editResPostalCode').value
+                };
+
+                const response = await fetch(
+                    `${API_URL}/hr/employees/${currentEmployeeId}`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(updatedData)
+                    }
+                );
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    alert('Werknemer inligting suksesvol opgedateer!');
+                    closeModal('editEmployeeModal');
+                    await loadEmployeeInfo(); // Refresh employee data
+                } else {
+                    alert('Fout: ' + (result.error || 'Unknown error'));
+                }
+
+            } catch (error) {
+                alert('Fout met update: ' + error.message);
+            }
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>

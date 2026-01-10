@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="af">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loonruns - Payroll System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .company-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .payruns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .payrun-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .payrun-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .payrun-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .payrun-period {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-draft {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .status-finalized {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-paid {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .payrun-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .payrun-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .payrun-actions button {
+            flex: 1;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            font-size: 28px;
+        }
+
+        .close-btn {
+            font-size: 30px;
+            cursor: pointer;
+            color: #6c757d;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #dc3545;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .summary-section {
+            margin-top: 30px;
+        }
+
+        .summary-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .summary-content {
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            padding: 20px;
+        }
+
+        .payment-method-section {
+            margin-bottom: 30px;
+        }
+
+        .payment-method-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .payment-method-header {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .payment-method-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .payment-method-total {
+            font-size: 20px;
+            font-weight: 700;
+            color: #28a745;
+        }
+
+        .employee-list {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .employee-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .employee-item:last-child {
+            border-bottom: none;
+        }
+
+        .employee-item:hover {
+            background: #f8f9fa;
+        }
+
+        .employee-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .employee-number {
+            color: #6c757d;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .employee-net {
+            font-size: 16px;
+            font-weight: 700;
+            color: #28a745;
+        }
+
+        .overall-totals {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .overall-totals h3 {
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .totals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .total-item {
+            background: rgba(255,255,255,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .total-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .total-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>Loonruns</h1>
+                <p id="companyName" class="company-badge"></p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="showCreateModal()">+ Nuwe Loonrun</button>
+                <button class="btn btn-secondary" onclick="goBack()">Terug</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="errorMessage"></div>
+            <div id="payrunsContainer">
+                <div class="loading">Laai loonruns...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Payrun Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Skep Nuwe Loonrun</h2>
+                <button class="close-btn" onclick="closeCreateModal()">&times;</button>
+            </div>
+            <form onsubmit="createPayrun(event)">
+                <div class="form-group">
+                    <label>Loonperiode *</label>
+                    <input type="month" id="payPeriod" required>
+                </div>
+                <div class="form-group">
+                    <label>Notas</label>
+                    <textarea id="notes" rows="4" placeholder="Opsionele notas vir hierdie loonrun..."></textarea>
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Kanselleer</button>
+                    <button type="submit" class="btn btn-primary">Skep Loonrun</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payrun Summary Modal -->
+    <div id="summaryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="summaryTitle">Loonrun Opsomming</h2>
+                <button class="close-btn" onclick="closeSummaryModal()">&times;</button>
+            </div>
+            <div id="summaryContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let selectedCompanyId = localStorage.getItem('selectedCompanyId');
+        let selectedCompanyName = localStorage.getItem('selectedCompanyName');
+        let payruns = [];
+
+        // Check authentication
+        if (!token || !selectedCompanyId) {
+            window.location.href = 'employee-management.html';
+        }
+
+        document.getElementById('companyName').textContent = selectedCompanyName;
+
+        // Load payruns on page load
+        loadPayruns();
+
+        async function loadPayruns() {
+            try {
+                const response = await fetch(`http://localhost:3000/api/payruns/runs?company_id=${selectedCompanyId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    payruns = data.runs;
+                    displayPayruns();
+                } else {
+                    showError(data.error || 'Kon nie loonruns laai nie');
+                }
+            } catch (error) {
+                showError('Fout met laai van loonruns: ' + error.message);
+            }
+        }
+
+        function displayPayruns() {
+            const container = document.getElementById('payrunsContainer');
+
+            if (payruns.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-text">Geen loonruns nog nie</div>
+                        <button class="btn btn-primary" onclick="showCreateModal()">Skep Jou Eerste Loonrun</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="payruns-grid">
+                    ${payruns.map(run => createPayrunCard(run)).join('')}
+                </div>
+            `;
+        }
+
+        function createPayrunCard(run) {
+            const statusClass = `status-${run.status}`;
+            const statusText = {
+                'draft': 'Konsep',
+                'finalized': 'Gefinaliseer',
+                'paid': 'Betaal'
+            }[run.status];
+
+            const actions = run.status === 'draft'
+                ? `
+                    <button class="btn btn-success" onclick="finalizePayrun(${run.id}, event)">Finaliseer</button>
+                    <button class="btn btn-danger" onclick="deletePayrun(${run.id}, event)">Verwyder</button>
+                `
+                : run.status === 'finalized'
+                ? `
+                    <button class="btn btn-info" onclick="viewSummary(${run.id}, event)">Opsomming</button>
+                    <button class="btn btn-success" onclick="markAsPaid(${run.id}, event)">Merk as Betaal</button>
+                `
+                : `
+                    <button class="btn btn-info" onclick="viewSummary(${run.id}, event)">Opsomming</button>
+                `;
+
+            return `
+                <div class="payrun-card">
+                    <div class="payrun-header">
+                        <div class="payrun-period">${formatPeriod(run.pay_period)}</div>
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="payrun-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Werknemers</div>
+                            <div class="stat-value">${run.total_employees || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Bruto Salaris</div>
+                            <div class="stat-value">R ${formatMoney(run.total_gross || 0)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">PAYE</div>
+                            <div class="stat-value">R ${formatMoney(run.total_paye || 0)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Netto Salaris</div>
+                            <div class="stat-value">R ${formatMoney(run.total_net || 0)}</div>
+                        </div>
+                    </div>
+                    <div class="payrun-actions">
+                        ${actions}
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatPeriod(period) {
+            const [year, month] = period.split('-');
+            const months = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
+            return `${months[parseInt(month) - 1]} ${year}`;
+        }
+
+        function formatMoney(amount) {
+            return parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        function showCreateModal() {
+            document.getElementById('createModal').classList.add('active');
+            // Set default to current month
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            document.getElementById('payPeriod').value = currentMonth;
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.remove('active');
+            document.getElementById('payPeriod').value = '';
+            document.getElementById('notes').value = '';
+        }
+
+        async function createPayrun(event) {
+            event.preventDefault();
+
+            const payPeriod = document.getElementById('payPeriod').value;
+            const notes = document.getElementById('notes').value;
+
+            try {
+                const response = await fetch('http://localhost:3000/api/payruns/runs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        company_id: selectedCompanyId,
+                        pay_period: payPeriod,
+                        notes: notes
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    closeCreateModal();
+                    loadPayruns();
+                } else {
+                    showError(data.error || 'Kon nie loonrun skep nie');
+                }
+            } catch (error) {
+                showError('Fout met skep van loonrun: ' + error.message);
+            }
+        }
+
+        async function finalizePayrun(runId, event) {
+            event.stopPropagation();
+
+            if (!confirm('Is jy seker jy wil hierdie loonrun finaliseer? Dit kan nie ongedaan gemaak word nie.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/payruns/runs/${runId}/finalize`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`Loonrun gefinaliseer!\n\nWerknemers: ${data.totals.employees}\nBruto: R ${formatMoney(data.totals.gross)}\nPAYE: R ${formatMoney(data.totals.paye)}\nNetto: R ${formatMoney(data.totals.net)}`);
+                    loadPayruns();
+                } else {
+                    showError(data.error || 'Kon nie loonrun finaliseer nie');
+                }
+            } catch (error) {
+                showError('Fout met finaliseer van loonrun: ' + error.message);
+            }
+        }
+
+        async function viewSummary(runId, event) {
+            event.stopPropagation();
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/payruns/runs/${runId}/summary`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displaySummary(data);
+                } else {
+                    showError(data.error || 'Kon nie opsomming laai nie');
+                }
+            } catch (error) {
+                showError('Fout met laai van opsomming: ' + error.message);
+            }
+        }
+
+        function displaySummary(data) {
+            const { run, summary } = data;
+
+            document.getElementById('summaryTitle').textContent = `Loonrun: ${formatPeriod(run.pay_period)}`;
+
+            let content = '';
+
+            // EFT Section
+            if (summary.eft.count > 0) {
+                content += createPaymentMethodSection('EFT Betalings', summary.eft);
+            }
+
+            // Cash Section
+            if (summary.cash.count > 0) {
+                content += createPaymentMethodSection('Kontant Betalings', summary.cash);
+            }
+
+            // Cheque Section
+            if (summary.cheque.count > 0) {
+                content += createPaymentMethodSection('Tjek Betalings', summary.cheque);
+            }
+
+            // Overall Totals
+            content += `
+                <div class="overall-totals">
+                    <h3>Totale Opsomming</h3>
+                    <div class="totals-grid">
+                        <div class="total-item">
+                            <div class="total-label">Werknemers</div>
+                            <div class="total-value">${summary.overall.total_employees}</div>
+                        </div>
+                        <div class="total-item">
+                            <div class="total-label">Bruto Salaris</div>
+                            <div class="total-value">R ${formatMoney(summary.overall.total_gross)}</div>
+                        </div>
+                        <div class="total-item">
+                            <div class="total-label">PAYE</div>
+                            <div class="total-value">R ${formatMoney(summary.overall.total_paye)}</div>
+                        </div>
+                        <div class="total-item">
+                            <div class="total-label">UIF</div>
+                            <div class="total-value">R ${formatMoney(summary.overall.total_uif)}</div>
+                        </div>
+                        <div class="total-item">
+                            <div class="total-label">Netto Salaris</div>
+                            <div class="total-value">R ${formatMoney(summary.overall.total_net)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('summaryContent').innerHTML = content;
+            document.getElementById('summaryModal').classList.add('active');
+        }
+
+        function createPaymentMethodSection(title, methodData) {
+            return `
+                <div class="payment-method-section">
+                    <div class="payment-method-header">
+                        <div class="payment-method-title">${title}</div>
+                        <div class="payment-method-total">R ${formatMoney(methodData.total)}</div>
+                    </div>
+                    <div class="employee-list">
+                        ${methodData.employees.map(emp => `
+                            <div class="employee-item">
+                                <div>
+                                    <span class="employee-name">${emp.employee_name}</span>
+                                    <span class="employee-number">#${emp.employee_number}</span>
+                                </div>
+                                <div class="employee-net">R ${formatMoney(emp.net_salary)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeSummaryModal() {
+            document.getElementById('summaryModal').classList.remove('active');
+        }
+
+        async function markAsPaid(runId, event) {
+            event.stopPropagation();
+
+            if (!confirm('Is jy seker jy wil hierdie loonrun merk as betaal?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/payruns/runs/${runId}/mark-paid`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    loadPayruns();
+                } else {
+                    showError(data.error || 'Kon nie loonrun merk as betaal nie');
+                }
+            } catch (error) {
+                showError('Fout met merk as betaal: ' + error.message);
+            }
+        }
+
+        async function deletePayrun(runId, event) {
+            event.stopPropagation();
+
+            if (!confirm('Is jy seker jy wil hierdie loonrun verwyder?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/payruns/runs/${runId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    loadPayruns();
+                } else {
+                    showError(data.error || 'Kon nie loonrun verwyder nie');
+                }
+            } catch (error) {
+                showError('Fout met verwyder van loonrun: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.innerHTML = `<div class="error">${message}</div>`;
+            setTimeout(() => {
+                errorDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        function goBack() {
+            window.location.href = 'employee-management.html#employees';
+        }
+    </script>
+</body>
+</html>

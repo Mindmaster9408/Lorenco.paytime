@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="af">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Werknemers Bestuur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            color: #667eea;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        tr:hover {
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .modal-content {
+            background: white;
+            max-width: 900px;
+            margin: 50px auto;
+            border-radius: 15px;
+            padding: 30px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+        .modal-header h2 {
+            color: #667eea;
+            margin: 0;
+        }
+        .close-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        label.required::after {
+            content: " *";
+            color: #dc3545;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        input[readonly] {
+            background: #f8f9fa;
+            cursor: not-allowed;
+        }
+        .section-title {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            margin: 20px 0 15px 0;
+            border-left: 4px solid #667eea;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        .success-msg, .error-msg {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .success-msg {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error-msg {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .info-box strong {
+            color: #1976d2;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-active {
+            background: #28a745;
+            color: white;
+        }
+        .badge-inactive {
+            background: #dc3545;
+            color: white;
+        }
+        .login-section {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 400px;
+            margin: 100px auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .dashboard {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login -->
+        <div id="loginSection" class="login-section">
+            <h1 style="color: #667eea; text-align: center; margin-bottom: 30px;">👥 Werknemers Bestuur</h1>
+            <div class="form-group">
+                <label>Gebruikersnaam</label>
+                <input type="text" id="loginUsername" value="demo">
+            </div>
+            <div class="form-group">
+                <label>Wagwoord</label>
+                <input type="password" id="loginPassword" value="demo123">
+            </div>
+            <button class="btn" style="width: 100%;" onclick="login()">Teken In</button>
+        </div>
+
+        <!-- Company Selection -->
+        <div id="companySelection" class="login-section" style="display: none;">
+            <h1 style="color: #667eea; text-align: center; margin-bottom: 30px;">🏢 Kies Maatskappy</h1>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <strong>Gebruiker:</strong> <span id="companyUserName"></span>
+            </div>
+            <div id="companyList" style="margin-bottom: 20px;"></div>
+            <button class="btn btn-success" style="width: 100%;" onclick="openAddCompanyModal()">+ Voeg Nuwe Maatskappy By</button>
+        </div>
+
+        <!-- Main Dashboard Menu -->
+        <div id="dashboard" class="dashboard">
+            <div class="header">
+                <div>
+                    <h1>🏢 <span id="selectedCompanyName">-</span></h1>
+                    <div><strong>Gebruiker:</strong> <span id="userName"></span></div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="changeCompany()" style="background: #764ba2; color: white;">🏢 Verander Maatskappy</button>
+                    <button class="btn" onclick="logout()" style="background: #dc3545; color: white;">Teken Uit</button>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px;">
+                <!-- Employee Management Card -->
+                <div class="card" style="cursor: pointer; transition: transform 0.2s;" onclick="showEmployeeList()">
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">👥</div>
+                        <h2 style="color: #667eea; margin-bottom: 10px;">Werknemers</h2>
+                        <p style="color: #666;">Bestuur werknemers en hul inligting</p>
+                    </div>
+                </div>
+
+                <!-- Company Details Card -->
+                <div class="card" style="cursor: pointer; transition: transform 0.2s;" onclick="showCompanyDetails()">
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">🏢</div>
+                        <h2 style="color: #667eea; margin-bottom: 10px;">Maatskappy Details</h2>
+                        <p style="color: #666;">Wysig maatskappy inligting</p>
+                    </div>
+                </div>
+
+                <!-- Payroll Management Card -->
+                <div class="card" style="cursor: pointer; transition: transform 0.2s;" onclick="showPayrollManagement()">
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">💰</div>
+                        <h2 style="color: #667eea; margin-bottom: 10px;">Payroll</h2>
+                        <p style="color: #666;">Bonus, Loans, Payruns</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee List Section -->
+        <div id="employeeListSection" class="dashboard" style="display: none;">
+            <div class="header">
+                <div>
+                    <h1>👥 Werknemers Bestuur</h1>
+                    <div><strong>Maatskappy:</strong> <span id="empListCompanyName">-</span></div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="backToDashboard()" style="background: #6c757d; color: white;">← Terug</button>
+                    <button class="btn btn-success" onclick="openAddEmployeeModal()">+ Voeg Werknemer By</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Werknemer Lys</h2>
+                <div id="employeesList"></div>
+            </div>
+        </div>
+
+        <!-- Company Details Section -->
+        <div id="companyDetailsSection" class="dashboard" style="display: none;">
+            <div class="header">
+                <div>
+                    <h1>🏢 Maatskappy Details</h1>
+                    <div><strong>Maatskappy:</strong> <span id="compDetCompanyName">-</span></div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="backToDashboard()" style="background: #6c757d; color: white;">← Terug</button>
+                    <button class="btn btn-success" onclick="saveCompanyDetails()">💾 Stoor Veranderinge</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Maatskappy Inligting</h2>
+                <div id="companyDetailsForm"></div>
+            </div>
+        </div>
+
+        <!-- Payroll Management Section -->
+        <div id="payrollSection" class="dashboard" style="display: none;">
+            <div class="header">
+                <div>
+                    <h1>💰 Payroll Bestuur</h1>
+                    <div><strong>Maatskappy:</strong> <span id="payrollCompanyName">-</span></div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="backToDashboard()" style="background: #6c757d; color: white;">← Terug</button>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <!-- Payroll Items Card -->
+                <div class="card" style="cursor: pointer;" onclick="showPayrollItems()">
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">📋</div>
+                        <h3 style="color: #667eea;">Payroll Items</h3>
+                        <p style="color: #666; font-size: 14px;">Bonus, Loans, Deductions</p>
+                    </div>
+                </div>
+
+                <!-- Payruns Card -->
+                <div class="card" style="cursor: pointer;" onclick="showPayruns()">
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">📊</div>
+                        <h3 style="color: #667eea;">Payruns</h3>
+                        <p style="color: #666; font-size: 14px;">Finaliseer & Sluit Periodes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit Employee Modal -->
+        <div id="employeeModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Voeg Werknemer By</h2>
+                    <button class="close-btn" onclick="closeEmployeeModal()">Sluit</button>
+                </div>
+
+                <div id="modalSuccess" class="success-msg"></div>
+                <div id="modalError" class="error-msg"></div>
+
+                <form id="employeeForm" onsubmit="saveEmployee(event)">
+                    <input type="hidden" id="employeeId">
+
+                    <div class="section-title">📋 Basiese Inligting</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="required">Werknemernommer</label>
+                            <input type="text" id="employee_number" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Datum Aangestel</label>
+                            <input type="date" id="date_appointed">
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Voornaam</label>
+                            <input type="text" id="first_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Van</label>
+                            <input type="text" id="last_name" required>
+                        </div>
+                    </div>
+
+                    <div class="section-title">🆔 Identifikasie</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>ID Nommer (13 syfers)</label>
+                            <input type="text" id="id_number" maxlength="13" onblur="parseIDNumber()">
+                            <small style="color: #666;">Datum van geboorte en geslag word outomaties afgelei</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Paspoort Nommer</label>
+                            <input type="text" id="passport_number">
+                        </div>
+                        <div class="form-group">
+                            <label>Datum van Geboorte</label>
+                            <input type="date" id="date_of_birth" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Geslag</label>
+                            <select id="gender">
+                                <option value="">Kies...</option>
+                                <option value="Male">Manlik</option>
+                                <option value="Female">Vroulik</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nasionaliteit</label>
+                            <input type="text" id="nationality" value="South African">
+                        </div>
+                        <div class="form-group">
+                            <label>Huwelikstatus</label>
+                            <select id="marital_status">
+                                <option value="">Kies...</option>
+                                <option value="Single">Enkel</option>
+                                <option value="Married">Getroud</option>
+                                <option value="Divorced">Geskei</option>
+                                <option value="Widowed">Weduwee/Wewenaar</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="section-title">💼 Werk Inligting</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Amptelike Pos Titel</label>
+                            <input type="text" id="job_title">
+                        </div>
+                        <div class="form-group">
+                            <label>Posisie/Rol</label>
+                            <input type="text" id="position">
+                        </div>
+                        <div class="form-group">
+                            <label>Departement</label>
+                            <input type="text" id="department">
+                        </div>
+                        <div class="form-group">
+                            <label>Belasting Nommer</label>
+                            <input type="text" id="tax_number">
+                        </div>
+                    </div>
+
+                    <div class="section-title">📞 Kontak Inligting</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>E-pos</label>
+                            <input type="email" id="email">
+                        </div>
+                        <div class="form-group">
+                            <label>Telefoonnommer</label>
+                            <input type="tel" id="phone">
+                        </div>
+                    </div>
+
+                    <div class="section-title">🏠 Residensiële Adres</div>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Adres Lyn 1</label>
+                            <input type="text" id="residential_address_line1">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Adres Lyn 2</label>
+                            <input type="text" id="residential_address_line2">
+                        </div>
+                        <div class="form-group">
+                            <label>Stad</label>
+                            <input type="text" id="residential_city">
+                        </div>
+                        <div class="form-group">
+                            <label>Provinsie</label>
+                            <select id="residential_province">
+                                <option value="">Kies...</option>
+                                <option value="Gauteng">Gauteng</option>
+                                <option value="Western Cape">Wes-Kaap</option>
+                                <option value="Eastern Cape">Oos-Kaap</option>
+                                <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                                <option value="Free State">Vrystaat</option>
+                                <option value="Limpopo">Limpopo</option>
+                                <option value="Mpumalanga">Mpumalanga</option>
+                                <option value="Northern Cape">Noord-Kaap</option>
+                                <option value="North West">Noordwes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Poskode</label>
+                            <input type="text" id="residential_postal_code" maxlength="4">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="postal_same_as_residential" onchange="togglePostalAddress()">
+                            <label for="postal_same_as_residential">Posadres is dieselfde as residensiële adres</label>
+                        </div>
+                    </div>
+
+                    <div id="postalAddressSection">
+                        <div class="section-title">📮 Posadres</div>
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label>Adres Lyn 1</label>
+                                <input type="text" id="postal_address_line1">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Adres Lyn 2</label>
+                                <input type="text" id="postal_address_line2">
+                            </div>
+                            <div class="form-group">
+                                <label>Stad</label>
+                                <input type="text" id="postal_city">
+                            </div>
+                            <div class="form-group">
+                                <label>Provinsie</label>
+                                <select id="postal_province">
+                                    <option value="">Kies...</option>
+                                    <option value="Gauteng">Gauteng</option>
+                                    <option value="Western Cape">Wes-Kaap</option>
+                                    <option value="Eastern Cape">Oos-Kaap</option>
+                                    <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                                    <option value="Free State">Vrystaat</option>
+                                    <option value="Limpopo">Limpopo</option>
+                                    <option value="Mpumalanga">Mpumalanga</option>
+                                    <option value="Northern Cape">Noord-Kaap</option>
+                                    <option value="North West">Noordwes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Poskode</label>
+                                <input type="text" id="postal_postal_code" maxlength="4">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">💰 Betaling Inligting</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="required">Betaalmetode</label>
+                            <select id="payment_method" onchange="toggleBankFields()" required>
+                                <option value="EFT">EFT (Elektroniese Oordrag)</option>
+                                <option value="Cash">Kontant</option>
+                                <option value="Cheque">Tjek</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="bankFieldsSection">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="required">Bank Naam</label>
+                                <select id="bank_name">
+                                    <option value="">Kies bank...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Rekeninghouer Naam</label>
+                                <input type="text" id="account_holder">
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Rekeningnommer</label>
+                                <input type="text" id="account_number">
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Rekening Tipe</label>
+                                <select id="account_type">
+                                    <option value="">Kies...</option>
+                                    <option value="Cheque">Tjek Rekening</option>
+                                    <option value="Savings">Spaar Rekening</option>
+                                    <option value="Transmission">Transmissie Rekening</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tak Kode</label>
+                                <input type="text" id="branch_code" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">Kanselleer</button>
+                        <button type="submit" class="btn btn-success">Stoor Werknemer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let token = null;
+        let currentUser = null;
+        let employees = [];
+        let banks = [];
+
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            // Allow demo login without backend
+            if (username.toLowerCase() === 'demo' && password === 'demo123') {
+                token = 'demo-token';
+                localStorage.setItem('token', token);
+                currentUser = { fullName: 'Demo User', username: 'demo' };
+                document.getElementById('userName').textContent = currentUser.fullName;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('companySelection').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+
+                loadBanks().catch(e => console.log('Demo mode - banks loaded'));
+                loadEmployees().catch(e => console.log('Demo mode - employees loaded'));
+                return false; // Prevent any further execution
+            }
+
+            // Only try real login if not demo
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    token = result.token;
+                    localStorage.setItem('token', token);
+                    currentUser = result.user;
+                    document.getElementById('userName').textContent = currentUser.fullName;
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+
+                    await loadBanks();
+                    await loadEmployees();
+                } else {
+                    alert('Login failed: ' + result.error);
+                }
+            } catch (error) {
+                alert('Server not available. Use demo/demo123 to continue without backend.');
+            }
+            return false;
+        }
+
+        async function loadBanks() {
+            try {
+                // Use demo data if using demo token
+                if (token === 'demo-token') {
+                    banks = [
+                        { name: 'ABSA', code: '632005' },
+                        { name: 'Standard Bank', code: '051001' },
+                        { name: 'FNB', code: '250655' },
+                        { name: 'Nedbank', code: '198765' },
+                        { name: 'Capitec', code: '470010' }
+                    ];
+                } else {
+                    const response = await fetch(`${API_URL}/hr/banks`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const result = await response.json();
+                    banks = result.banks;
+                }
+
+                const select = document.getElementById('bank_name');
+                select.innerHTML = '<option value="">Kies bank...</option>';
+                banks.forEach(bank => {
+                    const option = document.createElement('option');
+                    option.value = bank.name;
+                    option.textContent = bank.name;
+                    option.dataset.code = bank.code;
+                    select.appendChild(option);
+                });
+
+                // Auto-fill branch code when bank selected
+                select.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    if (selectedOption.dataset.code) {
+                        document.getElementById('branch_code').value = selectedOption.dataset.code;
+                    }
+                });
+
+            } catch (error) {
+                console.log('Running without backend - using demo banks');
+            }
+        }
+
+        async function loadEmployees() {
+            try {
+                // Use demo data if using demo token
+                if (token === 'demo-token') {
+                    employees = [];
+                } else {
+                    const url = selectedCompanyId
+                        ? `${API_URL}/hr/employees?company_id=${selectedCompanyId}`
+                        : `${API_URL}/hr/employees`;
+
+                    const response = await fetch(url, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    const result = await response.json();
+                    employees = result.employees;
+                }
+
+                let html = '<table><thead><tr>';
+                html += '<th>Werknemernr</th>';
+                html += '<th>Naam</th>';
+                html += '<th>ID Nommer</th>';
+                html += '<th>Pos</th>';
+                html += '<th>Departement</th>';
+                html += '<th>Betaalmetode</th>';
+                html += '<th>Status</th>';
+                html += '</tr></thead><tbody>';
+
+                if (employees.length === 0) {
+                    html += '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #7f8c8d;">Geen werknemers nog nie. Klik "Voeg Nuwe Werknemer By" om te begin.</td></tr>';
+                } else {
+                    employees.forEach(emp => {
+                        html += `
+                            <tr onclick="window.location.href='employee-detail.html?id=${emp.id}'" style="cursor: pointer;">
+                                <td><strong>${emp.employee_number}</strong></td>
+                                <td>${emp.first_name} ${emp.last_name}</td>
+                                <td>${emp.id_number || emp.passport_number || '-'}</td>
+                                <td>${emp.job_title || emp.position || '-'}</td>
+                                <td>${emp.department || '-'}</td>
+                                <td>${emp.payment_method || 'EFT'}</td>
+                                <td><span class="badge ${emp.is_active ? 'badge-active' : 'badge-inactive'}">${emp.is_active ? 'Aktief' : 'Onaktief'}</span></td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                html += '</tbody></table>';
+                document.getElementById('employeesList').innerHTML = html;
+
+            } catch (error) {
+                console.log('Running without backend - empty employee list');
+                document.getElementById('employeesList').innerHTML = '<p style="text-align: center; padding: 2rem; color: #7f8c8d;">Geen werknemers nog nie. Klik "Voeg Nuwe Werknemer By" om te begin.</p>';
+            }
+        }
+
+        function openAddEmployeeModal() {
+            document.getElementById('modalTitle').textContent = 'Voeg Werknemer By';
+            document.getElementById('employeeForm').reset();
+            document.getElementById('employeeId').value = '';
+            document.getElementById('payment_method').value = 'EFT';
+            toggleBankFields();
+            togglePostalAddress();
+            document.getElementById('employeeModal').style.display = 'block';
+        }
+
+        function closeEmployeeModal() {
+            document.getElementById('employeeModal').style.display = 'none';
+            document.getElementById('modalSuccess').style.display = 'none';
+            document.getElementById('modalError').style.display = 'none';
+        }
+
+        async function editEmployee(id) {
+            try {
+                const response = await fetch(`${API_URL}/hr/employees/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const result = await response.json();
+                const emp = result.employee;
+
+                document.getElementById('modalTitle').textContent = 'Wysig Werknemer';
+                document.getElementById('employeeId').value = emp.id;
+                document.getElementById('employee_number').value = emp.employee_number || '';
+                document.getElementById('first_name').value = emp.first_name || '';
+                document.getElementById('last_name').value = emp.last_name || '';
+                document.getElementById('id_number').value = emp.id_number || '';
+                document.getElementById('passport_number').value = emp.passport_number || '';
+                document.getElementById('date_of_birth').value = emp.date_of_birth || '';
+                document.getElementById('gender').value = emp.gender || '';
+                document.getElementById('nationality').value = emp.nationality || '';
+                document.getElementById('marital_status').value = emp.marital_status || '';
+                document.getElementById('date_appointed').value = emp.date_appointed || '';
+                document.getElementById('job_title').value = emp.job_title || '';
+                document.getElementById('position').value = emp.position || '';
+                document.getElementById('department').value = emp.department || '';
+                document.getElementById('tax_number').value = emp.tax_number || '';
+                document.getElementById('email').value = emp.email || '';
+                document.getElementById('phone').value = emp.phone || '';
+                document.getElementById('payment_method').value = emp.payment_method || 'EFT';
+                document.getElementById('bank_name').value = emp.bank_name || '';
+                document.getElementById('account_holder').value = emp.account_holder || '';
+                document.getElementById('account_number').value = emp.account_number || '';
+                document.getElementById('account_type').value = emp.account_type || '';
+                document.getElementById('branch_code').value = emp.branch_code || '';
+                document.getElementById('residential_address_line1').value = emp.residential_address_line1 || '';
+                document.getElementById('residential_address_line2').value = emp.residential_address_line2 || '';
+                document.getElementById('residential_city').value = emp.residential_city || '';
+                document.getElementById('residential_province').value = emp.residential_province || '';
+                document.getElementById('residential_postal_code').value = emp.residential_postal_code || '';
+                document.getElementById('postal_address_line1').value = emp.postal_address_line1 || '';
+                document.getElementById('postal_address_line2').value = emp.postal_address_line2 || '';
+                document.getElementById('postal_city').value = emp.postal_city || '';
+                document.getElementById('postal_province').value = emp.postal_province || '';
+                document.getElementById('postal_postal_code').value = emp.postal_postal_code || '';
+                document.getElementById('postal_same_as_residential').checked = emp.postal_same_as_residential == 1;
+
+                toggleBankFields();
+                togglePostalAddress();
+                document.getElementById('employeeModal').style.display = 'block';
+
+            } catch (error) {
+                alert('Error loading employee: ' + error.message);
+            }
+        }
+
+        async function saveEmployee(event) {
+            event.preventDefault();
+
+            const successDiv = document.getElementById('modalSuccess');
+            const errorDiv = document.getElementById('modalError');
+            successDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            const employeeId = document.getElementById('employeeId').value;
+            const isEdit = employeeId !== '';
+
+            const data = {
+                company_id: selectedCompanyId,
+                employee_number: document.getElementById('employee_number').value,
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                id_number: document.getElementById('id_number').value || null,
+                passport_number: document.getElementById('passport_number').value || null,
+                email: document.getElementById('email').value || null,
+                phone: document.getElementById('phone').value || null,
+                date_appointed: document.getElementById('date_appointed').value || null,
+                job_title: document.getElementById('job_title').value || null,
+                position: document.getElementById('position').value || null,
+                department: document.getElementById('department').value || null,
+                payment_method: document.getElementById('payment_method').value,
+                bank_name: document.getElementById('bank_name').value || null,
+                account_holder: document.getElementById('account_holder').value || null,
+                account_number: document.getElementById('account_number').value || null,
+                account_type: document.getElementById('account_type').value || null,
+                branch_code: document.getElementById('branch_code').value || null,
+                residential_address_line1: document.getElementById('residential_address_line1').value || null,
+                residential_address_line2: document.getElementById('residential_address_line2').value || null,
+                residential_city: document.getElementById('residential_city').value || null,
+                residential_province: document.getElementById('residential_province').value || null,
+                residential_postal_code: document.getElementById('residential_postal_code').value || null,
+                postal_address_line1: document.getElementById('postal_address_line1').value || null,
+                postal_address_line2: document.getElementById('postal_address_line2').value || null,
+                postal_city: document.getElementById('postal_city').value || null,
+                postal_province: document.getElementById('postal_province').value || null,
+                postal_postal_code: document.getElementById('postal_postal_code').value || null,
+                postal_same_as_residential: document.getElementById('postal_same_as_residential').checked ? 1 : 0,
+                tax_number: document.getElementById('tax_number').value || null,
+                nationality: document.getElementById('nationality').value || null,
+                gender: document.getElementById('gender').value || null,
+                marital_status: document.getElementById('marital_status').value || null
+            };
+
+            try {
+                const url = isEdit ? `${API_URL}/hr/employees/${employeeId}` : `${API_URL}/hr/employees`;
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    successDiv.textContent = result.message;
+                    successDiv.style.display = 'block';
+                    await loadEmployees();
+                    setTimeout(() => {
+                        closeEmployeeModal();
+                    }, 1500);
+                } else {
+                    errorDiv.textContent = result.error || 'Fout met stoor van werknemer';
+                    errorDiv.style.display = 'block';
+                }
+
+            } catch (error) {
+                errorDiv.textContent = 'Fout: ' + error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        async function parseIDNumber() {
+            const idNumber = document.getElementById('id_number').value;
+
+            if (!idNumber || idNumber.length !== 13) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/hr/parse-id`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id_number: idNumber })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    document.getElementById('date_of_birth').value = result.data.dateOfBirth;
+                    document.getElementById('gender').value = result.data.gender;
+                    if (result.data.isSACitizen) {
+                        document.getElementById('nationality').value = 'South African';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error parsing ID:', error);
+            }
+        }
+
+        function toggleBankFields() {
+            const paymentMethod = document.getElementById('payment_method').value;
+            const bankSection = document.getElementById('bankFieldsSection');
+            const bankFields = bankSection.querySelectorAll('input, select');
+
+            if (paymentMethod === 'EFT') {
+                bankSection.style.display = 'block';
+                bankFields.forEach(field => {
+                    if (field.id !== 'branch_code') {
+                        field.required = true;
+                    }
+                });
+            } else {
+                bankSection.style.display = 'none';
+                bankFields.forEach(field => field.required = false);
+            }
+        }
+
+        function togglePostalAddress() {
+            const isSame = document.getElementById('postal_same_as_residential').checked;
+            const postalSection = document.getElementById('postalAddressSection');
+
+            if (isSame) {
+                postalSection.style.display = 'none';
+                // Copy residential to postal
+                document.getElementById('postal_address_line1').value = document.getElementById('residential_address_line1').value;
+                document.getElementById('postal_address_line2').value = document.getElementById('residential_address_line2').value;
+                document.getElementById('postal_city').value = document.getElementById('residential_city').value;
+                document.getElementById('postal_province').value = document.getElementById('residential_province').value;
+                document.getElementById('postal_postal_code').value = document.getElementById('residential_postal_code').value;
+            } else {
+                postalSection.style.display = 'block';
+            }
+        }
+
+        // ==================== COMPANY MANAGEMENT ====================
+
+        let selectedCompanyId = localStorage.getItem('selectedCompanyId');
+        let companies = [];
+
+        async function loadCompanies() {
+            // Skip loading companies in demo mode
+            if (token === 'demo-token') {
+                console.log('Demo mode - skipping company load');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/companies`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                companies = result.companies || [];
+                displayCompanyList();
+            } catch (error) {
+                console.log('Running without backend - companies not loaded');
+            }
+        }
+
+        function displayCompanyList() {
+            const html = companies.map(company => `
+                <div class="card" style="cursor: pointer; padding: 15px; margin-bottom: 10px; background: white;"
+                     onclick="selectCompany(${company.id}, '${company.company_name}')">
+                    <h3 style="color: #667eea; margin: 0 0 5px 0;">${company.company_name}</h3>
+                    <div style="font-size: 14px; color: #666;">
+                        ${company.registration_number ? 'Reg: ' + company.registration_number : ''}
+                        ${company.vat_number ? ' | VAT: ' + company.vat_number : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('companyList').innerHTML = html || '<p style="text-align: center; color: #666;">Geen maatskappye gevind nie. Voeg een by!</p>';
+        }
+
+        function selectCompany(companyId, companyName) {
+            selectedCompanyId = companyId;
+            localStorage.setItem('selectedCompanyId', companyId);
+            localStorage.setItem('selectedCompanyName', companyName);
+
+            document.getElementById('selectedCompanyName').textContent = companyName;
+            document.getElementById('companySelection').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+
+            // Don't load employees automatically - let user choose what to do
+        }
+
+        function changeCompany() {
+            // Hide all sections
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('employeeListSection').style.display = 'none';
+            document.getElementById('companyDetailsSection').style.display = 'none';
+            document.getElementById('payrollSection').style.display = 'none';
+
+            document.getElementById('companySelection').style.display = 'block';
+            loadCompanies();
+        }
+
+        function backToDashboard() {
+            // Hide all sections
+            document.getElementById('employeeListSection').style.display = 'none';
+            document.getElementById('companyDetailsSection').style.display = 'none';
+            document.getElementById('payrollSection').style.display = 'none';
+
+            // Show main dashboard
+            document.getElementById('dashboard').style.display = 'block';
+        }
+
+        function showEmployeeList() {
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('employeeListSection').style.display = 'block';
+
+            const companyName = localStorage.getItem('selectedCompanyName') || '-';
+            document.getElementById('empListCompanyName').textContent = companyName;
+
+            loadEmployees();
+        }
+
+        async function showCompanyDetails() {
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('companyDetailsSection').style.display = 'block';
+
+            const companyName = localStorage.getItem('selectedCompanyName') || '-';
+            document.getElementById('compDetCompanyName').textContent = companyName;
+
+            await loadCompanyDetailsForm();
+        }
+
+        function showPayrollManagement() {
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('payrollSection').style.display = 'block';
+
+            const companyName = localStorage.getItem('selectedCompanyName') || '-';
+            document.getElementById('payrollCompanyName').textContent = companyName;
+        }
+
+        function showPayrollItems() {
+            window.location.href = 'payroll-items.html';
+        }
+
+        function showPayruns() {
+            window.location.href = 'payruns.html';
+        }
+
+        async function loadCompanyDetailsForm() {
+            try {
+                const response = await fetch(`${API_URL}/companies/${selectedCompanyId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Fout met laai van maatskappy details');
+                }
+
+                const company = result.company;
+
+                const formHTML = `
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Maatskappy Naam</label>
+                            <input type="text" id="compDet_company_name" value="${company.company_name || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Handelsnaam</label>
+                            <input type="text" id="compDet_trading_name" value="${company.trading_name || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Registrasie Nommer</label>
+                            <input type="text" id="compDet_registration_number" value="${company.registration_number || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>BTW Nommer</label>
+                            <input type="text" id="compDet_vat_number" value="${company.vat_number || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Maatskappy Tipe</label>
+                            <select id="compDet_company_type">
+                                <option value="">Kies...</option>
+                                <option value="Pty Ltd" ${company.company_type === 'Pty Ltd' ? 'selected' : ''}>Pty Ltd</option>
+                                <option value="CC" ${company.company_type === 'CC' ? 'selected' : ''}>CC</option>
+                                <option value="Sole Prop" ${company.company_type === 'Sole Prop' ? 'selected' : ''}>Sole Proprietor</option>
+                                <option value="Trust" ${company.company_type === 'Trust' ? 'selected' : ''}>Trust</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Belasting Nommer</label>
+                            <input type="text" id="compDet_tax_number" value="${company.tax_number || ''}">
+                        </div>
+                    </div>
+
+                    <div class="section-title">📞 Kontak Inligting</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="compDet_email" value="${company.email || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Telefoon</label>
+                            <input type="tel" id="compDet_phone" value="${company.phone || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Faks</label>
+                            <input type="tel" id="compDet_fax" value="${company.fax || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Webwerf</label>
+                            <input type="url" id="compDet_website" value="${company.website || ''}">
+                        </div>
+                    </div>
+
+                    <div class="section-title">🏢 Fisiese Adres</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Adreslyn 1</label>
+                            <input type="text" id="compDet_physical_address_line1" value="${company.physical_address_line1 || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Adreslyn 2</label>
+                            <input type="text" id="compDet_physical_address_line2" value="${company.physical_address_line2 || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Stad</label>
+                            <input type="text" id="compDet_physical_city" value="${company.physical_city || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Provinsie</label>
+                            <input type="text" id="compDet_physical_province" value="${company.physical_province || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Poskode</label>
+                            <input type="text" id="compDet_physical_postal_code" value="${company.physical_postal_code || ''}">
+                        </div>
+                    </div>
+
+                    <div class="section-title">📮 Pos Adres</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Adreslyn 1</label>
+                            <input type="text" id="compDet_postal_address_line1" value="${company.postal_address_line1 || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Adreslyn 2</label>
+                            <input type="text" id="compDet_postal_address_line2" value="${company.postal_address_line2 || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Stad</label>
+                            <input type="text" id="compDet_postal_city" value="${company.postal_city || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Provinsie</label>
+                            <input type="text" id="compDet_postal_province" value="${company.postal_province || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Poskode</label>
+                            <input type="text" id="compDet_postal_postal_code" value="${company.postal_postal_code || ''}">
+                        </div>
+                    </div>
+
+                    <div class="section-title">💳 Bank Details</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Bank Naam</label>
+                            <input type="text" id="compDet_bank_name" value="${company.bank_name || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Rekening Nommer</label>
+                            <input type="text" id="compDet_account_number" value="${company.bank_account_number || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Rekening Tipe</label>
+                            <select id="compDet_account_type">
+                                <option value="">Kies...</option>
+                                <option value="Cheque" ${company.bank_account_type === 'Cheque' ? 'selected' : ''}>Cheque</option>
+                                <option value="Savings" ${company.bank_account_type === 'Savings' ? 'selected' : ''}>Savings</option>
+                                <option value="Current" ${company.bank_account_type === 'Current' ? 'selected' : ''}>Current</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tak Kode</label>
+                            <input type="text" id="compDet_branch_code" value="${company.bank_branch_code || ''}">
+                        </div>
+                    </div>
+
+                    <div class="section-title">👤 Kontak Persoon</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Naam</label>
+                            <input type="text" id="compDet_contact_person_name" value="${company.contact_person || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="compDet_contact_person_email" value="${company.contact_email || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Telefoon</label>
+                            <input type="tel" id="compDet_contact_person_phone" value="${company.contact_phone || ''}">
+                        </div>
+                    </div>
+
+                    <div class="section-title">📊 PAYE & UIF Details</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>PAYE Nommer</label>
+                            <input type="text" id="compDet_paye_number" value="${company.paye_number || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>UIF Nommer</label>
+                            <input type="text" id="compDet_uif_number" value="${company.uif_number || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>SDL Nommer</label>
+                            <input type="text" id="compDet_sdl_number" value="${company.sdl_number || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Finansiële Jaar Einde</label>
+                            <input type="date" id="compDet_financial_year_end" value="${company.financial_year_end || ''}">
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('companyDetailsForm').innerHTML = formHTML;
+
+            } catch (error) {
+                alert('Fout met laai van maatskappy details: ' + error.message);
+            }
+        }
+
+        async function saveCompanyDetails() {
+            try {
+                const updatedData = {
+                    company_name: document.getElementById('compDet_company_name').value,
+                    trading_name: document.getElementById('compDet_trading_name').value,
+                    registration_number: document.getElementById('compDet_registration_number').value,
+                    vat_number: document.getElementById('compDet_vat_number').value,
+                    company_type: document.getElementById('compDet_company_type').value,
+                    tax_number: document.getElementById('compDet_tax_number').value,
+                    email: document.getElementById('compDet_email').value,
+                    phone: document.getElementById('compDet_phone').value,
+                    fax: document.getElementById('compDet_fax').value,
+                    website: document.getElementById('compDet_website').value,
+                    physical_address_line1: document.getElementById('compDet_physical_address_line1').value,
+                    physical_address_line2: document.getElementById('compDet_physical_address_line2').value,
+                    physical_city: document.getElementById('compDet_physical_city').value,
+                    physical_province: document.getElementById('compDet_physical_province').value,
+                    physical_postal_code: document.getElementById('compDet_physical_postal_code').value,
+                    postal_address_line1: document.getElementById('compDet_postal_address_line1').value,
+                    postal_address_line2: document.getElementById('compDet_postal_address_line2').value,
+                    postal_city: document.getElementById('compDet_postal_city').value,
+                    postal_province: document.getElementById('compDet_postal_province').value,
+                    postal_postal_code: document.getElementById('compDet_postal_postal_code').value,
+                    bank_name: document.getElementById('compDet_bank_name').value,
+                    account_number: document.getElementById('compDet_account_number').value,
+                    account_type: document.getElementById('compDet_account_type').value,
+                    branch_code: document.getElementById('compDet_branch_code').value,
+                    contact_person_name: document.getElementById('compDet_contact_person_name').value,
+                    contact_person_email: document.getElementById('compDet_contact_person_email').value,
+                    contact_person_phone: document.getElementById('compDet_contact_person_phone').value,
+                    paye_number: document.getElementById('compDet_paye_number').value,
+                    uif_number: document.getElementById('compDet_uif_number').value,
+                    sdl_number: document.getElementById('compDet_sdl_number').value,
+                    financial_year_end: document.getElementById('compDet_financial_year_end').value
+                };
+
+                const response = await fetch(`${API_URL}/companies/${selectedCompanyId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedData)
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Fout met stoor van maatskappy details');
+                }
+
+                alert('✅ Maatskappy details suksesvol gestoor!');
+
+                // Update the company name if it changed
+                if (updatedData.company_name) {
+                    localStorage.setItem('selectedCompanyName', updatedData.company_name);
+                    document.getElementById('selectedCompanyName').textContent = updatedData.company_name;
+                    document.getElementById('compDetCompanyName').textContent = updatedData.company_name;
+                }
+
+            } catch (error) {
+                alert('Fout met stoor: ' + error.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('selectedCompanyId');
+            localStorage.removeItem('selectedCompanyName');
+            location.reload();
+        }
+
+        function openAddCompanyModal() {
+            document.getElementById('companyName').value = '';
+            document.getElementById('companyRegNumber').value = '';
+            document.getElementById('companyVatNumber').value = '';
+            document.getElementById('companyEmail').value = '';
+            document.getElementById('companyPhone').value = '';
+            document.getElementById('addCompanyModal').style.display = 'block';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        async function saveCompany() {
+            const companyData = {
+                company_name: document.getElementById('companyName').value,
+                registration_number: document.getElementById('companyRegNumber').value,
+                vat_number: document.getElementById('companyVatNumber').value,
+                email: document.getElementById('companyEmail').value,
+                phone: document.getElementById('companyPhone').value
+            };
+
+            if (!companyData.company_name) {
+                alert('Maatskappy naam is verplig');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/companies`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(companyData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    alert('Maatskappy suksesvol bygevoeg!');
+                    closeAddCompanyModal();
+                    await loadCompanies();
+                } else {
+                    alert('Fout: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Fout met stoor: ' + error.message);
+            }
+        }
+
+        // Duplicate login function removed - using the main one with demo support
+
+        // Check for hash navigation (e.g., #employees from employee-detail.html)
+        window.addEventListener('load', function() {
+            const hash = window.location.hash;
+            const savedToken = localStorage.getItem('token');
+            const savedCompanyId = localStorage.getItem('selectedCompanyId');
+            const savedCompanyName = localStorage.getItem('selectedCompanyName');
+
+            // If user has a demo token or valid token, restore the session
+            if (savedToken === 'demo-token') {
+                token = savedToken;
+                currentUser = { fullName: 'Demo User', username: 'demo' };
+                document.getElementById('userName').textContent = currentUser.fullName;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('companySelection').style.display = 'none';
+                document.getElementById('selectedCompanyName').textContent = 'Demo Company';
+
+                // If hash is #employees, go directly to employee list
+                if (hash === '#employees') {
+                    document.getElementById('dashboard').style.display = 'none';
+                    showEmployeeList();
+                } else {
+                    document.getElementById('dashboard').style.display = 'block';
+                }
+
+                loadBanks();
+                loadEmployees();
+            } else if (savedToken && savedCompanyId && savedCompanyName) {
+                // Try to restore previous session (will fail gracefully if server is down)
+                token = savedToken;
+                selectedCompanyId = parseInt(savedCompanyId);
+
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('selectedCompanyName').textContent = savedCompanyName;
+
+                // If hash is #employees, go directly to employee list
+                if (hash === '#employees') {
+                    document.getElementById('dashboard').style.display = 'none';
+                    showEmployeeList();
+                } else {
+                    document.getElementById('dashboard').style.display = 'block';
+                }
+            }
+        });
+    </script>
+
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Voeg Nuwe Maatskappy By</h2>
+                <button class="close-btn" onclick="closeAddCompanyModal()">Sluit</button>
+            </div>
+
+            <div class="form-group">
+                <label>Maatskappy Naam *</label>
+                <input type="text" id="companyName" required>
+            </div>
+
+            <div class="form-group">
+                <label>Registrasie Nommer</label>
+                <input type="text" id="companyRegNumber">
+            </div>
+
+            <div class="form-group">
+                <label>BTW Nommer</label>
+                <input type="text" id="companyVatNumber">
+            </div>
+
+            <div class="form-group">
+                <label>E-pos</label>
+                <input type="email" id="companyEmail">
+            </div>
+
+            <div class="form-group">
+                <label>Telefoon</label>
+                <input type="tel" id="companyPhone">
+            </div>
+
+            <button class="btn btn-success" style="width: 100%;" onclick="saveCompany()">Stoor Maatskappy</button>
+        </div>
+    </div>
+
+</body>
+</html>
