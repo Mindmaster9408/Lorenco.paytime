@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(tasklist:*)",
+      "Bash(powershell:*)",
+      "Bash(curl:*)",
+      "Bash(python -m http.server:*)"
+    ]
+  }
+}

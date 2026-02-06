@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="af">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payroll System - Loonstelsel</title>
+    <title>Payroll System</title>
     <style>
         * {
             margin: 0;
@@ -11,7 +11,7 @@
             box-sizing: border-box;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -38,6 +38,24 @@
             font-size: 1.1rem;
             margin-bottom: 3rem;
         }
+        .loading {
+            font-size: 1rem;
+            color: #999;
+            margin-top: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         .btn {
             display: block;
             width: 100%;
@@ -57,42 +75,41 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
         }
-        .btn-secondary {
-            background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
-        }
         .version {
             margin-top: 2rem;
             color: #999;
             font-size: 0.9rem;
-        }
-        .info {
-            background: #f0f4ff;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            font-size: 0.9rem;
-            color: #555;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>💰 Payroll System</h1>
-        <p class="subtitle">Loonstelsel - Werknemers Bestuur</p>
-
-        <div class="info">
-            <strong>Demo Login:</strong><br>
-            Username: demo<br>
-            Password: demo123
-        </div>
-
-        <a href="employee-management.html" class="btn">👥 Employee Management<br><small style="font-size: 0.85rem; opacity: 0.9;">Werknemers Bestuur</small></a>
-
-        <a href="payruns.html" class="btn btn-secondary">💵 Pay Runs<br><small style="font-size: 0.85rem; opacity: 0.9;">Loonuitbetalings</small></a>
-
-        <a href="payroll-items.html" class="btn btn-secondary">📋 Payroll Items<br><small style="font-size: 0.85rem; opacity: 0.9;">Loon Items</small></a>
-
-        <div class="version">Version 1.0 - Standalone Payroll App</div>
+        <p class="subtitle">Employee & Payroll Management</p>
+        <div class="spinner"></div>
+        <div class="loading">Redirecting to login...</div>
     </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        // Check if user is already logged in
+        window.addEventListener('load', function() {
+            const session = AUTH.getSession();
+            
+            if (session) {
+                // User is logged in, redirect based on role
+                if (session.role === 'super_admin') {
+                    window.location.href = 'super-admin-dashboard.html';
+                } else if (session.company_id) {
+                    window.location.href = 'company-dashboard.html';
+                } else {
+                    window.location.href = 'company-selection.html';
+                }
+            } else {
+                // Not logged in, redirect to login
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
 </body>
 </html>

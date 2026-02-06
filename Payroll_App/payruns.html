@@ -1,887 +1,1546 @@
 <!DOCTYPE html>
-<html lang="af">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loonruns - Payroll System</title>
+    <title>Pay Runs</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
+        .wrapper { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        /* SIDEBAR */
+        .sidebar {
+            width: 300px; background: white; border-radius: 15px;
+            padding: 25px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            height: fit-content; position: sticky; top: 20px;
         }
-
-        .header {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 2px solid #eee; }
+        .sidebar-title { color: #667eea; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+        .sidebar-section { margin-top: 20px; }
+        .sidebar-section-title {
+            padding: 10px 20px; color: #999; font-size: 0.75rem;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
         }
-
-        .header h1 {
-            color: #667eea;
-            font-size: 32px;
+        .sidebar-link {
+            display: block; padding: 12px 20px; color: #666; text-decoration: none;
+            transition: all 0.2s; border-left: 3px solid transparent; font-weight: 500;
         }
-
-        .header-actions {
-            display: flex;
-            gap: 15px;
-            align-items: center;
+        .sidebar-link:hover { background: #f8f9fa; color: #667eea; border-left-color: #667eea; }
+        .sidebar-link.active { background: #f0f4ff; color: #667eea; border-left-color: #667eea; font-weight: 600; }
+        .company-carousel { margin-top: 15px; padding: 15px 20px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+        .carousel-title { font-size: 0.85rem; font-weight: 600; color: #999; margin-bottom: 10px; text-transform: uppercase; }
+        .carousel-companies { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+        .carousel-company {
+            background: #f8f9fa; padding: 10px 12px; border-radius: 6px; font-size: 0.85rem;
+            color: #333; cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
+        .carousel-company:hover { background: #eee; border-color: #667eea; color: #667eea; }
+        .sidebar-actions { padding: 15px 20px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .btn-sidebar { padding: 10px 15px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; text-align: center; }
+        .btn-switch { background: #667eea; color: white; }
+        .btn-switch:hover { background: #5568d3; }
+        .btn-logout { background: #eee; color: #333; }
+        .btn-logout:hover { background: #ddd; }
 
-        .company-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: 600;
+        /* MAIN CONTENT */
+        .main-content { flex: 1; background: white; border-radius: 15px; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-header h1 { color: #333; font-size: 1.8rem; }
+        .company-badge { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+
+        /* TOP TABS */
+        .top-tabs { display: flex; gap: 0; margin-bottom: 30px; border-bottom: 2px solid #eee; }
+        .top-tab {
+            padding: 15px 30px; background: none; border: none; cursor: pointer;
+            font-size: 1rem; font-weight: 600; color: #999; position: relative; transition: all 0.2s;
         }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
+        .top-tab:hover { color: #667eea; }
+        .top-tab.active { color: #667eea; }
+        .top-tab.active::after {
+            content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+            height: 3px; background: #667eea; border-radius: 3px 3px 0 0;
         }
+        .tab-view { display: none; }
+        .tab-view.active { display: block; }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        /* EMPLOYEE CARDS */
+        .employee-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .employee-card {
+            background: #f8f9fa; border-radius: 12px; padding: 20px; cursor: pointer;
+            transition: all 0.3s; border: 2px solid transparent;
         }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        .employee-card:hover { border-color: #667eea; transform: translateY(-3px); box-shadow: 0 8px 25px rgba(102,126,234,0.15); }
+        .emp-name { font-size: 1.1rem; font-weight: 700; color: #333; margin-bottom: 5px; }
+        .emp-number { font-size: 0.85rem; color: #667eea; font-weight: 600; margin-bottom: 10px; }
+        .emp-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .emp-detail-label { font-size: 0.75rem; color: #999; text-transform: uppercase; }
+        .emp-detail-value { font-size: 0.85rem; color: #555; font-weight: 500; }
+        .emp-payment-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: 600; margin-top: 10px;
         }
+        .badge-eft { background: #e3f2fd; color: #1976d2; }
+        .badge-cash { background: #e8f5e9; color: #388e3c; }
+        .badge-cheque { background: #fff3e0; color: #f57c00; }
+        .badge-finalized { background: #d4edda; color: #155724; }
+        .badge-draft { background: #fff3cd; color: #856404; }
+        .emp-badges { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
 
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
+        /* PAYRUN SECTIONS */
+        .payrun-section { margin-bottom: 30px; }
+        .section-header {
+            background: linear-gradient(135deg, #5a67d8, #6b7fda);
+            color: white; padding: 15px 20px; border-radius: 10px 10px 0 0;
+            font-size: 1.1rem; font-weight: 600;
         }
-
-        .btn-secondary:hover {
-            background: #5a6268;
+        .payrun-list { background: white; border-radius: 0 0 10px 10px; overflow: hidden; }
+        .payrun-item {
+            border: 1px solid #e0e0e0; border-top: none;
+            transition: all 0.2s;
         }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
-        .btn-info {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .btn-info:hover {
-            background: #138496;
-        }
-
-        .content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        .payruns-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .payrun-card {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .payrun-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border-color: #667eea;
-        }
-
+        .payrun-item:first-child { border-top: 1px solid #e0e0e0; }
         .payrun-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
+            padding: 20px 25px; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center;
+            background: #f8f9fa; transition: background 0.2s;
         }
-
-        .payrun-period {
-            font-size: 24px;
-            font-weight: 700;
-            color: #667eea;
+        .payrun-header:hover { background: #f0f2f5; }
+        .payrun-title { font-size: 1rem; font-weight: 600; color: #333; }
+        .payrun-subtitle { font-size: 0.85rem; color: #666; margin-top: 3px; }
+        .payrun-right { display: flex; align-items: center; gap: 20px; }
+        .payslips-stats {
+            display: flex; gap: 15px; align-items: center;
+            background: white; padding: 8px 15px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-draft {
-            background: #ffc107;
-            color: #000;
-        }
-
-        .status-finalized {
-            background: #28a745;
-            color: white;
-        }
-
-        .status-paid {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .payrun-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .stat-item {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 8px;
-        }
-
+        .stat-item { text-align: center; }
         .stat-label {
-            font-size: 12px;
-            color: #6c757d;
-            margin-bottom: 5px;
+            font-size: 0.7rem; color: #999; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 2px;
         }
-
         .stat-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #333;
+            font-size: 1.1rem; font-weight: 700; color: #333;
         }
-
-        .payrun-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
+        .stat-divider { width: 1px; height: 30px; background: #e0e0e0; }
+        .expand-icon { font-size: 1.2rem; color: #667eea; transition: transform 0.3s; }
+        .payrun-item.expanded .expand-icon { transform: rotate(180deg); }
+        .payrun-content {
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;
+            border-top: 1px solid #e0e0e0;
         }
-
-        .payrun-actions button {
-            flex: 1;
-            padding: 8px;
-            font-size: 14px;
+        .payrun-item.expanded .payrun-content { max-height: 1000px; }
+        .payrun-body { padding: 25px; background: white; }
+        .payment-breakdown { margin-bottom: 20px; }
+        .breakdown-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 15px; background: #f8f9fa; border-radius: 6px;
+            cursor: pointer; transition: background 0.2s;
         }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+        .breakdown-header:hover { background: #eef0f2; }
+        .breakdown-title { font-size: 0.9rem; font-weight: 600; color: #555; }
+        .breakdown-total { font-size: 1rem; font-weight: 700; color: #333; }
+        .breakdown-content {
+            margin-top: 10px; padding: 15px; background: #fafbfc;
+            border-radius: 6px; display: none;
         }
-
-        .modal.active {
-            display: flex;
+        .breakdown-content.show { display: block; }
+        .breakdown-table { width: 100%; font-size: 0.85rem; }
+        .breakdown-table td { padding: 8px 0; }
+        .breakdown-table .label { color: #666; }
+        .breakdown-table .value { text-align: right; font-weight: 600; color: #333; }
+        .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .action-link {
+            color: #667eea; font-size: 0.85rem; text-decoration: none;
+            font-weight: 600; padding: 6px 12px; border-radius: 5px;
+            transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px;
         }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 900px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
+        .action-link:hover { background: #f0f4ff; }
+        .show-more-btn {
+            padding: 12px; text-align: center; background: #f8f9fa;
+            color: #667eea; font-weight: 600; cursor: pointer;
+            border-bottom: 1px solid #e0e0e0; transition: background 0.2s;
         }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
+        .show-more-btn:hover { background: #f0f2f5; }
+        .historical-group { margin-bottom: 25px; }
+        .historical-group-title {
+            font-size: 1.1rem; font-weight: 700; color: #333;
+            margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #e0e0e0;
         }
-
-        .modal-header h2 {
-            color: #667eea;
-            font-size: 28px;
-        }
-
-        .close-btn {
-            font-size: 30px;
-            cursor: pointer;
-            color: #6c757d;
-            background: none;
-            border: none;
-            padding: 0;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .close-btn:hover {
-            color: #dc3545;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .summary-section {
-            margin-top: 30px;
-        }
-
-        .summary-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px 10px 0 0;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .summary-content {
-            border: 2px solid #667eea;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            padding: 20px;
-        }
-
-        .payment-method-section {
-            margin-bottom: 30px;
-        }
-
-        .payment-method-section:last-child {
-            margin-bottom: 0;
-        }
-
-        .payment-method-header {
-            background: #f8f9fa;
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .payment-method-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #333;
-        }
-
-        .payment-method-total {
-            font-size: 20px;
-            font-weight: 700;
-            color: #28a745;
-        }
-
-        .employee-list {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .employee-item {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .employee-item:last-child {
-            border-bottom: none;
-        }
-
-        .employee-item:hover {
-            background: #f8f9fa;
-        }
-
-        .employee-name {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .employee-number {
-            color: #6c757d;
-            font-size: 14px;
+        .frequency-tag {
+            font-size: 0.75rem; color: #667eea; font-weight: 600;
+            background: #f0f4ff; padding: 3px 8px; border-radius: 4px;
             margin-left: 10px;
         }
 
-        .employee-net {
-            font-size: 16px;
-            font-weight: 700;
-            color: #28a745;
+        /* BUTTONS */
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 6px; font-size: 14px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-success { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #dc3545, #c82333); color: white; }
+        .btn-info { background: linear-gradient(135deg, #17a2b8, #138496); color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
 
-        .overall-totals {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-icon { font-size: 3rem; margin-bottom: 15px; }
+        .empty-text { font-size: 1.1rem; margin-bottom: 10px; }
+        .empty-sub { font-size: 0.9rem; color: #bbb; }
 
-        .overall-totals h3 {
-            margin-bottom: 15px;
-            font-size: 22px;
+        /* MODAL */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;
         }
+        .modal.show { display: flex; align-items: flex-start; justify-content: center; padding: 50px 20px; }
+        .modal-content { background: white; max-width: 700px; width: 100%; border-radius: 15px; padding: 30px; }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #667eea;
+        }
+        .modal-header h3 { color: #667eea; margin: 0; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; }
 
-        .totals-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+        /* SUMMARY */
+        .summary-section { margin-bottom: 20px; }
+        .summary-section h4 { color: #667eea; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .summary-table { width: 100%; border-collapse: collapse; }
+        .summary-table th, .summary-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .summary-table th { background: #f8f9fa; font-weight: 600; color: #333; }
+        .summary-totals {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9); padding: 20px;
+            border-radius: 10px; margin-top: 20px;
         }
+        .summary-totals h4 { color: #2e7d32; margin-bottom: 15px; }
+        .total-row-item { display: flex; justify-content: space-between; padding: 5px 0; }
+        .total-row-item.net { font-size: 1.2rem; font-weight: 700; color: #1b5e20; border-top: 2px solid #4caf50; padding-top: 10px; margin-top: 10px; }
 
-        .total-item {
-            background: rgba(255,255,255,0.2);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
+        /* RETURNS SECTION */
+        .returns-section {
+            margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee;
         }
+        .returns-title {
+            font-size: 0.85rem; font-weight: 700; color: #999; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 12px;
+        }
+        .returns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .return-card {
+            background: #f8f9fa; border-radius: 10px; padding: 18px;
+            border: 1px solid #e0e0e0; transition: all 0.2s;
+        }
+        .return-card:hover { border-color: #667eea; box-shadow: 0 2px 8px rgba(102,126,234,0.1); }
+        .return-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .return-card-title { font-weight: 700; color: #333; font-size: 0.95rem; }
+        .return-status {
+            padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600;
+        }
+        .return-status-pending { background: #fff3cd; color: #856404; }
+        .return-status-submitted { background: #d4edda; color: #155724; }
+        .return-card-desc { font-size: 0.8rem; color: #888; margin-bottom: 12px; }
+        .return-card-amount { font-size: 1.1rem; font-weight: 700; color: #333; margin-bottom: 12px; }
+        .return-card-actions { display: flex; gap: 8px; }
+        .btn-outline {
+            padding: 6px 14px; border: 2px solid #667eea; border-radius: 6px;
+            background: white; color: #667eea; font-weight: 600; font-size: 0.8rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-outline:hover { background: #667eea; color: white; }
+        .btn-submit-return {
+            padding: 6px 14px; border: none; border-radius: 6px;
+            background: linear-gradient(135deg, #28a745, #20c997); color: white;
+            font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-submit-return:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(40,167,69,0.3); }
 
-        .total-label {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 5px;
+        /* EMP201/UIF PREVIEW TABLE */
+        .preview-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .preview-table th, .preview-table td {
+            padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem;
         }
+        .preview-table th { background: #f8f9fa; font-weight: 600; color: #555; }
+        .preview-table td.amount { text-align: right; font-weight: 600; }
+        .preview-table tr.total-row { background: #f0f4ff; font-weight: 700; }
+        .preview-table tr.total-row td { border-top: 2px solid #667eea; color: #333; }
+        .preview-header-info {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+        }
+        .preview-info-item { }
+        .preview-info-label { font-size: 0.75rem; color: #999; text-transform: uppercase; }
+        .preview-info-value { font-size: 0.9rem; font-weight: 600; color: #333; }
 
-        .total-value {
-            font-size: 20px;
-            font-weight: 700;
+        .search-bar {
+            width: 100%; padding: 12px 15px; border: 2px solid #eee; border-radius: 8px;
+            font-size: 0.95rem; margin-bottom: 20px; transition: border-color 0.2s;
         }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-        }
-
-        .empty-state-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            opacity: 0.3;
-        }
-
-        .empty-state-text {
-            font-size: 20px;
-            margin-bottom: 30px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #667eea;
-            font-size: 18px;
-        }
-
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #f5c6cb;
-        }
+        .search-bar:focus { outline: none; border-color: #667eea; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div>
-                <h1>Loonruns</h1>
-                <p id="companyName" class="company-badge"></p>
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Menu</div>
             </div>
-            <div class="header-actions">
-                <button class="btn btn-primary" onclick="showCreateModal()">+ Nuwe Loonrun</button>
-                <button class="btn btn-secondary" onclick="goBack()">Terug</button>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Navigation</div>
+                <a href="company-dashboard.html" class="sidebar-link">📊 Dashboard</a>
+                <a href="employee-management.html" class="sidebar-link">👥 Employees</a>
+                <a href="payruns.html" class="sidebar-link active">💵 Pay Runs</a>
+                <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
+            </div>
+            <div class="company-carousel">
+                <div class="carousel-title">Switch Company</div>
+                <div class="carousel-container">
+                    <div class="carousel-companies" id="companies-carousel"></div>
+                </div>
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn-sidebar btn-switch" onclick="window.location.href='company-selection.html'">← Return to Dashboard</button>
+                <button class="btn-sidebar btn-logout" onclick="handleLogout()">🚪 Logout</button>
             </div>
         </div>
 
-        <div class="content">
-            <div id="errorMessage"></div>
-            <div id="payrunsContainer">
-                <div class="loading">Laai loonruns...</div>
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>💵 Pay Runs</h1>
+                    <span class="company-badge" id="company-name-badge"></span>
+                </div>
+            </div>
+
+            <div class="top-tabs">
+                <button class="top-tab active" onclick="switchTopTab('payslips')">📄 Payslips</button>
+                <button class="top-tab" onclick="switchTopTab('payruns')">💰 Payroll Runs</button>
+            </div>
+
+            <!-- PAYSLIPS TAB -->
+            <div id="payslips-view" class="tab-view active">
+                <input type="text" class="search-bar" placeholder="Search employees by name, number, or department..." oninput="filterEmployees(this.value)">
+                <div class="employee-grid" id="employee-grid"></div>
+            </div>
+
+            <!-- PAYROLL RUNS TAB -->
+            <div id="payruns-view" class="tab-view">
+                <!-- Pending Pay Runs -->
+                <div class="payrun-section">
+                    <div class="section-header">Pending Pay Runs</div>
+                    <div class="payrun-list" id="pending-payruns"></div>
+                </div>
+
+                <!-- Historical Pay Runs -->
+                <div id="historical-payruns"></div>
             </div>
         </div>
     </div>
 
-    <!-- Create Payrun Modal -->
-    <div id="createModal" class="modal">
-        <div class="modal-content">
+    <!-- CREATE PAYRUN MODAL -->
+    <div id="createPayrunModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
-                <h2>Skep Nuwe Loonrun</h2>
-                <button class="close-btn" onclick="closeCreateModal()">&times;</button>
+                <h3>Create Pay Run</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('createPayrunModal')">Close</button>
             </div>
             <form onsubmit="createPayrun(event)">
                 <div class="form-group">
-                    <label>Loonperiode *</label>
-                    <input type="month" id="payPeriod" required>
+                    <label>Pay Period</label>
+                    <input type="month" id="payrun-period" required>
                 </div>
                 <div class="form-group">
-                    <label>Notas</label>
-                    <textarea id="notes" rows="4" placeholder="Opsionele notas vir hierdie loonrun..."></textarea>
+                    <label>Notes (optional)</label>
+                    <textarea id="payrun-notes" rows="3" placeholder="Add any notes for this pay run..."></textarea>
                 </div>
-                <div style="display: flex; gap: 15px; justify-content: flex-end;">
-                    <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Kanselleer</button>
-                    <button type="submit" class="btn btn-primary">Skep Loonrun</button>
-                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%;">Create Pay Run</button>
             </form>
         </div>
     </div>
 
-    <!-- Payrun Summary Modal -->
+    <!-- SUMMARY MODAL -->
     <div id="summaryModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
-                <h2 id="summaryTitle">Loonrun Opsomming</h2>
-                <button class="close-btn" onclick="closeSummaryModal()">&times;</button>
+                <h3>Pay Run Summary</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('summaryModal')">Close</button>
             </div>
-            <div id="summaryContent"></div>
+            <div id="summary-content"></div>
         </div>
     </div>
 
+    <!-- EMP201 PREVIEW MODAL -->
+    <div id="emp201Modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>📋 EMP201 - Monthly Employer Declaration</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('emp201Modal')">Close</button>
+            </div>
+            <div id="emp201-content"></div>
+        </div>
+    </div>
+
+    <!-- UIF RETURN PREVIEW MODAL -->
+    <div id="uifModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>📋 UIF Monthly Declaration</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('uifModal')">Close</button>
+            </div>
+            <div id="uif-content"></div>
+        </div>
+    </div>
+
+    <!-- EMP501 PREVIEW MODAL -->
+    <div id="emp501Modal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>📋 EMP501 - Employer Reconciliation Declaration</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('emp501Modal')">Close</button>
+            </div>
+            <div id="emp501-content"></div>
+        </div>
+    </div>
+
+    <!-- WCF PREVIEW MODAL -->
+    <div id="wcfModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>📋 WCF Return - Workmen's Compensation Fund</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('wcfModal')">Close</button>
+            </div>
+            <div id="wcf-content"></div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
     <script>
-        let token = localStorage.getItem('token');
-        let selectedCompanyId = localStorage.getItem('selectedCompanyId');
-        let selectedCompanyName = localStorage.getItem('selectedCompanyName');
+        let currentCompanyId = null;
+        let employees = [];
         let payruns = [];
 
-        // Check authentication
-        if (!token || !selectedCompanyId) {
-            window.location.href = 'employee-management.html';
+        // ========== INIT ==========
+        window.addEventListener('load', function() {
+            if (!AUTH.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            const session = AUTH.getSession();
+            currentCompanyId = session.company_id;
+            const company = AUTH.getCompanyById(currentCompanyId);
+            document.getElementById('company-name-badge').textContent = company ? company.name : 'Unknown Company';
+            loadCompaniesCarousel();
+            loadEmployees();
+            loadPayruns();
+        });
+
+        // ========== SIDEBAR ==========
+        function loadCompaniesCarousel() {
+            const session = AUTH.getSession();
+            const user = { role: session.role, company_id: session.company_id };
+            const companies = AUTH.getCompaniesForUser(user);
+            const carousel = document.getElementById('companies-carousel');
+            carousel.innerHTML = '';
+            companies.forEach(company => {
+                const div = document.createElement('div');
+                div.className = 'carousel-company';
+                div.textContent = company.name;
+                if (company.id === session.company_id) {
+                    div.style.background = '#667eea';
+                    div.style.color = 'white';
+                    div.style.fontWeight = '600';
+                }
+                div.onclick = () => switchToCompany(company.id);
+                carousel.appendChild(div);
+            });
         }
 
-        document.getElementById('companyName').textContent = selectedCompanyName;
+        function switchToCompany(companyId) {
+            const session = AUTH.getSession();
+            session.company_id = companyId;
+            localStorage.setItem('session', JSON.stringify(session));
+            window.location.reload();
+        }
 
-        // Load payruns on page load
-        loadPayruns();
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                AUTH.logout();
+            }
+        }
 
-        async function loadPayruns() {
-            try {
-                const response = await fetch(`http://localhost:3000/api/payruns/runs?company_id=${selectedCompanyId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+        // ========== TOP TABS ==========
+        function switchTopTab(tab) {
+            document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + '-view').classList.add('active');
+        }
+
+        // ========== PAYSLIPS TAB ==========
+        function loadEmployees() {
+            const stored = localStorage.getItem('employees_' + currentCompanyId);
+            employees = stored ? JSON.parse(stored) : [];
+            displayEmployees(employees);
+        }
+
+        function displayEmployees(list) {
+            const grid = document.getElementById('employee-grid');
+            list = list || employees;
+            if (list.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><div class="empty-icon">👥</div><div class="empty-text">No employees found</div><div class="empty-sub">Add employees from the Employee Management page first.</div></div>';
+                return;
+            }
+            // Get current period for status check
+            const now = new Date();
+            const currentPeriod = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            grid.innerHTML = list.map(emp => {
+                const badgeClass = emp.payment_method === 'Cash' ? 'badge-cash' : emp.payment_method === 'Cheque' ? 'badge-cheque' : 'badge-eft';
+                const psStatus = getPayslipStatus(emp.id, currentPeriod);
+                const statusBadge = psStatus.status === 'finalized'
+                    ? '<span class="emp-payment-badge badge-finalized">✓ Finalized</span>'
+                    : '<span class="emp-payment-badge badge-draft">Draft</span>';
+                return '<div class="employee-card" onclick="openEmployeeDetail(\'' + emp.id + '\')">' +
+                    '<div class="emp-name">' + emp.first_name + ' ' + emp.last_name + '</div>' +
+                    '<div class="emp-number">#' + emp.employee_number + '</div>' +
+                    '<div class="emp-details">' +
+                        '<div><div class="emp-detail-label">Position</div><div class="emp-detail-value">' + (emp.position || emp.job_title || '-') + '</div></div>' +
+                        '<div><div class="emp-detail-label">Department</div><div class="emp-detail-value">' + (emp.department || '-') + '</div></div>' +
+                    '</div>' +
+                    '<div class="emp-badges">' +
+                        '<span class="emp-payment-badge ' + badgeClass + '">' + (emp.payment_method || 'EFT') + '</span>' +
+                        statusBadge +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function filterEmployees(query) {
+            if (!query) { displayEmployees(employees); return; }
+            const q = query.toLowerCase();
+            const filtered = employees.filter(e =>
+                (e.first_name + ' ' + e.last_name).toLowerCase().includes(q) ||
+                (e.employee_number || '').toLowerCase().includes(q) ||
+                (e.department || '').toLowerCase().includes(q)
+            );
+            displayEmployees(filtered);
+        }
+
+        function openEmployeeDetail(empId) {
+            window.location.href = 'employee-detail.html?id=' + empId;
+        }
+
+        // ========== PAYROLL RUNS TAB ==========
+        function loadPayruns() {
+            const stored = localStorage.getItem('payruns_' + currentCompanyId);
+            payruns = stored ? JSON.parse(stored) : [];
+            
+            // Auto-generate pending pay runs based on company pay frequencies
+            autoGeneratePendingPayruns();
+            displayPayruns();
+        }
+
+        function autoGeneratePendingPayruns() {
+            const companyData = getCompanyDetails();
+            const frequencies = companyData.pay_frequencies || ['Monthly'];
+            const now = new Date();
+            
+            frequencies.forEach(freq => {
+                const periods = generatePeriodsForFrequency(freq, now);
+                periods.forEach(period => {
+                    if (!payruns.some(p => p.period === period.id && p.frequency === freq)) {
+                        payruns.push({
+                            id: 'pr-' + Math.random().toString(36).substr(2, 9),
+                            period: period.id,
+                            frequency: freq,
+                            period_label: period.label,
+                            status: 'pending',
+                            created_date: new Date().toISOString(),
+                            finalized_date: null,
+                            paid_date: null,
+                            employee_count: 0,
+                            total_gross: 0,
+                            total_paye: 0,
+                            total_uif: 0,
+                            total_net: 0
+                        });
                     }
                 });
+            });
+            savePayruns();
+        }
 
-                const data = await response.json();
-
-                if (data.success) {
-                    payruns = data.runs;
-                    displayPayruns();
-                } else {
-                    showError(data.error || 'Kon nie loonruns laai nie');
+        function generatePeriodsForFrequency(frequency, currentDate) {
+            const periods = [];
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth(); // 0-indexed
+            const day = currentDate.getDate();
+            
+            if (frequency === 'Monthly') {
+                // Current month
+                const endDay = new Date(year, month + 1, 0).getDate();
+                const companyData = getCompanyDetails();
+                const payDay = parseInt(companyData.pay_day) || 25;
+                periods.push({
+                    id: year + '-' + String(month + 1).padStart(2, '0'),
+                    label: 'The month ending ' + payDay + ' ' + getMonthName(month) + ' ' + year
+                });
+                // Next month
+                const nextMonth = month + 1;
+                const nextYear = nextMonth > 11 ? year + 1 : year;
+                const nextMonthIndex = nextMonth > 11 ? 0 : nextMonth;
+                periods.push({
+                    id: nextYear + '-' + String(nextMonthIndex + 1).padStart(2, '0'),
+                    label: 'The month ending ' + payDay + ' ' + getMonthName(nextMonthIndex) + ' ' + nextYear
+                });
+            } else if (frequency === 'Bi-Weekly') {
+                // Calculate bi-weekly periods (simplified)
+                const period1End = new Date(year, month, 14);
+                const period2End = new Date(year, month, 28);
+                if (day <= 14) {
+                    periods.push({
+                        id: year + '-' + String(month + 1).padStart(2, '0') + '-1',
+                        label: 'Bi-weekly ending ' + formatDate(period1End)
+                    });
                 }
-            } catch (error) {
-                showError('Fout met laai van loonruns: ' + error.message);
+                periods.push({
+                    id: year + '-' + String(month + 1).padStart(2, '0') + '-2',
+                    label: 'Bi-weekly ending ' + formatDate(period2End)
+                });
+            } else if (frequency === 'Weekly') {
+                // Generate 4-5 weekly periods for the month
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                let weekNum = 1;
+                for (let d = 7; d <= lastDay.getDate(); d += 7) {
+                    periods.push({
+                        id: year + '-' + String(month + 1).padStart(2, '0') + '-W' + weekNum,
+                        label: 'Week ending ' + d + ' ' + getMonthName(month) + ' ' + year
+                    });
+                    weekNum++;
+                }
             }
+            
+            return periods;
+        }
+
+        function getCompanyDetails() {
+            const key = 'company_details_' + currentCompanyId;
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : { pay_frequencies: ['Monthly'], pay_day: 25 };
         }
 
         function displayPayruns() {
-            const container = document.getElementById('payrunsContainer');
+            displayPendingPayruns();
+            displayHistoricalPayruns();
+        }
 
-            if (payruns.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📊</div>
-                        <div class="empty-state-text">Geen loonruns nog nie</div>
-                        <button class="btn btn-primary" onclick="showCreateModal()">Skep Jou Eerste Loonrun</button>
-                    </div>
-                `;
+        function displayPendingPayruns() {
+            const container = document.getElementById('pending-payruns');
+            const pending = payruns.filter(p => p.status === 'pending' || p.status === 'draft').sort((a, b) => a.period.localeCompare(b.period));
+            
+            if (pending.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">💰</div><div class="empty-text">No pending pay runs</div><div class="empty-sub">Set pay frequencies in Company Details to generate pay runs.</div></div>';
                 return;
             }
 
-            container.innerHTML = `
-                <div class="payruns-grid">
-                    ${payruns.map(run => createPayrunCard(run)).join('')}
-                </div>
-            `;
+            const visible = pending.slice(0, 2);
+            const hidden = pending.slice(2);
+
+            let html = visible.map(run => createPayrunItem(run)).join('');
+            
+            if (hidden.length > 0) {
+                html += '<div class="show-more-btn" onclick="toggleHiddenPayruns()">' +
+                    '<span id="show-more-text">Show ' + hidden.length + ' more</span></div>' +
+                    '<div id="hidden-payruns" style="display: none;">' +
+                    hidden.map(run => createPayrunItem(run)).join('') +
+                    '</div>';
+            }
+
+            container.innerHTML = html;
         }
 
-        function createPayrunCard(run) {
-            const statusClass = `status-${run.status}`;
-            const statusText = {
-                'draft': 'Konsep',
-                'finalized': 'Gefinaliseer',
-                'paid': 'Betaal'
-            }[run.status];
+        function displayHistoricalPayruns() {
+            const container = document.getElementById('historical-payruns');
+            const historical = payruns.filter(p => p.status === 'finalized' || p.status === 'paid')
+                .sort((a, b) => b.period.localeCompare(a.period));
 
-            const actions = run.status === 'draft'
-                ? `
-                    <button class="btn btn-success" onclick="finalizePayrun(${run.id}, event)">Finaliseer</button>
-                    <button class="btn btn-danger" onclick="deletePayrun(${run.id}, event)">Verwyder</button>
-                `
-                : run.status === 'finalized'
-                ? `
-                    <button class="btn btn-info" onclick="viewSummary(${run.id}, event)">Opsomming</button>
-                    <button class="btn btn-success" onclick="markAsPaid(${run.id}, event)">Merk as Betaal</button>
-                `
-                : `
-                    <button class="btn btn-info" onclick="viewSummary(${run.id}, event)">Opsomming</button>
-                `;
+            if (historical.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
 
-            return `
-                <div class="payrun-card">
-                    <div class="payrun-header">
-                        <div class="payrun-period">${formatPeriod(run.pay_period)}</div>
-                        <span class="status-badge ${statusClass}">${statusText}</span>
-                    </div>
-                    <div class="payrun-stats">
-                        <div class="stat-item">
-                            <div class="stat-label">Werknemers</div>
-                            <div class="stat-value">${run.total_employees || 0}</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Bruto Salaris</div>
-                            <div class="stat-value">R ${formatMoney(run.total_gross || 0)}</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">PAYE</div>
-                            <div class="stat-value">R ${formatMoney(run.total_paye || 0)}</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Netto Salaris</div>
-                            <div class="stat-value">R ${formatMoney(run.total_net || 0)}</div>
-                        </div>
-                    </div>
-                    <div class="payrun-actions">
-                        ${actions}
-                    </div>
-                </div>
-            `;
+            // Group by month
+            const groups = {};
+            historical.forEach(run => {
+                const monthKey = getHistoricalGroupKey(run);
+                if (!groups[monthKey]) groups[monthKey] = [];
+                groups[monthKey].push(run);
+            });
+
+            let html = '';
+            Object.keys(groups).forEach(monthKey => {
+                const runs = groups[monthKey];
+                html += '<div class="historical-group">' +
+                    '<div class="historical-group-title">' + monthKey + '</div>' +
+                    '<div class="payrun-list">' +
+                    runs.map(run => createPayrunItem(run)).join('') +
+                    '</div></div>';
+            });
+
+            container.innerHTML = html;
         }
 
+        function createPayrunItem(run) {
+            const stats = calculatePayrunStats(run);
+            const isPending = run.status === 'pending' || run.status === 'draft';
+            
+            let html = '<div class="payrun-item" id="payrun-' + run.id + '">' +
+                '<div class="payrun-header" onclick="togglePayrunExpand(\'' + run.id + '\')">' +
+                '<div>' +
+                '<div class="payrun-title">' + (run.period_label || formatPeriod(run.period)) + 
+                '<span class="frequency-tag">' + run.frequency + '</span></div>';
+            
+            if (!isPending) {
+                html += '<div class="payrun-subtitle">Total: ' + formatMoney(stats.total) + '</div>';
+            } else if (stats.finalized === 0 && stats.pending > 0) {
+                html += '<div class="payrun-subtitle" style="color: #856404;">Payslips need to be finalised before creating the pay run.</div>';
+            }
+            
+            html += '</div><div class="payrun-right">';
+            
+            if (isPending) {
+                html += '<div class="payslips-stats">' +
+                    '<div class="stat-item"><div class="stat-label">Total</div><div class="stat-value">' + stats.total + '</div></div>' +
+                    '<div class="stat-divider"></div>' +
+                    '<div class="stat-item"><div class="stat-label">Finalised</div><div class="stat-value">' + stats.finalized + '</div></div>' +
+                    '<div class="stat-divider"></div>' +
+                    '<div class="stat-item"><div class="stat-label">Pending</div><div class="stat-value">' + stats.pending + '</div></div>' +
+                    '</div>';
+            }
+            
+            html += '<div class="expand-icon">▼</div></div></div>' +
+                '<div class="payrun-content"><div class="payrun-body">';
+
+            // Actions and content
+            if (isPending) {
+                html += '<div class="action-buttons">';
+                if (stats.finalized > 0) {
+                    html += '<button class="btn btn-success btn-sm" onclick="event.stopPropagation(); finalizePayrun(\'' + run.id + '\')">Finalise</button>';
+                }
+                html += '<a href="#" class="action-link" onclick="event.preventDefault(); previewPayrun(\'' + run.id + '\')">📄 Preview</a>' +
+                    '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); createPayrunFromPending(\'' + run.id + '\')">Create Pay Run</button>' +
+                    '</div>';
+            } else {
+                // Payment breakdown
+                html += createPaymentBreakdown(run, stats);
+
+                // EMP201 & UIF Returns
+                html += createReturnsSection(run);
+
+                // Actions
+                html += '<div class="action-buttons" style="margin-top: 15px;">';
+                if (run.status === 'finalized') {
+                    html += '<a href="#" class="action-link" onclick="event.preventDefault(); viewPayrun(\'' + run.id + '\')">👁 View</a>' +
+                        '<a href="#" class="action-link" onclick="event.preventDefault(); unfinalisePayrun(\'' + run.id + '\')">↩ Unfinalise</a>' +
+                        '<button class="btn btn-success btn-sm" onclick="event.stopPropagation(); markAsPaid(\'' + run.id + '\')">Mark as Paid</button>';
+                } else {
+                    html += '<a href="#" class="action-link" onclick="event.preventDefault(); viewPayrun(\'' + run.id + '\')">👁 View</a>' +
+                        '<a href="#" class="action-link" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'all\')">📄 Download All</a>' +
+                        '<a href="#" class="action-link" onclick="event.preventDefault(); sendToXero(\'' + run.id + '\')">📤 Send to Xero</a>';
+                }
+                html += '</div>';
+            }
+
+            html += '</div></div></div>';
+            return html;
+        }
+
+        function createPaymentBreakdown(run, stats) {
+            let html = '<div class="payment-breakdown">';
+            
+            // Payment Info
+            html += '<div class="breakdown-header" onclick="toggleBreakdown(this)">' +
+                '<span class="breakdown-title">💳 ' + run.period_label + ' Payment Info</span>' +
+                '<span class="breakdown-total">' + formatMoney(stats.total) + '</span>' +
+                '</div><div class="breakdown-content">';
+            
+            const groups = stats.paymentGroups;
+            html += '<table class="breakdown-table"><tbody>';
+            
+            if (groups.All && groups.All.count > 0) {
+                html += '<tr><td class="label">All Payslips (' + groups.All.count + ')</td>' +
+                    '<td class="value">' +
+                    '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'all\')">📄</a> ' +
+                    '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'all-xlsx\')">📊</a>' +
+                    '</td></tr>';
+            }
+            if (groups.EFT && groups.EFT.count > 0) {
+                html += '<tr><td class="label">EFT (' + groups.EFT.count + ')</td>' +
+                    '<td class="value">' + formatMoney(groups.EFT.total) + ' ' +
+                    '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'eft\')">📄</a> ' +
+                    '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'eft-xlsx\')">📊</a> ' +
+                    '<a href="#" onclick="event.preventDefault(); downloadBanking(\'' + run.id + '\')">🏦</a>' +
+                    '</td></tr>';
+            }
+            if (groups.Cash && groups.Cash.count > 0) {
+                html += '<tr><td class="label">Cash (' + groups.Cash.count + ')</td>' +
+                    '<td class="value">' + formatMoney(groups.Cash.total) + ' ' +
+                    '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'cash\')">📄</a>' +
+                    '</td></tr>';
+            }
+            
+            html += '</tbody></table></div></div>';
+            
+            // Accounting Info
+            html += '<div class="payment-breakdown"><div class="breakdown-header" onclick="toggleBreakdown(this)">' +
+                '<span class="breakdown-title">📊 Accounting Info</span>' +
+                '<span class="breakdown-total">' +
+                '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'accounting\')">📄</a> ' +
+                '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'accounting-xlsx\')">📊</a> ' +
+                '<a href="#" onclick="event.preventDefault(); sendToXero(\'' + run.id + '\')">Send to Xero</a>' +
+                '</span></div></div>';
+            
+            // Beneficiaries
+            html += '<div class="payment-breakdown"><div class="breakdown-header" onclick="toggleBreakdown(this)">' +
+                '<span class="breakdown-title">👥 Beneficiaries</span>' +
+                '<span class="breakdown-total">' +
+                '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'beneficiaries\')">📄</a> ' +
+                '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'beneficiaries-xlsx\')">📊</a>' +
+                '</span></div></div>';
+            
+            return html;
+        }
+
+        function calculatePayrunStats(run) {
+            let total = 0, finalized = 0, pending = 0;
+            const paymentGroups = { All: { count: 0, total: 0 }, EFT: { count: 0, total: 0 }, Cash: { count: 0, total: 0 }, Cheque: { count: 0, total: 0 } };
+            
+            employees.forEach(emp => {
+                const psStatus = getPayslipStatus(emp.id, run.period);
+                const pd = getEmployeePayroll(emp.id);
+                const calc = calculateEmployeePeriod(emp.id, run.period, pd);
+                
+                if (calc.gross > 0) {
+                    total++;
+                    if (psStatus.status === 'finalized') {
+                        finalized++;
+                        const method = emp.payment_method || 'EFT';
+                        paymentGroups.All.count++;
+                        paymentGroups.All.total += calc.net;
+                        if (paymentGroups[method]) {
+                            paymentGroups[method].count++;
+                            paymentGroups[method].total += calc.net;
+                        }
+                    } else {
+                        pending++;
+                    }
+                }
+            });
+            
+            return { total, finalized, pending, paymentGroups };
+        }
+
+        function togglePayrunExpand(runId) {
+            const item = document.getElementById('payrun-' + runId);
+            if (item) {
+                item.classList.toggle('expanded');
+            }
+        }
+
+        function toggleBreakdown(header) {
+            const content = header.nextElementSibling;
+            if (content) {
+                content.classList.toggle('show');
+            }
+        }
+
+        function toggleHiddenPayruns() {
+            const hidden = document.getElementById('hidden-payruns');
+            const btn = document.getElementById('show-more-text');
+            if (hidden.style.display === 'none') {
+                hidden.style.display = 'block';
+                btn.textContent = 'Show less';
+            } else {
+                hidden.style.display = 'none';
+                const count = document.querySelectorAll('#hidden-payruns .payrun-item').length;
+                btn.textContent = 'Show ' + count + ' more';
+            }
+        }
+
+        function createPayrunFromPending(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            
+            const stats = calculatePayrunStats(run);
+            if (stats.finalized === 0) {
+                alert('Cannot create pay run: No employees have finalized payslips.\n\nPlease finalize payslips first.');
+                return;
+            }
+            
+            if (confirm('Create pay run for ' + (run.period_label || run.period) + '?\n\nThis will include ' + stats.finalized + ' finalized payslip(s).')) {
+                run.status = 'draft';
+                savePayruns();
+                displayPayruns();
+            }
+        }
+
+        function previewPayrun(runId) {
+            viewSummary(runId);
+        }
+
+        function viewPayrun(runId) {
+            viewSummary(runId);
+        }
+
+        function unfinalisePayrun(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run || !confirm('Unfinalise pay run for ' + (run.period_label || run.period) + '?')) return;
+            run.status = 'pending';
+            run.finalized_date = null;
+            savePayruns();
+            displayPayruns();
+        }
+
+        function downloadPDF(runId, type) {
+            alert('Download ' + type + ' - This feature will generate and download the selected report.');
+        }
+
+        function downloadBanking(runId) {
+            alert('Download Banking File - This will generate a file for bank import.');
+        }
+
+        function sendToXero(runId) {
+            alert('Send to Xero - This will export the payroll data to your Xero account.');
+        }
+
+        function getHistoricalGroupKey(run) {
+            const [year, month] = run.period.split('-');
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const now = new Date();
+            const runDate = new Date(parseInt(year), parseInt(month) - 1);
+            const monthsDiff = (now.getFullYear() - runDate.getFullYear()) * 12 + (now.getMonth() - runDate.getMonth());
+            
+            if (monthsDiff === 1) return 'Last month (' + monthNames[runDate.getMonth()] + ' ' + year + ')';
+            if (monthsDiff === 2) return '2 months ago (' + monthNames[runDate.getMonth()] + ' ' + year + ')';
+            if (monthsDiff >= 3 && monthsDiff <= 12) return monthsDiff + ' months ago (' + monthNames[runDate.getMonth()] + ' ' + year + ')';
+            return monthNames[runDate.getMonth()] + ' ' + year;
+        }
+
+        function getMonthName(monthIndex) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            return months[monthIndex];
+        }
+
+        function formatDate(date) {
+            return date.getDate() + ' ' + getMonthName(date.getMonth()) + ' ' + date.getFullYear();
+        }
+
+        function finalizePayrun(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+
+            // Check which employees have finalized payslips
+            const finalizedEmps = [];
+            const unfinalizedEmps = [];
+            employees.forEach(emp => {
+                const psStatus = getPayslipStatus(emp.id, run.period);
+                const pd = getEmployeePayroll(emp.id);
+                if (psStatus.status === 'finalized') {
+                    finalizedEmps.push(emp);
+                } else if (pd.basic_salary > 0 || pd.regular_inputs.length > 0) {
+                    unfinalizedEmps.push(emp);
+                }
+            });
+
+            if (finalizedEmps.length === 0) {
+                alert('Cannot finalize pay run: No employees have finalized payslips for ' + formatPeriod(run.period) + '.\n\nGo to each employee\'s payroll and click "Finalize Payslip" first.');
+                return;
+            }
+
+            // Warn about unfinalized employees
+            let warningMsg = '';
+            if (unfinalizedEmps.length > 0) {
+                warningMsg = '\n\n⚠ ' + unfinalizedEmps.length + ' employee(s) have unfinalized payslips and will NOT be included:\n' +
+                    unfinalizedEmps.map(e => '  - ' + e.first_name + ' ' + e.last_name).join('\n');
+            }
+
+            let totalGross = 0, totalPaye = 0, totalUif = 0, totalNet = 0;
+            finalizedEmps.forEach(emp => {
+                const pd = getEmployeePayroll(emp.id);
+                const calc = calculateEmployeePeriod(emp.id, run.period, pd);
+                totalGross += calc.gross;
+                totalPaye += calc.paye;
+                totalUif += calc.uif;
+                totalNet += calc.net;
+            });
+
+            if (!confirm('Finalize pay run for ' + formatPeriod(run.period) + '?\n\nFinalized Employees: ' + finalizedEmps.length + '\nGross: ' + formatMoney(totalGross) + '\nPAYE: ' + formatMoney(totalPaye) + '\nUIF: ' + formatMoney(totalUif) + '\nNet: ' + formatMoney(totalNet) + warningMsg)) return;
+
+            run.employee_count = finalizedEmps.length;
+            run.total_gross = totalGross;
+            run.total_paye = totalPaye;
+            run.total_uif = totalUif;
+            run.total_net = totalNet;
+            run.status = 'finalized';
+            run.finalized_date = new Date().toISOString();
+            savePayruns();
+            displayPayruns();
+        }
+
+        function savePayruns() {
+            localStorage.setItem('payruns_' + currentCompanyId, JSON.stringify(payruns));
+        }
+
+        function getPayslipStatus(empId, period) {
+            const key = 'emp_payslip_status_' + currentCompanyId + '_' + empId + '_' + period;
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : { status: 'draft' };
+        }
+
+        function markAsPaid(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run || !confirm('Mark pay run for ' + formatPeriod(run.period) + ' as paid?')) return;
+            run.status = 'paid';
+            run.paid_date = new Date().toISOString();
+            savePayruns();
+            displayPayruns();
+        }
+
+        function deletePayrun(runId) {
+            if (!confirm('Are you sure you want to delete this pay run?')) return;
+            payruns = payruns.filter(r => r.id !== runId);
+            savePayruns();
+            displayPayruns();
+        }
+
+        function viewSummary(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const groups = { EFT: [], Cash: [], Cheque: [] };
+            let overallGross = 0, overallPaye = 0, overallUif = 0, overallNet = 0;
+            employees.forEach(emp => {
+                // Only include finalized payslips in summary
+                const psStatus = getPayslipStatus(emp.id, run.period);
+                if (psStatus.status !== 'finalized') return;
+                const pd = getEmployeePayroll(emp.id);
+                const calc = calculateEmployeePeriod(emp.id, run.period, pd);
+                if (calc.gross <= 0) return;
+                const method = emp.payment_method || 'EFT';
+                if (!groups[method]) groups[method] = [];
+                groups[method].push({ name: emp.first_name + ' ' + emp.last_name, number: emp.employee_number, gross: calc.gross, paye: calc.paye, uif: calc.uif, net: calc.net });
+                overallGross += calc.gross;
+                overallPaye += calc.paye;
+                overallUif += calc.uif;
+                overallNet += calc.net;
+            });
+            let html = '<h3 style="margin-bottom: 20px;">Pay Run: ' + formatPeriod(run.period) + ' <span class="status-badge status-' + run.status + '">' + run.status + '</span></h3>';
+            for (const method of ['EFT', 'Cash', 'Cheque']) {
+                const empList = groups[method];
+                if (!empList || empList.length === 0) continue;
+                const methodTotal = empList.reduce((sum, e) => sum + e.net, 0);
+                html += '<div class="summary-section"><h4>' + method + ' (' + empList.length + ' employee' + (empList.length > 1 ? 's' : '') + ') - Total: ' + formatMoney(methodTotal) + '</h4>' +
+                    '<table class="summary-table"><thead><tr><th>Employee</th><th>Emp #</th><th style="text-align:right;">Gross</th><th style="text-align:right;">Net</th></tr></thead><tbody>' +
+                    empList.map(e => '<tr><td>' + e.name + '</td><td>' + e.number + '</td><td style="text-align:right;">' + formatMoney(e.gross) + '</td><td style="text-align:right;">' + formatMoney(e.net) + '</td></tr>').join('') +
+                    '</tbody></table></div>';
+            }
+            html += '<div class="summary-totals"><h4>Overall Totals</h4>' +
+                '<div class="total-row-item"><span>Total Gross</span><strong>' + formatMoney(overallGross) + '</strong></div>' +
+                '<div class="total-row-item"><span>Total PAYE</span><strong>' + formatMoney(overallPaye) + '</strong></div>' +
+                '<div class="total-row-item"><span>Total UIF</span><strong>' + formatMoney(overallUif) + '</strong></div>' +
+                '<div class="total-row-item net"><span>Total Net</span><strong>' + formatMoney(overallNet) + '</strong></div></div>';
+            document.getElementById('summary-content').innerHTML = html;
+            document.getElementById('summaryModal').classList.add('show');
+        }
+
+        // ========== PAYROLL CALCULATION ==========
+        function getEmployeePayroll(empId) {
+            const stored = localStorage.getItem('emp_payroll_' + currentCompanyId + '_' + empId);
+            return stored ? JSON.parse(stored) : { basic_salary: 0, regular_inputs: [] };
+        }
+
+        function calculateEmployeePeriod(empId, period, payrollData) {
+            if (!payrollData) payrollData = getEmployeePayroll(empId);
+            let gross = payrollData.basic_salary || 0;
+
+            // Regular allowances
+            payrollData.regular_inputs.forEach(ri => {
+                if (ri.type !== 'deduction') gross += parseFloat(ri.amount) || 0;
+            });
+
+            // Current inputs
+            const currentInputs = JSON.parse(localStorage.getItem('emp_current_' + currentCompanyId + '_' + empId + '_' + period) || '[]');
+            currentInputs.forEach(ci => {
+                if (ci.type !== 'deduction') gross += parseFloat(ci.amount) || 0;
+            });
+
+            // Overtime
+            const hourlyRate = payrollData.basic_salary ? payrollData.basic_salary / 173.33 : 0;
+            const overtime = JSON.parse(localStorage.getItem('emp_overtime_' + currentCompanyId + '_' + empId + '_' + period) || '[]');
+            overtime.forEach(ot => {
+                gross += (parseFloat(ot.hours) || 0) * hourlyRate * (parseFloat(ot.rate_multiplier) || 1.5);
+            });
+
+            // Multi-rate
+            const multiRate = JSON.parse(localStorage.getItem('emp_multi_rate_' + currentCompanyId + '_' + empId + '_' + period) || '[]');
+            multiRate.forEach(mr => {
+                gross += (parseFloat(mr.hours) || 0) * (parseFloat(mr.hourly_rate) || 0);
+            });
+
+            // Short time
+            const shortTime = JSON.parse(localStorage.getItem('emp_short_time_' + currentCompanyId + '_' + empId + '_' + period) || '[]');
+            shortTime.forEach(st => {
+                gross -= (parseFloat(st.hours_missed) || 0) * hourlyRate;
+            });
+
+            if (gross < 0) gross = 0;
+
+            // PAYE (SA 2024/2025 brackets)
+            const annualGross = gross * 12;
+            let annualPaye = 0;
+            if (annualGross <= 237100) annualPaye = annualGross * 0.18;
+            else if (annualGross <= 370500) annualPaye = 42678 + (annualGross - 237100) * 0.26;
+            else if (annualGross <= 512800) annualPaye = 77362 + (annualGross - 370500) * 0.31;
+            else if (annualGross <= 673000) annualPaye = 121475 + (annualGross - 512800) * 0.36;
+            else if (annualGross <= 857900) annualPaye = 179147 + (annualGross - 673000) * 0.39;
+            else if (annualGross <= 1817000) annualPaye = 251258 + (annualGross - 857900) * 0.41;
+            else annualPaye = 644489 + (annualGross - 1817000) * 0.45;
+            annualPaye -= 17235; // Primary rebate
+            if (annualPaye < 0) annualPaye = 0;
+            const paye = Math.round(annualPaye / 12 * 100) / 100;
+
+            // UIF
+            const uif = Math.round(Math.min(gross * 0.01, 177.12) * 100) / 100;
+
+            // Deductions
+            let deductions = 0;
+            payrollData.regular_inputs.forEach(ri => {
+                if (ri.type === 'deduction') deductions += parseFloat(ri.amount) || 0;
+            });
+            currentInputs.forEach(ci => {
+                if (ci.type === 'deduction') deductions += parseFloat(ci.amount) || 0;
+            });
+
+            const net = Math.max(gross - paye - uif - deductions, 0);
+            return { gross: Math.round(gross * 100) / 100, paye, uif, deductions: Math.round(deductions * 100) / 100, net: Math.round(net * 100) / 100 };
+        }
+
+        // ========== EMP201 & UIF RETURNS ==========
+        function getReturnStatus(runId, type) {
+            const key = 'return_status_' + currentCompanyId + '_' + runId + '_' + type;
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : { status: 'pending', submitted_date: null };
+        }
+
+        function setReturnStatus(runId, type, status) {
+            const key = 'return_status_' + currentCompanyId + '_' + runId + '_' + type;
+            localStorage.setItem(key, JSON.stringify(status));
+        }
+
+        function createReturnsSection(run) {
+            const emp201Status = getReturnStatus(run.id, 'emp201');
+            const uifStatus = getReturnStatus(run.id, 'uif');
+            const emp501Status = getReturnStatus(run.id, 'emp501');
+            const wcfStatus = getReturnStatus(run.id, 'wcf');
+            const returnCalc = calculateReturns(run);
+
+            let html = '<div class="returns-section">' +
+                '<div class="returns-title">Statutory Returns</div>' +
+                '<div class="returns-grid">';
+
+            // EMP201 Card
+            html += createReturnCard('EMP201', 'Monthly Employer Declaration to SARS',
+                'Total Payable: ' + formatMoney(returnCalc.emp201Total), emp201Status, run.id, 'emp201', 'previewEMP201');
+
+            // UIF Card
+            html += createReturnCard('UIF Return', 'Monthly Declaration to Department of Labour',
+                'Total UIF: ' + formatMoney(returnCalc.uifTotal), uifStatus, run.id, 'uif', 'previewUIF');
+
+            // EMP501 Card
+            const emp501Period = getEMP501Period(run.period);
+            html += createReturnCard('EMP501', 'Bi-Annual Employer Reconciliation (' + emp501Period.label + ')',
+                'PAYE + SDL + UIF Reconciliation', emp501Status, run.id, 'emp501', 'previewEMP501');
+
+            // WCF Card
+            html += createReturnCard('WCF Return', 'Workmen\'s Compensation Fund Return',
+                'Total Earnings: ' + formatMoney(returnCalc.totalGross), wcfStatus, run.id, 'wcf', 'previewWCF');
+
+            html += '</div></div>';
+            return html;
+        }
+
+        function createReturnCard(title, desc, amountText, status, runId, type, previewFn) {
+            let html = '<div class="return-card">' +
+                '<div class="return-card-header">' +
+                '<span class="return-card-title">' + title + '</span>' +
+                '<span class="return-status ' + (status.status === 'submitted' ? 'return-status-submitted' : 'return-status-pending') + '">' +
+                (status.status === 'submitted' ? 'Submitted' : 'Pending') + '</span>' +
+                '</div>' +
+                '<div class="return-card-desc">' + desc + '</div>' +
+                '<div class="return-card-amount">' + amountText + '</div>' +
+                '<div class="return-card-actions">' +
+                '<button class="btn-outline" onclick="event.stopPropagation(); ' + previewFn + '(\'' + runId + '\')">Preview</button>';
+            if (status.status !== 'submitted') {
+                html += '<button class="btn-submit-return" onclick="event.stopPropagation(); submitReturn(\'' + runId + '\', \'' + type + '\')">Submit Return</button>';
+            } else {
+                html += '<span style="font-size:0.75rem; color:#155724;">Submitted ' + formatSubmitDate(status.submitted_date) + '</span>';
+            }
+            html += '</div></div>';
+            return html;
+        }
+
+        function calculateReturns(run) {
+            let totalPaye = 0, totalSdl = 0, totalUifEmployee = 0, totalUifEmployer = 0, totalGross = 0;
+            const empDetails = [];
+
+            employees.forEach(emp => {
+                const psStatus = getPayslipStatus(emp.id, run.period);
+                if (psStatus.status !== 'finalized') return;
+                const pd = getEmployeePayroll(emp.id);
+                const calc = calculateEmployeePeriod(emp.id, run.period, pd);
+                if (calc.gross <= 0) return;
+
+                const uifEmp = calc.uif;
+                const uifEmployer = uifEmp; // Employer matches employee contribution
+                const sdl = Math.round(calc.gross * 0.01 * 100) / 100; // 1% SDL
+
+                totalPaye += calc.paye;
+                totalSdl += sdl;
+                totalUifEmployee += uifEmp;
+                totalUifEmployer += uifEmployer;
+                totalGross += calc.gross;
+
+                empDetails.push({
+                    name: emp.first_name + ' ' + emp.last_name,
+                    id_number: emp.id_number || emp.sa_id || '-',
+                    employee_number: emp.employee_number,
+                    gross: calc.gross,
+                    paye: calc.paye,
+                    sdl: sdl,
+                    uif_employee: uifEmp,
+                    uif_employer: uifEmployer,
+                    net: calc.net
+                });
+            });
+
+            return {
+                totalPaye: Math.round(totalPaye * 100) / 100,
+                totalSdl: Math.round(totalSdl * 100) / 100,
+                totalUifEmployee: Math.round(totalUifEmployee * 100) / 100,
+                totalUifEmployer: Math.round(totalUifEmployer * 100) / 100,
+                uifTotal: Math.round((totalUifEmployee + totalUifEmployer) * 100) / 100,
+                emp201Total: Math.round((totalPaye + totalSdl + totalUifEmployee + totalUifEmployer) * 100) / 100,
+                totalGross: Math.round(totalGross * 100) / 100,
+                employees: empDetails
+            };
+        }
+
+        function previewEMP201(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const calc = calculateReturns(run);
+            const companyDetails = getCompanyDetails();
+            const company = AUTH.getCompanyById(currentCompanyId);
+            const emp201Status = getReturnStatus(runId, 'emp201');
+
+            let html = '<div class="preview-header-info">' +
+                '<div class="preview-info-item"><div class="preview-info-label">Company</div><div class="preview-info-value">' + (company ? company.name : '-') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">PAYE Ref No.</div><div class="preview-info-value">' + (companyDetails.paye_ref || companyDetails.tax_number || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Period</div><div class="preview-info-value">' + formatPeriod(run.period) + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">UIF Ref No.</div><div class="preview-info-value">' + (companyDetails.uif_ref || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Employees</div><div class="preview-info-value">' + calc.employees.length + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">SDL Ref No.</div><div class="preview-info-value">' + (companyDetails.sdl_ref || 'Not set') + '</div></div>' +
+                '</div>';
+
+            // Summary table
+            html += '<h4 style="color: #667eea; margin-bottom: 10px;">Declaration Summary</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Tax Type</th><th style="text-align:right;">Amount</th></tr></thead>' +
+                '<tbody>' +
+                '<tr><td>PAYE (Pay As You Earn)</td><td class="amount">' + formatMoney(calc.totalPaye) + '</td></tr>' +
+                '<tr><td>SDL (Skills Development Levy) - 1%</td><td class="amount">' + formatMoney(calc.totalSdl) + '</td></tr>' +
+                '<tr><td>UIF - Employee Contribution (1%)</td><td class="amount">' + formatMoney(calc.totalUifEmployee) + '</td></tr>' +
+                '<tr><td>UIF - Employer Contribution (1%)</td><td class="amount">' + formatMoney(calc.totalUifEmployer) + '</td></tr>' +
+                '<tr class="total-row"><td><strong>Total Payable to SARS</strong></td><td class="amount"><strong>' + formatMoney(calc.emp201Total) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            // Employee breakdown
+            html += '<h4 style="color: #667eea; margin: 20px 0 10px;">Employee Breakdown</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Employee</th><th>Emp #</th><th style="text-align:right;">Gross</th><th style="text-align:right;">PAYE</th><th style="text-align:right;">SDL</th><th style="text-align:right;">UIF</th></tr></thead>' +
+                '<tbody>';
+            calc.employees.forEach(emp => {
+                html += '<tr><td>' + emp.name + '</td><td>' + emp.employee_number + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.gross) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.paye) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.sdl) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.uif_employee) + '</td></tr>';
+            });
+            html += '<tr class="total-row"><td colspan="2"><strong>Totals</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalGross) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalPaye) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalSdl) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalUifEmployee) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            if (emp201Status.status === 'submitted') {
+                html += '<div style="background: #d4edda; padding: 12px; border-radius: 8px; margin-top: 15px; color: #155724; font-weight: 600;">' +
+                    '✓ Submitted on ' + formatSubmitDate(emp201Status.submitted_date) + '</div>';
+            }
+
+            document.getElementById('emp201-content').innerHTML = html;
+            document.getElementById('emp201Modal').classList.add('show');
+        }
+
+        function previewUIF(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const calc = calculateReturns(run);
+            const companyDetails = getCompanyDetails();
+            const company = AUTH.getCompanyById(currentCompanyId);
+            const uifStatus = getReturnStatus(runId, 'uif');
+
+            let html = '<div class="preview-header-info">' +
+                '<div class="preview-info-item"><div class="preview-info-label">Company</div><div class="preview-info-value">' + (company ? company.name : '-') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">UIF Ref No.</div><div class="preview-info-value">' + (companyDetails.uif_ref || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Period</div><div class="preview-info-value">' + formatPeriod(run.period) + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Employees</div><div class="preview-info-value">' + calc.employees.length + '</div></div>' +
+                '</div>';
+
+            // Employee table
+            html += '<h4 style="color: #667eea; margin-bottom: 10px;">UIF Contributions per Employee</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Employee</th><th>ID Number</th><th style="text-align:right;">Gross Remuneration</th><th style="text-align:right;">Employee (1%)</th><th style="text-align:right;">Employer (1%)</th><th style="text-align:right;">Total UIF</th></tr></thead>' +
+                '<tbody>';
+            calc.employees.forEach(emp => {
+                html += '<tr><td>' + emp.name + '</td><td>' + emp.id_number + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.gross) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.uif_employee) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.uif_employer) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.uif_employee + emp.uif_employer) + '</td></tr>';
+            });
+            html += '<tr class="total-row"><td colspan="2"><strong>Totals</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalGross) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalUifEmployee) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalUifEmployer) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.uifTotal) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            // Summary
+            html += '<div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px;">' +
+                '<div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Employee Contributions:</span><strong>' + formatMoney(calc.totalUifEmployee) + '</strong></div>' +
+                '<div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Employer Contributions:</span><strong>' + formatMoney(calc.totalUifEmployer) + '</strong></div>' +
+                '<div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 2px solid #90caf9; font-size: 1.1rem;"><span><strong>Total Payable:</strong></span><strong>' + formatMoney(calc.uifTotal) + '</strong></div>' +
+                '</div>';
+
+            if (uifStatus.status === 'submitted') {
+                html += '<div style="background: #d4edda; padding: 12px; border-radius: 8px; margin-top: 15px; color: #155724; font-weight: 600;">' +
+                    '✓ Submitted on ' + formatSubmitDate(uifStatus.submitted_date) + '</div>';
+            }
+
+            document.getElementById('uif-content').innerHTML = html;
+            document.getElementById('uifModal').classList.add('show');
+        }
+
+        function getEMP501Period(period) {
+            const [year, month] = period.split('-');
+            const m = parseInt(month);
+            // EMP501 has two periods: March-August (Interim) and September-February (Annual)
+            // Tax year runs March to February
+            if (m >= 3 && m <= 8) {
+                return { label: 'Interim', period: year + '-interim', months: 'March - August ' + year };
+            } else {
+                const taxYear = m >= 9 ? year : (parseInt(year) - 1);
+                return { label: 'Annual', period: taxYear + '-annual', months: 'March ' + taxYear + ' - February ' + (parseInt(taxYear) + 1) };
+            }
+        }
+
+        function previewEMP501(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const calc = calculateReturns(run);
+            const companyDetails = getCompanyDetails();
+            const company = AUTH.getCompanyById(currentCompanyId);
+            const emp501Status = getReturnStatus(runId, 'emp501');
+            const emp501Period = getEMP501Period(run.period);
+
+            let html = '<div class="preview-header-info">' +
+                '<div class="preview-info-item"><div class="preview-info-label">Company</div><div class="preview-info-value">' + (company ? company.name : '-') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">PAYE Ref No.</div><div class="preview-info-value">' + (companyDetails.paye_ref || companyDetails.tax_number || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Period Type</div><div class="preview-info-value">' + emp501Period.label + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Tax Period</div><div class="preview-info-value">' + emp501Period.months + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">SDL Ref No.</div><div class="preview-info-value">' + (companyDetails.sdl_ref || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">UIF Ref No.</div><div class="preview-info-value">' + (companyDetails.uif_ref || 'Not set') + '</div></div>' +
+                '</div>';
+
+            html += '<div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px; color: #856404;">' +
+                '<strong>Note:</strong> EMP501 is a bi-annual reconciliation that summarizes all EMP201 declarations for the period. ' +
+                'This preview shows data for <strong>' + formatPeriod(run.period) + '</strong>. ' +
+                'To submit the full reconciliation, you would need to aggregate all months in the ' + emp501Period.label.toLowerCase() + ' period (' + emp501Period.months + ').' +
+                '</div>';
+
+            // Reconciliation Summary
+            html += '<h4 style="color: #667eea; margin-bottom: 10px;">Reconciliation Summary for ' + formatPeriod(run.period) + '</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Description</th><th style="text-align:right;">Amount Declared</th></tr></thead>' +
+                '<tbody>' +
+                '<tr><td>Total PAYE withheld</td><td class="amount">' + formatMoney(calc.totalPaye) + '</td></tr>' +
+                '<tr><td>SDL @ 1% of gross remuneration</td><td class="amount">' + formatMoney(calc.totalSdl) + '</td></tr>' +
+                '<tr><td>UIF - Employee contributions @ 1%</td><td class="amount">' + formatMoney(calc.totalUifEmployee) + '</td></tr>' +
+                '<tr><td>UIF - Employer contributions @ 1%</td><td class="amount">' + formatMoney(calc.totalUifEmployer) + '</td></tr>' +
+                '<tr class="total-row"><td><strong>Total Amount Due to SARS</strong></td><td class="amount"><strong>' + formatMoney(calc.emp201Total) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            // Employee summary
+            html += '<h4 style="color: #667eea; margin: 20px 0 10px;">Employee Certificate Summary (IRP5/IT3a)</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Employee</th><th>ID Number</th><th style="text-align:right;">Remuneration</th><th style="text-align:right;">PAYE</th><th style="text-align:right;">UIF</th></tr></thead>' +
+                '<tbody>';
+            calc.employees.forEach(emp => {
+                html += '<tr><td>' + emp.name + '</td><td>' + emp.id_number + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.gross) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.paye) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.uif_employee) + '</td></tr>';
+            });
+            html += '<tr class="total-row"><td colspan="2"><strong>Totals (' + calc.employees.length + ' employees)</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalGross) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalPaye) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalUifEmployee) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            if (emp501Status.status === 'submitted') {
+                html += '<div style="background: #d4edda; padding: 12px; border-radius: 8px; margin-top: 15px; color: #155724; font-weight: 600;">' +
+                    '✓ Submitted on ' + formatSubmitDate(emp501Status.submitted_date) + '</div>';
+            }
+
+            document.getElementById('emp501-content').innerHTML = html;
+            document.getElementById('emp501Modal').classList.add('show');
+        }
+
+        function previewWCF(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const calc = calculateReturns(run);
+            const companyDetails = getCompanyDetails();
+            const company = AUTH.getCompanyById(currentCompanyId);
+            const wcfStatus = getReturnStatus(runId, 'wcf');
+
+            // WCF assessment is typically based on industry risk class (we'll use a default 1% for demo)
+            const wcfRate = 0.01; // 1% of gross remuneration (varies by industry)
+            const wcfAmount = Math.round(calc.totalGross * wcfRate * 100) / 100;
+
+            let html = '<div class="preview-header-info">' +
+                '<div class="preview-info-item"><div class="preview-info-label">Company</div><div class="preview-info-value">' + (company ? company.name : '-') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Registration No.</div><div class="preview-info-value">' + (companyDetails.reg_number || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">COID Ref No.</div><div class="preview-info-value">' + (companyDetails.coid_ref || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Period</div><div class="preview-info-value">' + formatPeriod(run.period) + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Total Employees</div><div class="preview-info-value">' + calc.employees.length + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Industry Class</div><div class="preview-info-value">' + (companyDetails.industry_class || 'Not specified') + '</div></div>' +
+                '</div>';
+
+            html += '<div style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin-bottom: 15px; color: #0d47a1;">' +
+                '<strong>Note:</strong> WCF (Compensation for Occupational Injuries and Diseases Act) returns are typically submitted annually. ' +
+                'The assessment rate varies by industry classification. This preview uses an estimated rate of ' + (wcfRate * 100) + '% for demonstration.' +
+                '</div>';
+
+            // Summary
+            html += '<h4 style="color: #667eea; margin-bottom: 10px;">Return Summary</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Description</th><th style="text-align:right;">Amount</th></tr></thead>' +
+                '<tbody>' +
+                '<tr><td>Total Gross Remuneration (Earnings)</td><td class="amount">' + formatMoney(calc.totalGross) + '</td></tr>' +
+                '<tr><td>Number of Employees</td><td class="amount">' + calc.employees.length + '</td></tr>' +
+                '<tr><td>Assessment Rate (Industry Class)</td><td class="amount">' + (wcfRate * 100) + '%</td></tr>' +
+                '<tr class="total-row"><td><strong>Estimated Assessment Amount</strong></td><td class="amount"><strong>' + formatMoney(wcfAmount) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            // Employee earnings breakdown
+            html += '<h4 style="color: #667eea; margin: 20px 0 10px;">Employee Earnings Breakdown</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Employee</th><th>ID Number</th><th style="text-align:right;">Gross Remuneration</th><th style="text-align:right;">Contribution</th></tr></thead>' +
+                '<tbody>';
+            calc.employees.forEach(emp => {
+                const empContribution = Math.round(emp.gross * wcfRate * 100) / 100;
+                html += '<tr><td>' + emp.name + '</td><td>' + emp.id_number + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.gross) + '</td>' +
+                    '<td class="amount">' + formatMoney(empContribution) + '</td></tr>';
+            });
+            html += '<tr class="total-row"><td colspan="2"><strong>Totals</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalGross) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(wcfAmount) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            if (wcfStatus.status === 'submitted') {
+                html += '<div style="background: #d4edda; padding: 12px; border-radius: 8px; margin-top: 15px; color: #155724; font-weight: 600;">' +
+                    '✓ Submitted on ' + formatSubmitDate(wcfStatus.submitted_date) + '</div>';
+            }
+
+            document.getElementById('wcf-content').innerHTML = html;
+            document.getElementById('wcfModal').classList.add('show');
+        }
+
+        function submitReturn(runId, type) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const typeNames = {
+                'emp201': 'EMP201',
+                'uif': 'UIF Return',
+                'emp501': 'EMP501',
+                'wcf': 'WCF Return'
+            };
+            const typeName = typeNames[type] || type;
+            if (!confirm('Mark ' + typeName + ' for ' + formatPeriod(run.period) + ' as submitted?\n\nThis records that the return has been filed.')) return;
+
+            setReturnStatus(runId, type, {
+                status: 'submitted',
+                submitted_date: new Date().toISOString()
+            });
+
+            displayPayruns();
+            alert(typeName + ' for ' + formatPeriod(run.period) + ' has been marked as submitted.');
+        }
+
+        function formatSubmitDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.getDate() + ' ' + getMonthName(d.getMonth()) + ' ' + d.getFullYear();
+        }
+
+        // ========== HELPERS ==========
         function formatPeriod(period) {
             const [year, month] = period.split('-');
-            const months = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
-            return `${months[parseInt(month) - 1]} ${year}`;
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return months[parseInt(month) - 1] + ' ' + year;
         }
 
         function formatMoney(amount) {
-            return parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            return 'R ' + (amount || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         }
 
-        function showCreateModal() {
-            document.getElementById('createModal').classList.add('active');
-            // Set default to current month
-            const now = new Date();
-            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            document.getElementById('payPeriod').value = currentMonth;
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
         }
 
-        function closeCreateModal() {
-            document.getElementById('createModal').classList.remove('active');
-            document.getElementById('payPeriod').value = '';
-            document.getElementById('notes').value = '';
-        }
-
-        async function createPayrun(event) {
-            event.preventDefault();
-
-            const payPeriod = document.getElementById('payPeriod').value;
-            const notes = document.getElementById('notes').value;
-
-            try {
-                const response = await fetch('http://localhost:3000/api/payruns/runs', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        company_id: selectedCompanyId,
-                        pay_period: payPeriod,
-                        notes: notes
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    closeCreateModal();
-                    loadPayruns();
-                } else {
-                    showError(data.error || 'Kon nie loonrun skep nie');
-                }
-            } catch (error) {
-                showError('Fout met skep van loonrun: ' + error.message);
-            }
-        }
-
-        async function finalizePayrun(runId, event) {
-            event.stopPropagation();
-
-            if (!confirm('Is jy seker jy wil hierdie loonrun finaliseer? Dit kan nie ongedaan gemaak word nie.')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`http://localhost:3000/api/payruns/runs/${runId}/finalize`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert(`Loonrun gefinaliseer!\n\nWerknemers: ${data.totals.employees}\nBruto: R ${formatMoney(data.totals.gross)}\nPAYE: R ${formatMoney(data.totals.paye)}\nNetto: R ${formatMoney(data.totals.net)}`);
-                    loadPayruns();
-                } else {
-                    showError(data.error || 'Kon nie loonrun finaliseer nie');
-                }
-            } catch (error) {
-                showError('Fout met finaliseer van loonrun: ' + error.message);
-            }
-        }
-
-        async function viewSummary(runId, event) {
-            event.stopPropagation();
-
-            try {
-                const response = await fetch(`http://localhost:3000/api/payruns/runs/${runId}/summary`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    displaySummary(data);
-                } else {
-                    showError(data.error || 'Kon nie opsomming laai nie');
-                }
-            } catch (error) {
-                showError('Fout met laai van opsomming: ' + error.message);
-            }
-        }
-
-        function displaySummary(data) {
-            const { run, summary } = data;
-
-            document.getElementById('summaryTitle').textContent = `Loonrun: ${formatPeriod(run.pay_period)}`;
-
-            let content = '';
-
-            // EFT Section
-            if (summary.eft.count > 0) {
-                content += createPaymentMethodSection('EFT Betalings', summary.eft);
-            }
-
-            // Cash Section
-            if (summary.cash.count > 0) {
-                content += createPaymentMethodSection('Kontant Betalings', summary.cash);
-            }
-
-            // Cheque Section
-            if (summary.cheque.count > 0) {
-                content += createPaymentMethodSection('Tjek Betalings', summary.cheque);
-            }
-
-            // Overall Totals
-            content += `
-                <div class="overall-totals">
-                    <h3>Totale Opsomming</h3>
-                    <div class="totals-grid">
-                        <div class="total-item">
-                            <div class="total-label">Werknemers</div>
-                            <div class="total-value">${summary.overall.total_employees}</div>
-                        </div>
-                        <div class="total-item">
-                            <div class="total-label">Bruto Salaris</div>
-                            <div class="total-value">R ${formatMoney(summary.overall.total_gross)}</div>
-                        </div>
-                        <div class="total-item">
-                            <div class="total-label">PAYE</div>
-                            <div class="total-value">R ${formatMoney(summary.overall.total_paye)}</div>
-                        </div>
-                        <div class="total-item">
-                            <div class="total-label">UIF</div>
-                            <div class="total-value">R ${formatMoney(summary.overall.total_uif)}</div>
-                        </div>
-                        <div class="total-item">
-                            <div class="total-label">Netto Salaris</div>
-                            <div class="total-value">R ${formatMoney(summary.overall.total_net)}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('summaryContent').innerHTML = content;
-            document.getElementById('summaryModal').classList.add('active');
-        }
-
-        function createPaymentMethodSection(title, methodData) {
-            return `
-                <div class="payment-method-section">
-                    <div class="payment-method-header">
-                        <div class="payment-method-title">${title}</div>
-                        <div class="payment-method-total">R ${formatMoney(methodData.total)}</div>
-                    </div>
-                    <div class="employee-list">
-                        ${methodData.employees.map(emp => `
-                            <div class="employee-item">
-                                <div>
-                                    <span class="employee-name">${emp.employee_name}</span>
-                                    <span class="employee-number">#${emp.employee_number}</span>
-                                </div>
-                                <div class="employee-net">R ${formatMoney(emp.net_salary)}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        function closeSummaryModal() {
-            document.getElementById('summaryModal').classList.remove('active');
-        }
-
-        async function markAsPaid(runId, event) {
-            event.stopPropagation();
-
-            if (!confirm('Is jy seker jy wil hierdie loonrun merk as betaal?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`http://localhost:3000/api/payruns/runs/${runId}/mark-paid`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    loadPayruns();
-                } else {
-                    showError(data.error || 'Kon nie loonrun merk as betaal nie');
-                }
-            } catch (error) {
-                showError('Fout met merk as betaal: ' + error.message);
-            }
-        }
-
-        async function deletePayrun(runId, event) {
-            event.stopPropagation();
-
-            if (!confirm('Is jy seker jy wil hierdie loonrun verwyder?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`http://localhost:3000/api/payruns/runs/${runId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    loadPayruns();
-                } else {
-                    showError(data.error || 'Kon nie loonrun verwyder nie');
-                }
-            } catch (error) {
-                showError('Fout met verwyder van loonrun: ' + error.message);
-            }
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.innerHTML = `<div class="error">${message}</div>`;
-            setTimeout(() => {
-                errorDiv.innerHTML = '';
-            }, 5000);
-        }
-
-        function goBack() {
-            window.location.href = 'employee-management.html#employees';
-        }
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('show');
+            });
+        });
     </script>
 </body>
 </html>

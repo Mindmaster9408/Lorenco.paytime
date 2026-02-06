@@ -1,353 +1,261 @@
 <!DOCTYPE html>
-<html lang="af">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Werknemer Detail</title>
+    <title>Employee Detail</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
             min-height: 100vh;
         }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        .wrapper { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 300px; background: white; border-radius: 15px;
+            padding: 25px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            height: fit-content; position: sticky; top: 20px;
         }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 2px solid #eee; }
+        .sidebar-title { color: #667eea; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+        .sidebar-section { margin-top: 20px; }
+        .sidebar-section-title {
+            padding: 10px 20px; color: #999; font-size: 0.75rem;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .sidebar-link {
+            display: block; padding: 12px 20px; color: #666; text-decoration: none;
+            transition: all 0.2s; border-left: 3px solid transparent; font-weight: 500;
+        }
+        .sidebar-link:hover { background: #f8f9fa; color: #667eea; border-left-color: #667eea; }
+        .sidebar-link.active { background: #f0f4ff; color: #667eea; border-left-color: #667eea; font-weight: 600; }
+        .company-carousel { margin-top: 15px; padding: 15px 20px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+        .carousel-title { font-size: 0.85rem; font-weight: 600; color: #999; margin-bottom: 10px; text-transform: uppercase; }
+        .carousel-companies { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+        .carousel-company {
+            background: #f8f9fa; padding: 10px 12px; border-radius: 6px; font-size: 0.85rem;
+            color: #333; cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .carousel-company:hover { background: #eee; border-color: #667eea; color: #667eea; }
+        .sidebar-actions { padding: 15px 20px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .btn-sidebar { padding: 10px 15px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; text-align: center; }
+        .btn-switch { background: #667eea; color: white; }
+        .btn-switch:hover { background: #5568d3; }
+        .btn-logout { background: #eee; color: #333; }
+        .btn-logout:hover { background: #ddd; }
+
+        .main-content { flex: 1; }
+
+        /* HEADER */
         .header {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: white; padding: 30px; border-radius: 15px;
+            margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        .header h1 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        .employee-info {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .info-item {
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-        .info-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        .info-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-        }
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .header h1 { color: #667eea; margin-bottom: 0; }
+        .employee-info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
+        .info-item { padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .info-label { font-size: 12px; color: #666; margin-bottom: 5px; }
+        .info-value { font-size: 16px; font-weight: 600; color: #333; }
+
+        /* TABS */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
         .tab {
-            padding: 15px 30px;
-            background: white;
-            border: none;
-            border-radius: 10px 10px 0 0;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            color: #666;
-            transition: all 0.3s;
+            padding: 15px 30px; background: white; border: none; border-radius: 10px 10px 0 0;
+            cursor: pointer; font-size: 16px; font-weight: 600; color: #666; transition: all 0.3s;
         }
-        .tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
+        .tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* CARD */
         .card {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            background: white; padding: 25px; border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;
         }
-        .card h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
-        }
-        .section-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        .section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-        }
+        .card h3 { color: #667eea; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #667eea; }
+
+        /* SECTIONS */
+        .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .section { background: #f8f9fa; padding: 20px; border-radius: 10px; }
         .section-title {
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            font-weight: 600; color: #667eea; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
         }
+
+        /* SALARY ITEMS */
         .salary-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            background: white;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px;
+            cursor: pointer; transition: all 0.2s;
         }
-        .salary-item:hover {
-            background: #e3f2fd;
+        .salary-item:hover { background: #e3f2fd; }
+        .salary-item.editable { border-left: 3px solid #667eea; }
+        .salary-label { font-size: 14px; color: #555; }
+        .salary-value { font-weight: 600; color: #333; }
+        .salary-item .delete-btn {
+            background: #dc3545; color: white; border: none; border-radius: 4px;
+            padding: 2px 8px; font-size: 11px; cursor: pointer; margin-left: 10px;
         }
-        .salary-item.editable {
-            border-left: 3px solid #667eea;
-        }
-        .salary-label {
-            font-size: 14px;
-            color: #555;
-        }
-        .salary-value {
-            font-weight: 600;
-            color: #333;
-        }
+
+        /* BUTTONS */
         .btn {
-            padding: 8px 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
+            padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 6px; font-size: 14px;
+            font-weight: 600; cursor: pointer; transition: transform 0.2s;
         }
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        }
-        .btn-danger {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        }
-        .btn-secondary {
-            background: #6c757d;
-        }
-        .input-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr auto;
-            gap: 10px;
-            margin-bottom: 10px;
-            align-items: end;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 8px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        .checkbox {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 10px 0;
-        }
-        .checkbox input[type="checkbox"] {
-            width: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #333;
-            font-size: 13px;
-        }
-        td {
-            font-size: 14px;
-        }
-        tr:hover {
-            background: #f8f9fa;
-        }
-        .action-btns {
-            display: flex;
-            gap: 5px;
-        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-success { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
+        .btn-danger { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+        .btn-secondary { background: #6c757d; }
+
+        /* COLLAPSIBLE */
+        .collapsible { cursor: pointer; user-select: none; }
+        .collapsible:hover { background: #e8eaf6; }
+        .collapsed-content { display: none; padding: 15px; background: white; border-radius: 8px; margin-top: 10px; }
+        .expanded .collapsed-content { display: block; }
+
+        /* CHECKBOX */
+        .checkbox { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+        .checkbox input[type="checkbox"] { width: auto; }
+
+        /* PAYROLL SUMMARY */
+        .total-row { border-top: 2px solid #667eea; font-weight: 700; background: #f0f4ff !important; }
+
+        /* MODAL */
         .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            overflow-y: auto;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;
         }
-        .modal-content {
-            background: white;
-            max-width: 600px;
-            margin: 50px auto;
-            border-radius: 15px;
-            padding: 30px;
-        }
+        .modal.show { display: flex; align-items: flex-start; justify-content: center; padding: 50px 20px; }
+        .modal-content { background: white; max-width: 600px; width: 100%; border-radius: 15px; padding: 30px; }
+        .modal-content.wide { max-width: 800px; max-height: 90vh; overflow-y: auto; }
         .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #667eea;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #667eea;
         }
-        .modal-header h3 {
-            color: #667eea;
-            margin: 0;
+        .modal-header h3 { color: #667eea; margin: 0; }
+
+        /* FORMS */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;
         }
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        /* LEAVE */
+        .leave-balances { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .leave-balance-card {
+            background: white; border-radius: 12px; padding: 20px; text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-top: 4px solid #667eea;
         }
-        .badge-regular {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-        .badge-current {
-            background: #fff3e0;
-            color: #f57c00;
-        }
-        .total-row {
-            border-top: 2px solid #667eea;
-            font-weight: 700;
-            background: #f0f4ff !important;
-        }
-        .collapsible {
-            cursor: pointer;
-            user-select: none;
-        }
-        .collapsible:hover {
-            background: #e8eaf6;
-        }
-        .collapsed-content {
-            display: none;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-        .expanded .collapsed-content {
-            display: block;
-        }
+        .leave-balance-card.sick { border-top-color: #dc3545; }
+        .leave-balance-card.family { border-top-color: #ffc107; }
+        .leave-balance-type { font-size: 0.85rem; color: #999; text-transform: uppercase; font-weight: 600; }
+        .leave-balance-number { font-size: 2rem; font-weight: 700; color: #333; margin: 5px 0; }
+        .leave-balance-total { font-size: 0.8rem; color: #999; }
+        .leave-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .leave-table th, .leave-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .leave-table th { background: #f8f9fa; font-weight: 600; color: #333; }
+        .leave-status { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .leave-approved { background: #d4edda; color: #155724; }
+        .leave-pending { background: #fff3cd; color: #856404; }
+        .leave-rejected { background: #f8d7da; color: #721c24; }
+
+        /* NOTES */
         .note-item {
-            background: #fff9c4;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 4px solid #fbc02d;
+            background: #fff9c4; padding: 15px; border-radius: 8px;
+            margin-bottom: 10px; border-left: 4px solid #fbc02d;
         }
-        .note-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
+        .note-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .note-meta { font-size: 12px; color: #666; }
+        .note-text { color: #333; line-height: 1.5; }
+
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; color: #333; font-size: 13px; }
+
+        /* PAYSLIP STATUS */
+        .payslip-status-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 20px; border-radius: 8px; margin-bottom: 15px; font-weight: 600;
         }
-        .note-meta {
-            font-size: 12px;
-            color: #666;
+        .payslip-status-bar.draft { background: #fff3cd; color: #856404; }
+        .payslip-status-bar.finalized { background: #d4edda; color: #155724; }
+        .payslip-status-bar.locked { background: #f8d7da; color: #721c24; }
+        .locked-overlay {
+            position: relative;
         }
-        .note-text {
-            color: #333;
-            line-height: 1.5;
+        .locked-overlay::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.5); border-radius: 10px; z-index: 5;
+            pointer-events: all; cursor: not-allowed;
         }
+        .btn-finalize { background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 8px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .btn-finalize:hover { transform: translateY(-1px); }
+        .btn-unfinalize { background: linear-gradient(135deg, #ffc107, #ff9800); color: #333; padding: 8px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .btn-unfinalize:hover { transform: translateY(-1px); }
+
+        /* AUTH MODAL */
+        .auth-input { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
+        .auth-input:focus { outline: none; border-color: #667eea; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h1 id="employeeName">Werknemer Detail</h1>
-                <button class="btn" onclick="goBackToEmployeeList()" style="background: #667eea; color: white;">← Terug na Werknemers</button>
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Menu</div>
             </div>
-            <div class="employee-info">
-                <div class="info-item">
-                    <div class="info-label">Werknemernr</div>
-                    <div class="info-value" id="employeeNumber">-</div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Navigation</div>
+                <a href="company-dashboard.html" class="sidebar-link">📊 Dashboard</a>
+                <a href="employee-management.html" class="sidebar-link">👥 Employees</a>
+                <a href="payruns.html" class="sidebar-link active">💵 Pay Runs</a>
+                <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
+            </div>
+            <div class="company-carousel">
+                <div class="carousel-title">Switch Company</div>
+                <div class="carousel-container">
+                    <div class="carousel-companies" id="companies-carousel"></div>
                 </div>
-                <div class="info-item">
-                    <div class="info-label">Posisie</div>
-                    <div class="info-value" id="employeePosition">-</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Departement</div>
-                    <div class="info-value" id="employeeDepartment">-</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">ID Nommer</div>
-                    <div class="info-value" id="employeeId">-</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Datum van Geboorte</div>
-                    <div class="info-value" id="employeeDOB">-</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Betaalmetode</div>
-                    <div class="info-value" id="employeePayMethod">-</div>
-                </div>
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn-sidebar btn-switch" onclick="window.location.href='company-selection.html'">← Return to Dashboard</button>
+                <button class="btn-sidebar btn-logout" onclick="handleLogout()">🚪 Logout</button>
             </div>
         </div>
 
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-top">
+                <h1 id="employeeName">Employee Detail</h1>
+                <button class="btn" onclick="window.location.href='payruns.html'">← Back to Pay Runs</button>
+            </div>
+            <div class="employee-info">
+                <div class="info-item"><div class="info-label">Employee Number</div><div class="info-value" id="empNumber">-</div></div>
+                <div class="info-item"><div class="info-label">Position</div><div class="info-value" id="empPosition">-</div></div>
+                <div class="info-item"><div class="info-label">Department</div><div class="info-value" id="empDepartment">-</div></div>
+                <div class="info-item"><div class="info-label">ID Number</div><div class="info-value" id="empIdNumber">-</div></div>
+                <div class="info-item"><div class="info-label">Date of Birth</div><div class="info-value" id="empDOB">-</div></div>
+                <div class="info-item"><div class="info-label">Payment Method</div><div class="info-value" id="empPayMethod">-</div></div>
+            </div>
+        </div>
+
+        <!-- TABS -->
         <div class="tabs">
             <button class="tab active" onclick="switchTab('payroll')">💰 Payroll</button>
             <button class="tab" onclick="switchTab('edit')">✏️ Edit Info</button>
@@ -355,1185 +263,775 @@
             <button class="tab" onclick="switchTab('notes')">📝 Notes</button>
         </div>
 
-        <!-- PAYROLL TAB -->
+        <!-- ==================== PAYROLL TAB ==================== -->
         <div id="payroll-tab" class="tab-content active">
             <div class="card">
-                <h3>Payroll vir Periode: <select id="payPeriod" onchange="loadPayrollData()"></select></h3>
-
+                <h3 style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <span>Payroll for Period: <select id="payPeriod" onchange="loadPayrollData()" style="padding: 5px 10px; border: 2px solid #667eea; border-radius: 6px; font-size: 14px;"></select></span>
+                    <span id="finalizeBtn"></span>
+                </h3>
+                <div id="payslipStatusBar"></div>
+                <div id="payrollContent">
                 <div class="section-grid">
-                    <!-- REGULAR INPUTS -->
                     <div class="section">
-                        <div class="section-title">
-                            <span>📅 Regular Inputs (Maandeliks)</span>
-                            <button class="btn btn-sm btn-success" onclick="openAddRegularInput()">+ Voeg By</button>
-                        </div>
-
+                        <div class="section-title"><span>📅 Regular Inputs (Monthly)</span><button class="btn btn-sm btn-success" onclick="openAddRegularInput()">+ Add</button></div>
                         <div class="salary-item editable" onclick="editBasicSalary()">
                             <span class="salary-label">Basic Salary</span>
                             <span class="salary-value" id="basicSalary">R 0.00</span>
                         </div>
-                        <div class="salary-item editable" onclick="editAllowance('housing')">
-                            <span class="salary-label">Housing Allowance</span>
-                            <span class="salary-value" id="housingAllowance">R 0.00</span>
-                        </div>
-                        <div class="salary-item editable" onclick="editAllowance('travel')">
-                            <span class="salary-label">Travel Allowance</span>
-                            <span class="salary-value" id="travelAllowance">R 0.00</span>
-                        </div>
-                        <div class="salary-item editable" onclick="editAllowance('phone')">
-                            <span class="salary-label">Phone Allowance</span>
-                            <span class="salary-value" id="phoneAllowance">R 0.00</span>
-                        </div>
-
-                        <div id="regularInputsList" style="margin-top: 10px;"></div>
+                        <div id="regularInputsList"></div>
                     </div>
-
-                    <!-- CURRENT INPUTS -->
                     <div class="section">
-                        <div class="section-title">
-                            <span>📊 Current Inputs (Hierdie Maand)</span>
-                            <button class="btn btn-sm btn-success" onclick="openAddCurrentInput()">+ Voeg By</button>
-                        </div>
-
-                        <div id="currentInputsList">
-                            <p style="color: #999; font-size: 14px;">Geen current inputs vir hierdie periode nie</p>
-                        </div>
+                        <div class="section-title"><span>📊 Current Inputs (This Month)</span><button class="btn btn-sm btn-success" onclick="openAddCurrentInput()">+ Add</button></div>
+                        <div id="currentInputsList"><p style="color: #999; font-size: 14px;">No current inputs for this period</p></div>
                     </div>
                 </div>
 
-                <!-- ADDITIONAL HOURS SECTION -->
+                <!-- ADDITIONAL HOURS -->
                 <div class="card" style="margin-top: 20px;">
                     <div class="checkbox">
                         <input type="checkbox" id="showAdditionalHours" onchange="toggleAdditionalHours()">
-                        <label for="showAdditionalHours" style="margin: 0;">Betaal vir Addisionele Ure</label>
+                        <label for="showAdditionalHours" style="margin: 0; cursor: pointer;">Pay for Additional Hours</label>
                     </div>
-
                     <div id="additionalHoursSection" style="display: none; margin-top: 15px;">
-                        <!-- OVERTIME -->
                         <div class="section collapsible" onclick="toggleSection(this)">
-                            <div class="section-title">
-                                ⏰ Overtime
-                                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddOvertime()">+ Voeg By</button>
-                            </div>
-                            <div class="collapsed-content">
-                                <div id="overtimeList"></div>
-                            </div>
+                            <div class="section-title">⏰ Overtime <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddOvertime()">+ Add</button></div>
+                            <div class="collapsed-content"><div id="overtimeList"></div></div>
                         </div>
-
-                        <!-- SHORT TIME -->
                         <div class="section collapsible" onclick="toggleSection(this)" style="margin-top: 15px;">
-                            <div class="section-title">
-                                ⏱️ Short Time
-                                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddShortTime()">+ Voeg By</button>
-                            </div>
-                            <div class="collapsed-content">
-                                <div id="shortTimeList"></div>
-                            </div>
+                            <div class="section-title">⏱️ Short Time <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddShortTime()">+ Add</button></div>
+                            <div class="collapsed-content"><div id="shortTimeList"></div></div>
                         </div>
-
-                        <!-- PAID AT DIFFERENT RATE -->
                         <div class="section collapsible" onclick="toggleSection(this)" style="margin-top: 15px;">
-                            <div class="section-title">
-                                💵 Paid at Different Rate
-                                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddMultiRate()">+ Voeg By</button>
-                            </div>
-                            <div class="collapsed-content">
-                                <div id="multiRateList"></div>
-                            </div>
+                            <div class="section-title">💵 Paid at Different Rate <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddMultiRate()">+ Add</button></div>
+                            <div class="collapsed-content"><div id="multiRateList"></div></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- PAYROLL SUMMARY -->
                 <div class="card" style="margin-top: 20px; background: linear-gradient(135deg, #f0f4ff 0%, #e8eaf6 100%);">
-                    <h3>💰 Payroll Opsomming</h3>
+                    <h3>💰 Payroll Summary</h3>
                     <table>
-                        <tr>
-                            <td><strong>Gross Salary:</strong></td>
-                            <td style="text-align: right;"><strong id="totalGross">R 0.00</strong></td>
-                        </tr>
-                        <tr>
-                            <td>PAYE:</td>
-                            <td style="text-align: right;" id="totalPAYE">R 0.00</td>
-                        </tr>
-                        <tr>
-                            <td>UIF:</td>
-                            <td style="text-align: right;" id="totalUIF">R 0.00</td>
-                        </tr>
-                        <tr>
-                            <td>Pension:</td>
-                            <td style="text-align: right;" id="totalPension">R 0.00</td>
-                        </tr>
-                        <tr>
-                            <td>Medical Aid:</td>
-                            <td style="text-align: right;" id="totalMedical">R 0.00</td>
-                        </tr>
-                        <tr class="total-row">
-                            <td><strong>NET SALARY:</strong></td>
-                            <td style="text-align: right;"><strong id="totalNet" style="font-size: 18px; color: #28a745;">R 0.00</strong></td>
-                        </tr>
+                        <tr><td><strong>Gross Salary:</strong></td><td style="text-align: right;"><strong id="totalGross">R 0.00</strong></td></tr>
+                        <tr><td>PAYE:</td><td style="text-align: right;" id="totalPAYE">R 0.00</td></tr>
+                        <tr><td>UIF:</td><td style="text-align: right;" id="totalUIF">R 0.00</td></tr>
+                        <tr><td>Deductions:</td><td style="text-align: right;" id="totalDeductions">R 0.00</td></tr>
+                        <tr class="total-row"><td><strong>NET SALARY:</strong></td><td style="text-align: right;"><strong id="totalNet" style="font-size: 18px; color: #28a745;">R 0.00</strong></td></tr>
                     </table>
-                    <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="calculatePayslip()">Bereken Payslip</button>
+                    <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="calculatePayslip()">Calculate Payslip</button>
                 </div>
+                </div><!-- /payrollContent -->
             </div>
         </div>
 
-        <!-- EDIT INFO TAB -->
+        <!-- ==================== EDIT INFO TAB ==================== -->
         <div id="edit-tab" class="tab-content">
             <div class="card">
-                <h3>Werknemer Inligting</h3>
-
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <h3>Employee Information</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div>
-                        <h4 style="color: #667eea; margin-bottom: 10px;">Persoonlike Inligting</h4>
-                        <div class="info-item">
-                            <div class="info-label">Volle Naam</div>
-                            <div class="info-value" id="editFullName">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">ID Nommer</div>
-                            <div class="info-value" id="editIdNumber">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Datum van Geboorte</div>
-                            <div class="info-value" id="editDOB">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Geslag</div>
-                            <div class="info-value" id="editGender">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">E-pos</div>
-                            <div class="info-value" id="editEmail">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Telefoon</div>
-                            <div class="info-value" id="editPhone">-</div>
-                        </div>
+                        <h4 style="color: #667eea; margin-bottom: 10px;">Personal Information</h4>
+                        <div class="info-item"><div class="info-label">Full Name</div><div class="info-value" id="editFullName">-</div></div>
+                        <div class="info-item"><div class="info-label">ID Number</div><div class="info-value" id="editIdNumber">-</div></div>
+                        <div class="info-item"><div class="info-label">Email</div><div class="info-value" id="editEmail">-</div></div>
+                        <div class="info-item"><div class="info-label">Phone</div><div class="info-value" id="editPhone">-</div></div>
                     </div>
-
                     <div>
-                        <h4 style="color: #667eea; margin-bottom: 10px;">Werk Inligting</h4>
-                        <div class="info-item">
-                            <div class="info-label">Werknemernommer</div>
-                            <div class="info-value" id="editEmpNumber">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Pos Titel</div>
-                            <div class="info-value" id="editJobTitle">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Departement</div>
-                            <div class="info-value" id="editDepartment">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Datum Aangestel</div>
-                            <div class="info-value" id="editDateAppointed">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Betaalmetode</div>
-                            <div class="info-value" id="editPayMethod">-</div>
-                        </div>
-                        <div class="info-item" id="editBankInfo" style="display: none;">
-                            <div class="info-label">Bank Besonderhede</div>
-                            <div class="info-value" id="editBankDetails">-</div>
+                        <h4 style="color: #667eea; margin-bottom: 10px;">Work Information</h4>
+                        <div class="info-item"><div class="info-label">Employee Number</div><div class="info-value" id="editEmpNumber">-</div></div>
+                        <div class="info-item"><div class="info-label">Job Title</div><div class="info-value" id="editJobTitle">-</div></div>
+                        <div class="info-item"><div class="info-label">Department</div><div class="info-value" id="editDepartment">-</div></div>
+                        <div class="info-item"><div class="info-label">Date Appointed</div><div class="info-value" id="editDateAppointed">-</div></div>
+                        <div class="info-item"><div class="info-label">Payment Method</div><div class="info-value" id="editPayMethod">-</div></div>
+                        <div class="info-item" id="editBankSection" style="display: none;">
+                            <div class="info-label">Bank Details</div><div class="info-value" id="editBankDetails">-</div>
                         </div>
                     </div>
                 </div>
-
-                <div style="margin-top: 20px;">
-                    <h4 style="color: #667eea; margin-bottom: 10px;">Adres Inligting</h4>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-                        <div class="info-item">
-                            <div class="info-label">Residensiële Adres</div>
-                            <div class="info-value" id="editResAddress">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Posadres</div>
-                            <div class="info-value" id="editPostalAddress">-</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="openEditEmployeeModal()">Wysig Inligting</button>
-                    <button class="btn" onclick="window.location.href='employee-management.html'">Terug na Employee Management</button>
-                </div>
+                <div style="margin-top: 20px;"><button class="btn" onclick="openEditEmployeeModal()">Edit Information</button></div>
             </div>
         </div>
 
-        <!-- LEAVE TAB -->
+        <!-- ==================== LEAVE TAB ==================== -->
         <div id="leave-tab" class="tab-content">
             <div class="card">
                 <h3>Leave Management</h3>
-                <p>Verlof bestuur sal binnekort beskikbaar wees...</p>
+                <div class="leave-balances">
+                    <div class="leave-balance-card">
+                        <div class="leave-balance-type">Annual Leave</div>
+                        <div class="leave-balance-number" id="annualLeaveBalance">15</div>
+                        <div class="leave-balance-total">of 15 days remaining</div>
+                    </div>
+                    <div class="leave-balance-card sick">
+                        <div class="leave-balance-type">Sick Leave</div>
+                        <div class="leave-balance-number" id="sickLeaveBalance">30</div>
+                        <div class="leave-balance-total">of 30 days (3yr cycle)</div>
+                    </div>
+                    <div class="leave-balance-card family">
+                        <div class="leave-balance-type">Family Responsibility</div>
+                        <div class="leave-balance-number" id="familyLeaveBalance">3</div>
+                        <div class="leave-balance-total">of 3 days remaining</div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+                    <button class="btn btn-success" onclick="openAddLeaveModal()">+ Add Leave Request</button>
+                </div>
+                <table class="leave-table">
+                    <thead><tr><th>Type</th><th>Start Date</th><th>End Date</th><th>Days</th><th>Status</th><th>Reason</th><th>Actions</th></tr></thead>
+                    <tbody id="leaveTableBody"><tr><td colspan="7" style="text-align: center; color: #999; padding: 30px;">No leave records yet</td></tr></tbody>
+                </table>
             </div>
         </div>
 
-        <!-- NOTES TAB -->
+        <!-- ==================== NOTES TAB ==================== -->
         <div id="notes-tab" class="tab-content">
             <div class="card">
-                <h3>Payroll Notes vir <span id="notesCurrentPeriod">-</span></h3>
+                <h3>Employee Notes</h3>
                 <div class="form-group">
-                    <label>Voeg Note by:</label>
-                    <textarea id="newNote" rows="3" placeholder="Tik jou note hier..."></textarea>
+                    <label>Add a note:</label>
+                    <textarea id="newNote" rows="3" placeholder="Type your note here..."></textarea>
                 </div>
-                <button class="btn btn-success" onclick="addNote()">Stoor Note</button>
+                <button class="btn btn-success" onclick="addNote()">Save Note</button>
                 <div id="notesList" style="margin-top: 20px;"></div>
             </div>
         </div>
-    </div>
+        </div><!-- /main-content -->
+    </div><!-- /wrapper -->
 
-    <!-- MODALS -->
+    <!-- ==================== MODALS ==================== -->
 
-    <!-- Edit Employee Info Modal -->
-    <div id="editEmployeeModal" class="modal">
-        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h3>Wysig Werknemer Inligting</h3>
-                <button class="btn btn-danger btn-sm" onclick="closeModal('editEmployeeModal')">Sluit</button>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                <div class="form-group">
-                    <label>Voornaam</label>
-                    <input type="text" id="editFirstName">
-                </div>
-                <div class="form-group">
-                    <label>Van</label>
-                    <input type="text" id="editLastName">
-                </div>
-                <div class="form-group">
-                    <label>E-pos</label>
-                    <input type="email" id="editEmailInput">
-                </div>
-                <div class="form-group">
-                    <label>Telefoon</label>
-                    <input type="tel" id="editPhoneInput">
-                </div>
-                <div class="form-group">
-                    <label>Pos Titel</label>
-                    <input type="text" id="editJobTitleInput">
-                </div>
-                <div class="form-group">
-                    <label>Departement</label>
-                    <input type="text" id="editDepartmentInput">
-                </div>
-                <div class="form-group">
-                    <label>Datum Aangestel</label>
-                    <input type="date" id="editDateAppointedInput">
-                </div>
-                <div class="form-group">
-                    <label>Betaalmetode</label>
-                    <select id="editPayMethodInput">
-                        <option value="EFT">EFT</option>
-                        <option value="Cash">Cash</option>
-                        <option value="Cheque">Cheque</option>
-                    </select>
-                </div>
-            </div>
-
-            <div style="margin-top: 15px;">
-                <h4 style="color: #667eea; margin-bottom: 10px;">Adres Inligting</h4>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                    <div class="form-group">
-                        <label>Residensiële Adres Lyn 1</label>
-                        <input type="text" id="editResLine1">
-                    </div>
-                    <div class="form-group">
-                        <label>Residensiële Adres Lyn 2</label>
-                        <input type="text" id="editResLine2">
-                    </div>
-                    <div class="form-group">
-                        <label>Stad</label>
-                        <input type="text" id="editResCity">
-                    </div>
-                    <div class="form-group">
-                        <label>Provinsie</label>
-                        <input type="text" id="editResProvince">
-                    </div>
-                    <div class="form-group">
-                        <label>Poskode</label>
-                        <input type="text" id="editResPostalCode">
-                    </div>
-                </div>
-            </div>
-
-            <button class="btn btn-success" style="margin-top: 15px; width: 100%;" onclick="saveEmployeeInfo()">Stoor Wysigings</button>
-        </div>
-    </div>
-
-    <!-- Edit Basic Salary Modal -->
+    <!-- Edit Basic Salary -->
     <div id="editBasicModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Wysig Basic Salary</h3>
-                <button class="btn btn-danger btn-sm" onclick="closeModal('editBasicModal')">Sluit</button>
-            </div>
-            <div class="form-group">
-                <label>Basic Salary (pm)</label>
-                <input type="number" id="editBasicValue" step="0.01">
-            </div>
-            <button class="btn btn-success" onclick="saveBasicSalary()">Stoor</button>
+            <div class="modal-header"><h3>Edit Basic Salary</h3><button class="btn btn-danger btn-sm" onclick="closeModal('editBasicModal')">Close</button></div>
+            <div class="form-group"><label>Basic Salary (per month)</label><input type="number" id="editBasicValue" step="0.01" min="0"></div>
+            <button class="btn btn-success" style="width:100%;" onclick="saveBasicSalary()">Save</button>
         </div>
     </div>
 
-    <!-- Add Regular Input Modal -->
+    <!-- Add Regular Input -->
     <div id="addRegularModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Voeg Regular Input By</h3>
-                <button class="btn btn-danger btn-sm" onclick="closeModal('addRegularModal')">Sluit</button>
-            </div>
-            <div class="form-group">
-                <label>Tipe</label>
-                <select id="regularInputType">
-                    <option value="allowance">Allowance</option>
-                    <option value="deduction">Deduction</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Beskrywing</label>
-                <input type="text" id="regularInputDesc">
-            </div>
-            <div class="form-group">
-                <label>Bedrag (pm)</label>
-                <input type="number" id="regularInputAmount" step="0.01">
-            </div>
-            <button class="btn btn-success" onclick="saveRegularInput()">Stoor</button>
+            <div class="modal-header"><h3>Add Regular Input</h3><button class="btn btn-danger btn-sm" onclick="closeModal('addRegularModal')">Close</button></div>
+            <div class="form-group"><label>Type</label><select id="regularInputType"><option value="allowance">Allowance</option><option value="deduction">Deduction</option></select></div>
+            <div class="form-group"><label>Description</label><input type="text" id="regularInputDesc" placeholder="e.g. Housing Allowance"></div>
+            <div class="form-group"><label>Amount (per month)</label><input type="number" id="regularInputAmount" step="0.01" min="0"></div>
+            <button class="btn btn-success" style="width:100%;" onclick="saveRegularInput()">Save</button>
         </div>
     </div>
 
-    <!-- Add Current Input Modal -->
+    <!-- Add Current Input -->
     <div id="addCurrentModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Voeg Current Input By</h3>
-                <button class="btn btn-danger btn-sm" onclick="closeModal('addCurrentModal')">Sluit</button>
-            </div>
-            <div class="form-group">
-                <label>Tipe</label>
-                <select id="currentInputType">
-                    <option value="bonus">Bonus</option>
-                    <option value="commission">Commission</option>
-                    <option value="allowance">Allowance</option>
-                    <option value="deduction">Deduction</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Beskrywing</label>
-                <input type="text" id="currentInputDesc">
-            </div>
-            <div class="form-group">
-                <label>Bedrag</label>
-                <input type="number" id="currentInputAmount" step="0.01">
-            </div>
-            <button class="btn btn-success" onclick="saveCurrentInput()">Stoor</button>
+            <div class="modal-header"><h3>Add Current Input</h3><button class="btn btn-danger btn-sm" onclick="closeModal('addCurrentModal')">Close</button></div>
+            <div class="form-group"><label>Type</label><select id="currentInputType"><option value="bonus">Bonus</option><option value="commission">Commission</option><option value="allowance">Allowance</option><option value="deduction">Deduction</option><option value="other">Other</option></select></div>
+            <div class="form-group"><label>Description</label><input type="text" id="currentInputDesc"></div>
+            <div class="form-group"><label>Amount</label><input type="number" id="currentInputAmount" step="0.01" min="0"></div>
+            <button class="btn btn-success" style="width:100%;" onclick="saveCurrentInput()">Save</button>
         </div>
     </div>
 
-    <!-- Add Overtime Modal -->
+    <!-- Add Overtime -->
     <div id="addOvertimeModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Voeg Overtime By</h3>
-                <button class="btn btn-danger btn-sm" onclick="closeModal('addOvertimeModal')">Sluit</button>
-            </div>
-            <div class="form-group">
-                <label>Datum</label>
-                <input type="date" id="overtimeDate">
-            </div>
-            <div class="form-group">
-                <label>Ure</label>
-                <input type="number" id="overtimeHours" step="0.5">
-            </div>
-            <div class="form-group">
-                <label>Tarief Multiplier</label>
-                <select id="overtimeRate">
-                    <option value="1.5">1.5x (Time and a half)</option>
-                    <option value="2.0">2.0x (Double time)</option>
-                    <option value="2.5">2.5x</option>
-                    <option value="3.0">3.0x (Triple time)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Beskrywing</label>
-                <input type="text" id="overtimeDesc">
-            </div>
-            <button class="btn btn-success" onclick="saveOvertime()">Stoor</button>
+            <div class="modal-header"><h3>Add Overtime</h3><button class="btn btn-danger btn-sm" onclick="closeModal('addOvertimeModal')">Close</button></div>
+            <div class="form-group"><label>Date</label><input type="date" id="overtimeDate"></div>
+            <div class="form-group"><label>Hours</label><input type="number" id="overtimeHours" step="0.5" min="0"></div>
+            <div class="form-group"><label>Rate Multiplier</label><select id="overtimeRate"><option value="1.5">1.5x (Time and a half)</option><option value="2.0">2.0x (Double time)</option><option value="2.5">2.5x</option><option value="3.0">3.0x (Triple time)</option></select></div>
+            <div class="form-group"><label>Description</label><input type="text" id="overtimeDesc"></div>
+            <button class="btn btn-success" style="width:100%;" onclick="saveOvertime()">Save</button>
         </div>
     </div>
 
-    <!-- Add Short Time Modal -->
+    <!-- Add Short Time -->
     <div id="addShortTimeModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Voeg Short Time By</h3>
-                <button class="btn btn-danger btn-sm" onclick="closeModal('addShortTimeModal')">Sluit</button>
-            </div>
-            <div class="form-group">
-                <label>Datum</label>
-                <input type="date" id="shortTimeDate">
-            </div>
-            <div class="form-group">
-                <label>Ure Gemis</label>
-                <input type="number" id="shortTimeHours" step="0.5">
-            </div>
-            <div class="form-group">
-                <label>Rede</label>
-                <input type="text" id="shortTimeReason">
-            </div>
-            <button class="btn btn-success" onclick="saveShortTime()">Stoor</button>
+            <div class="modal-header"><h3>Add Short Time</h3><button class="btn btn-danger btn-sm" onclick="closeModal('addShortTimeModal')">Close</button></div>
+            <div class="form-group"><label>Date</label><input type="date" id="shortTimeDate"></div>
+            <div class="form-group"><label>Hours Missed</label><input type="number" id="shortTimeHours" step="0.5" min="0"></div>
+            <div class="form-group"><label>Reason</label><input type="text" id="shortTimeReason"></div>
+            <button class="btn btn-success" style="width:100%;" onclick="saveShortTime()">Save</button>
         </div>
     </div>
 
-    <!-- Add Multi-Rate Hours Modal -->
+    <!-- Add Multi-Rate -->
     <div id="addMultiRateModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Voeg Paid at Different Rate By</h3>
-                <button class="btn btn-danger btn-sm" onclick="closeModal('addMultiRateModal')">Sluit</button>
-            </div>
-            <div class="form-group">
-                <label>Datum</label>
-                <input type="date" id="multiRateDate">
-            </div>
-            <div class="form-group">
-                <label>Ure</label>
-                <input type="number" id="multiRateHours" step="0.5">
-            </div>
-            <div class="form-group">
-                <label>Tarief per Uur (R)</label>
-                <input type="number" id="multiRatePerHour" step="0.01">
-            </div>
-            <div class="form-group">
-                <label>Tarief Beskrywing (bv. "Bookkeeper Rate")</label>
-                <input type="text" id="multiRateDesc">
-            </div>
-            <div class="form-group">
-                <label>Job Code / Kliënt Verwysing (opsioneel)</label>
-                <input type="text" id="multiRateJobCode">
-            </div>
-            <button class="btn btn-success" onclick="saveMultiRate()">Stoor</button>
+            <div class="modal-header"><h3>Add Paid at Different Rate</h3><button class="btn btn-danger btn-sm" onclick="closeModal('addMultiRateModal')">Close</button></div>
+            <div class="form-group"><label>Description</label><input type="text" id="multiRateDesc"></div>
+            <div class="form-group"><label>Hourly Rate (R)</label><input type="number" id="multiRateHourly" step="0.01" min="0"></div>
+            <div class="form-group"><label>Hours</label><input type="number" id="multiRateHours" step="0.5" min="0"></div>
+            <button class="btn btn-success" style="width:100%;" onclick="saveMultiRate()">Save</button>
         </div>
     </div>
 
+    <!-- Edit Employee Info -->
+    <div id="editEmployeeModal" class="modal">
+        <div class="modal-content wide">
+            <div class="modal-header"><h3>Edit Employee Information</h3><button class="btn btn-danger btn-sm" onclick="closeModal('editEmployeeModal')">Close</button></div>
+            <div class="form-row">
+                <div class="form-group"><label>First Name</label><input type="text" id="editFirstName"></div>
+                <div class="form-group"><label>Last Name</label><input type="text" id="editLastName"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Email</label><input type="email" id="editEmailInput"></div>
+                <div class="form-group"><label>Phone</label><input type="tel" id="editPhoneInput"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Job Title</label><input type="text" id="editJobTitleInput"></div>
+                <div class="form-group"><label>Department</label><input type="text" id="editDepartmentInput"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Position</label><input type="text" id="editPositionInput"></div>
+                <div class="form-group"><label>Date Appointed</label><input type="date" id="editDateAppointedInput"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Payment Method</label><select id="editPayMethodInput"><option value="EFT">EFT</option><option value="Cash">Cash</option><option value="Cheque">Cheque</option></select></div>
+                <div class="form-group"><label>ID Number</label><input type="text" id="editIdNumberInput" maxlength="13"></div>
+            </div>
+            <h4 style="color: #667eea; margin: 15px 0 10px;">Bank Details</h4>
+            <div class="form-row">
+                <div class="form-group"><label>Bank Name</label><input type="text" id="editBankName"></div>
+                <div class="form-group"><label>Account Holder</label><input type="text" id="editAccountHolder"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Account Number</label><input type="text" id="editAccountNumber"></div>
+                <div class="form-group"><label>Branch Code</label><input type="text" id="editBranchCode"></div>
+            </div>
+            <button class="btn btn-success" style="margin-top: 15px; width: 100%;" onclick="saveEmployeeInfo()">Save Changes</button>
+        </div>
+    </div>
+
+    <!-- Add Leave -->
+    <div id="addLeaveModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>Add Leave Request</h3><button class="btn btn-danger btn-sm" onclick="closeModal('addLeaveModal')">Close</button></div>
+            <div class="form-group"><label>Leave Type</label><select id="leaveType"><option value="annual">Annual Leave</option><option value="sick">Sick Leave</option><option value="family">Family Responsibility</option><option value="maternity">Maternity Leave</option><option value="study">Study Leave</option><option value="unpaid">Unpaid Leave</option></select></div>
+            <div class="form-row">
+                <div class="form-group"><label>Start Date</label><input type="date" id="leaveStartDate" onchange="calcLeaveDays()"></div>
+                <div class="form-group"><label>End Date</label><input type="date" id="leaveEndDate" onchange="calcLeaveDays()"></div>
+            </div>
+            <div class="form-group"><label>Days (auto-calculated, weekdays only)</label><input type="number" id="leaveDays" min="0.5" step="0.5" readonly style="background: #f0f0f0;"></div>
+            <div class="form-group"><label>Reason</label><textarea id="leaveReason" rows="2" placeholder="Reason for leave..."></textarea></div>
+            <div class="form-group"><label>Status</label><select id="leaveStatus"><option value="approved">Approved</option><option value="pending">Pending</option><option value="rejected">Rejected</option></select></div>
+            <button class="btn btn-success" style="width:100%;" onclick="saveLeave()">Save Leave</button>
+        </div>
+    </div>
+
+    <!-- Manager Auth Modal -->
+    <div id="managerAuthModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header"><h3>Manager Authorization</h3><button class="btn btn-danger btn-sm" onclick="closeModal('managerAuthModal')">Close</button></div>
+            <p style="color: #666; margin-bottom: 15px;">A pay run exists for this period. A manager must authorize changes to this payslip.</p>
+            <div class="form-group"><label>Manager Email</label><input type="email" id="authEmail" class="auth-input" placeholder="manager@company.com"></div>
+            <div class="form-group"><label>Manager Password</label><input type="password" id="authPassword" class="auth-input" placeholder="Password"></div>
+            <button class="btn btn-success" style="width:100%;" onclick="verifyManagerAuth()">Authorize & Unlock</button>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
     <script>
-        const API_URL = 'http://localhost:3000/api';
-        let token = localStorage.getItem('token');
-        let currentEmployeeId = null;
+        let currentCompanyId = null;
         let currentEmployee = null;
-        let currentPayPeriod = null;
-        let currentSalaryData = null;
+        let currentEmpId = null;
+        let payrollData = { basic_salary: 0, regular_inputs: [] };
+        let currentPeriod = '';
 
-        // Get employee ID from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        currentEmployeeId = urlParams.get('id');
+        // ========== INIT ==========
+        window.addEventListener('load', function() {
+            if (!AUTH.isLoggedIn()) { window.location.href = 'login.html'; return; }
+            const session = AUTH.getSession();
+            currentCompanyId = session.company_id;
+            const params = new URLSearchParams(window.location.search);
+            currentEmpId = params.get('id');
+            if (!currentEmpId) { alert('No employee specified'); window.location.href = 'payruns.html'; return; }
+            loadEmployee();
+            loadCompaniesCarousel();
+            initPeriodSelect();
+            loadPayrollData();
+            loadLeaveData();
+            loadNotes();
+        });
 
-        if (!currentEmployeeId || !token) {
-            window.location.href = 'employee-management.html';
-        }
-
-        function goBackToEmployeeList() {
-            // Navigate back to employee management, preserving the session
-            window.location.href = 'employee-management.html#employees';
-        }
-
-        async function init() {
-            await loadEmployeeInfo();
-            generatePayPeriods();
-            currentPayPeriod = document.getElementById('payPeriod').value;
-            await loadPayrollData();
-        }
-
-        async function loadEmployeeInfo() {
-            try {
-                const response = await fetch(`${API_URL}/hr/employees/${currentEmployeeId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                const result = await response.json();
-                currentEmployee = result.employee;
-
-                // Header info
-                document.getElementById('employeeName').textContent =
-                    `${currentEmployee.first_name} ${currentEmployee.last_name}`;
-                document.getElementById('employeeNumber').textContent = currentEmployee.employee_number || '-';
-                document.getElementById('employeePosition').textContent =
-                    currentEmployee.job_title || currentEmployee.position || '-';
-                document.getElementById('employeeDepartment').textContent = currentEmployee.department || '-';
-                document.getElementById('employeeId').textContent = currentEmployee.id_number || '-';
-                document.getElementById('employeeDOB').textContent =
-                    currentEmployee.date_of_birth ? new Date(currentEmployee.date_of_birth).toLocaleDateString('af-ZA') : '-';
-                document.getElementById('employeePayMethod').textContent = currentEmployee.payment_method || 'EFT';
-
-                // Edit Info tab
-                document.getElementById('editFullName').textContent =
-                    `${currentEmployee.first_name} ${currentEmployee.last_name}`;
-                document.getElementById('editIdNumber').textContent = currentEmployee.id_number || '-';
-                document.getElementById('editDOB').textContent =
-                    currentEmployee.date_of_birth ? new Date(currentEmployee.date_of_birth).toLocaleDateString('af-ZA') : '-';
-                document.getElementById('editGender').textContent = currentEmployee.gender || '-';
-                document.getElementById('editEmail').textContent = currentEmployee.email || '-';
-                document.getElementById('editPhone').textContent = currentEmployee.phone || '-';
-                document.getElementById('editEmpNumber').textContent = currentEmployee.employee_number || '-';
-                document.getElementById('editJobTitle').textContent =
-                    currentEmployee.job_title || currentEmployee.position || '-';
-                document.getElementById('editDepartment').textContent = currentEmployee.department || '-';
-                document.getElementById('editDateAppointed').textContent =
-                    currentEmployee.date_appointed ? new Date(currentEmployee.date_appointed).toLocaleDateString('af-ZA') : '-';
-                document.getElementById('editPayMethod').textContent = currentEmployee.payment_method || 'EFT';
-
-                // Bank info
-                if (currentEmployee.payment_method === 'EFT' && currentEmployee.bank_name) {
-                    document.getElementById('editBankInfo').style.display = 'block';
-                    document.getElementById('editBankDetails').textContent =
-                        `${currentEmployee.bank_name} - ${currentEmployee.account_number || 'N/A'} (${currentEmployee.account_type || 'N/A'})`;
+        // ========== SIDEBAR ==========
+        function loadCompaniesCarousel() {
+            const session = AUTH.getSession();
+            const user = { role: session.role, company_id: session.company_id };
+            const companies = AUTH.getCompaniesForUser(user);
+            const carousel = document.getElementById('companies-carousel');
+            carousel.innerHTML = '';
+            companies.forEach(company => {
+                const div = document.createElement('div');
+                div.className = 'carousel-company';
+                div.textContent = company.name;
+                if (company.id === session.company_id) {
+                    div.style.background = '#667eea';
+                    div.style.color = 'white';
+                    div.style.fontWeight = '600';
                 }
+                div.onclick = () => switchToCompany(company.id);
+                carousel.appendChild(div);
+            });
+        }
 
-                // Address info
-                const resAddress = [
-                    currentEmployee.residential_address_line1,
-                    currentEmployee.residential_address_line2,
-                    currentEmployee.residential_city,
-                    currentEmployee.residential_province,
-                    currentEmployee.residential_postal_code
-                ].filter(Boolean).join(', ');
-                document.getElementById('editResAddress').textContent = resAddress || '-';
+        function switchToCompany(companyId) {
+            const session = AUTH.getSession();
+            session.company_id = companyId;
+            localStorage.setItem('session', JSON.stringify(session));
+            window.location.href = 'payruns.html';
+        }
 
-                const postalAddress = [
-                    currentEmployee.postal_address_line1,
-                    currentEmployee.postal_address_line2,
-                    currentEmployee.postal_city,
-                    currentEmployee.postal_province,
-                    currentEmployee.postal_postal_code
-                ].filter(Boolean).join(', ');
-                document.getElementById('editPostalAddress').textContent =
-                    currentEmployee.postal_same_as_residential ? 'Selfde as residensieel' : (postalAddress || '-');
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) { AUTH.logout(); }
+        }
 
-            } catch (error) {
-                console.error('Error loading employee:', error);
-                alert('Fout met laai van werknemer');
+        function loadEmployee() {
+            const stored = localStorage.getItem('employees_' + currentCompanyId);
+            const employees = stored ? JSON.parse(stored) : [];
+            currentEmployee = employees.find(e => e.id === currentEmpId);
+            if (!currentEmployee) { alert('Employee not found'); window.location.href = 'payruns.html'; return; }
+
+            document.getElementById('employeeName').textContent = currentEmployee.first_name + ' ' + currentEmployee.last_name;
+            document.getElementById('empNumber').textContent = currentEmployee.employee_number || '-';
+            document.getElementById('empPosition').textContent = currentEmployee.position || currentEmployee.job_title || '-';
+            document.getElementById('empDepartment').textContent = currentEmployee.department || '-';
+            document.getElementById('empIdNumber').textContent = currentEmployee.id_number || '-';
+            document.getElementById('empDOB').textContent = currentEmployee.id_number ? extractDOB(currentEmployee.id_number) : '-';
+            document.getElementById('empPayMethod').textContent = currentEmployee.payment_method || 'EFT';
+
+            // Edit Info tab
+            document.getElementById('editFullName').textContent = currentEmployee.first_name + ' ' + currentEmployee.last_name;
+            document.getElementById('editIdNumber').textContent = currentEmployee.id_number || '-';
+            document.getElementById('editEmail').textContent = currentEmployee.email || '-';
+            document.getElementById('editPhone').textContent = currentEmployee.phone || '-';
+            document.getElementById('editEmpNumber').textContent = currentEmployee.employee_number || '-';
+            document.getElementById('editJobTitle').textContent = currentEmployee.job_title || '-';
+            document.getElementById('editDepartment').textContent = currentEmployee.department || '-';
+            document.getElementById('editDateAppointed').textContent = currentEmployee.date_appointed || '-';
+            document.getElementById('editPayMethod').textContent = currentEmployee.payment_method || 'EFT';
+            if (currentEmployee.payment_method === 'EFT' && currentEmployee.bank_name) {
+                document.getElementById('editBankSection').style.display = '';
+                document.getElementById('editBankDetails').textContent = currentEmployee.bank_name + ' - ' + (currentEmployee.account_number || '') + ' (Branch: ' + (currentEmployee.branch_code || '') + ')';
             }
         }
 
-        function generatePayPeriods() {
+        function extractDOB(idNumber) {
+            if (!idNumber || idNumber.length < 6) return '-';
+            const yy = idNumber.substring(0, 2);
+            const mm = idNumber.substring(2, 4);
+            const dd = idNumber.substring(4, 6);
+            const year = parseInt(yy) > 30 ? '19' + yy : '20' + yy;
+            return dd + '/' + mm + '/' + year;
+        }
+
+        // ========== TAB SWITCHING ==========
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+
+        // ========== PERIOD SELECT ==========
+        function initPeriodSelect() {
             const select = document.getElementById('payPeriod');
             const now = new Date();
+            for (let i = 0; i < 12; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const val = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = months[d.getMonth()] + ' ' + d.getFullYear();
+                select.appendChild(opt);
+            }
+            currentPeriod = select.value;
+        }
 
-            // Generate last 12 months + current + next month
-            for (let i = -12; i <= 1; i++) {
-                const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const value = `${year}-${month}`;
-                const label = new Date(year, month - 1).toLocaleDateString('af-ZA', { year: 'numeric', month: 'long' });
+        // ========== STORAGE KEYS ==========
+        function getPayrollKey() { return 'emp_payroll_' + currentCompanyId + '_' + currentEmpId; }
+        function getCurrentKey() { return 'emp_current_' + currentCompanyId + '_' + currentEmpId + '_' + currentPeriod; }
+        function getOvertimeKey() { return 'emp_overtime_' + currentCompanyId + '_' + currentEmpId + '_' + currentPeriod; }
+        function getShortTimeKey() { return 'emp_short_time_' + currentCompanyId + '_' + currentEmpId + '_' + currentPeriod; }
+        function getMultiRateKey() { return 'emp_multi_rate_' + currentCompanyId + '_' + currentEmpId + '_' + currentPeriod; }
+        function getLeaveKey() { return 'emp_leave_' + currentCompanyId + '_' + currentEmpId; }
+        function getNotesKey() { return 'emp_notes_' + currentCompanyId + '_' + currentEmpId; }
+        function getPayslipStatusKey() { return 'emp_payslip_status_' + currentCompanyId + '_' + currentEmpId + '_' + currentPeriod; }
 
-                const option = document.createElement('option');
-                option.value = value;
-                option.textContent = label;
-                if (i === 0) option.selected = true;
-                select.appendChild(option);
+        // ========== PAYSLIP STATUS ==========
+        function getPayslipStatus() {
+            const stored = localStorage.getItem(getPayslipStatusKey());
+            return stored ? JSON.parse(stored) : { status: 'draft' };
+        }
+
+        function isPayrunLockedForPeriod() {
+            const payruns = JSON.parse(localStorage.getItem('payruns_' + currentCompanyId) || '[]');
+            return payruns.find(pr => pr.period === currentPeriod && (pr.status === 'finalized' || pr.status === 'paid'));
+        }
+
+        function updatePayslipUI() {
+            const psStatus = getPayslipStatus();
+            const lockedRun = isPayrunLockedForPeriod();
+            const statusBar = document.getElementById('payslipStatusBar');
+            const btnArea = document.getElementById('finalizeBtn');
+            const content = document.getElementById('payrollContent');
+
+            content.classList.remove('locked-overlay');
+
+            if (lockedRun && psStatus.status === 'finalized') {
+                // Pay run exists AND payslip finalized = fully locked
+                statusBar.innerHTML = '<div class="payslip-status-bar locked">🔒 Locked — Pay run (' + lockedRun.status + ') exists for this period. Manager authorization required to make changes.</div>';
+                btnArea.innerHTML = '<button class="btn-unfinalize" onclick="requestManagerAuth()">🔓 Request Unlock</button>';
+                content.classList.add('locked-overlay');
+            } else if (psStatus.status === 'finalized') {
+                // Finalized but no pay run yet = can unfinalize freely
+                statusBar.innerHTML = '<div class="payslip-status-bar finalized">✅ Payslip finalized on ' + new Date(psStatus.finalized_date).toLocaleDateString() + ' by ' + (psStatus.finalized_by || 'System') + '</div>';
+                btnArea.innerHTML = '<button class="btn-unfinalize" onclick="unfinalizePayslip()">↩ Unfinalize</button>';
+                content.classList.add('locked-overlay');
+            } else {
+                // Draft
+                statusBar.innerHTML = '<div class="payslip-status-bar draft">📝 Draft — Finalize this payslip to include it in a pay run.</div>';
+                btnArea.innerHTML = '<button class="btn-finalize" onclick="finalizePayslip()">✓ Finalize Payslip</button>';
             }
         }
 
-        async function loadPayrollData() {
-            currentPayPeriod = document.getElementById('payPeriod').value;
-            document.getElementById('notesCurrentPeriod').textContent =
-                new Date(currentPayPeriod + '-01').toLocaleDateString('af-ZA', { year: 'numeric', month: 'long' });
-
-            await loadPayrollSummary();
-            await loadNotes();
+        function finalizePayslip() {
+            // Auto-calculate before finalizing
+            calculatePayslip();
+            const session = AUTH.getSession();
+            if (!confirm('Finalize this payslip for ' + formatPeriodLabel(currentPeriod) + '? It will be locked for editing.')) return;
+            const status = { status: 'finalized', finalized_date: new Date().toISOString(), finalized_by: session.name || session.email };
+            localStorage.setItem(getPayslipStatusKey(), JSON.stringify(status));
+            updatePayslipUI();
         }
 
-        async function loadPayrollSummary() {
-            try {
-                const response = await fetch(
-                    `${API_URL}/payroll-inputs/employees/${currentEmployeeId}/payroll-summary?pay_period=${currentPayPeriod}`,
-                    { headers: { 'Authorization': `Bearer ${token}` } }
-                );
-
-                const result = await response.json();
-
-                if (result.success) {
-                    currentSalaryData = result.salary; // Store for editing
-                    displayPayrollSummary(result);
-                }
-
-            } catch (error) {
-                console.error('Error loading payroll summary:', error);
-            }
+        function unfinalizePayslip() {
+            if (!confirm('Unfinalize this payslip? It will be editable again.')) return;
+            localStorage.removeItem(getPayslipStatusKey());
+            updatePayslipUI();
         }
 
-        function displayPayrollSummary(data) {
-            // Display base salary
-            const salary = data.salary || {};
-            document.getElementById('basicSalary').textContent =
-                'R ' + parseFloat(salary.basic_salary || 0).toFixed(2);
-            document.getElementById('housingAllowance').textContent =
-                'R ' + parseFloat(salary.housing_allowance || 0).toFixed(2);
-            document.getElementById('travelAllowance').textContent =
-                'R ' + parseFloat(salary.travel_allowance || 0).toFixed(2);
-            document.getElementById('phoneAllowance').textContent =
-                'R ' + parseFloat(salary.phone_allowance || 0).toFixed(2);
-
-            // Display regular inputs
-            let regularHtml = '';
-            (data.regularInputs || []).forEach(input => {
-                regularHtml += `
-                    <div class="salary-item" style="border-left: 3px solid #4caf50;">
-                        <span class="salary-label">${input.description} <span class="badge badge-regular">Regular</span></span>
-                        <span class="salary-value">R ${parseFloat(input.amount || 0).toFixed(2)}</span>
-                    </div>
-                `;
-            });
-            document.getElementById('regularInputsList').innerHTML = regularHtml || '';
-
-            // Display current inputs
-            let currentHtml = '';
-            (data.currentInputs || []).forEach(input => {
-                currentHtml += `
-                    <div class="salary-item" style="border-left: 3px solid #ff9800;">
-                        <span class="salary-label">${input.description} <span class="badge badge-current">Current</span></span>
-                        <div>
-                            <span class="salary-value">R ${parseFloat(input.amount || 0).toFixed(2)}</span>
-                            <button class="btn btn-sm btn-danger" onclick="deleteCurrentInput(${input.id})">×</button>
-                        </div>
-                    </div>
-                `;
-            });
-            document.getElementById('currentInputsList').innerHTML = currentHtml ||
-                '<p style="color: #999; font-size: 14px;">Geen current inputs vir hierdie periode nie</p>';
-
-            // Display overtime
-            displayOvertimeList(data.overtime || []);
-
-            // Display short time
-            displayShortTimeList(data.shortTime || []);
-
-            // Display multi-rate
-            displayMultiRateList(data.multiRate || []);
+        function requestManagerAuth() {
+            document.getElementById('authEmail').value = '';
+            document.getElementById('authPassword').value = '';
+            document.getElementById('managerAuthModal').classList.add('show');
         }
 
-        function displayOvertimeList(records) {
-            if (records.length === 0) {
-                document.getElementById('overtimeList').innerHTML =
-                    '<p style="color: #999;">Geen overtime nie</p>';
+        function verifyManagerAuth() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            if (!email || !password) { alert('Please enter both email and password'); return; }
+
+            // Check credentials via AUTH system
+            const result = AUTH.findUserByEmail(email);
+            if (!result) { alert('User not found'); return; }
+            if (result.user.password !== password) { alert('Invalid password'); return; }
+
+            // Check if user has authorized role
+            const role = result.user.role || '';
+            const allowedRoles = ['super_admin', 'admin', 'manager', 'business_owner'];
+            if (!allowedRoles.includes(role)) {
+                alert('Authorization denied. Only business owners, managers, and admins can unlock payslips.');
                 return;
             }
 
-            let html = '<table style="font-size: 13px;"><tr><th>Datum</th><th>Ure</th><th>Rate</th><th>Aksie</th></tr>';
-            records.forEach(rec => {
-                html += `
-                    <tr>
-                        <td>${new Date(rec.date_worked).toLocaleDateString('af-ZA')}</td>
-                        <td>${rec.hours}h</td>
-                        <td>${rec.rate_multiplier}x</td>
-                        <td><button class="btn btn-sm btn-danger" onclick="deleteOvertime(${rec.id})">×</button></td>
-                    </tr>
-                `;
-            });
-            html += '</table>';
-            document.getElementById('overtimeList').innerHTML = html;
+            // Unlock: remove finalized status
+            localStorage.removeItem(getPayslipStatusKey());
+            closeModal('managerAuthModal');
+            updatePayslipUI();
+            alert('Payslip unlocked by ' + email + '. You can now make changes.');
         }
 
-        function displayShortTimeList(records) {
-            if (records.length === 0) {
-                document.getElementById('shortTimeList').innerHTML =
-                    '<p style="color: #999;">Geen short time nie</p>';
-                return;
+        function formatPeriodLabel(period) {
+            const [year, month] = period.split('-');
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return months[parseInt(month) - 1] + ' ' + year;
+        }
+
+        // ========== PAYROLL DATA ==========
+        function loadPayrollData() {
+            currentPeriod = document.getElementById('payPeriod').value;
+            const stored = localStorage.getItem(getPayrollKey());
+            payrollData = stored ? JSON.parse(stored) : { basic_salary: 0, regular_inputs: [] };
+            renderPayroll();
+            updatePayslipUI();
+        }
+
+        function savePayrollData() {
+            localStorage.setItem(getPayrollKey(), JSON.stringify(payrollData));
+        }
+
+        function renderPayroll() {
+            document.getElementById('basicSalary').textContent = formatMoney(payrollData.basic_salary || 0);
+
+            // Regular inputs
+            const riList = document.getElementById('regularInputsList');
+            riList.innerHTML = payrollData.regular_inputs.map(ri => {
+                const color = ri.type === 'deduction' ? '#dc3545' : '#28a745';
+                const prefix = ri.type === 'deduction' ? '- ' : '+ ';
+                return '<div class="salary-item editable"><span class="salary-label">' + ri.description + ' <span style="color:' + color + '; font-size:11px;">(' + ri.type + ')</span></span><span><span class="salary-value" style="color:' + color + ';">' + prefix + formatMoney(ri.amount) + '</span><button class="delete-btn" onclick="event.stopPropagation(); deleteRegularInput(\'' + ri.id + '\')">x</button></span></div>';
+            }).join('');
+
+            // Current inputs
+            const ciList = document.getElementById('currentInputsList');
+            const currentInputs = JSON.parse(localStorage.getItem(getCurrentKey()) || '[]');
+            if (currentInputs.length === 0) {
+                ciList.innerHTML = '<p style="color: #999; font-size: 14px;">No current inputs for this period</p>';
+            } else {
+                ciList.innerHTML = currentInputs.map(ci => {
+                    const color = ci.type === 'deduction' ? '#dc3545' : '#28a745';
+                    const prefix = ci.type === 'deduction' ? '- ' : '+ ';
+                    return '<div class="salary-item"><span class="salary-label">' + ci.description + ' <span style="color:' + color + '; font-size:11px;">(' + ci.type + ')</span></span><span><span class="salary-value" style="color:' + color + ';">' + prefix + formatMoney(ci.amount) + '</span><button class="delete-btn" onclick="event.stopPropagation(); deleteCurrentInput(\'' + ci.id + '\')">x</button></span></div>';
+                }).join('');
             }
 
-            let html = '<table style="font-size: 13px;"><tr><th>Datum</th><th>Ure Gemis</th><th>Rede</th><th>Aksie</th></tr>';
-            records.forEach(rec => {
-                html += `
-                    <tr>
-                        <td>${new Date(rec.date).toLocaleDateString('af-ZA')}</td>
-                        <td>${rec.hours_missed}h</td>
-                        <td>${rec.reason || '-'}</td>
-                        <td><button class="btn btn-sm btn-danger" onclick="deleteShortTime(${rec.id})">×</button></td>
-                    </tr>
-                `;
-            });
-            html += '</table>';
-            document.getElementById('shortTimeList').innerHTML = html;
+            // Overtime
+            const otList = document.getElementById('overtimeList');
+            const overtime = JSON.parse(localStorage.getItem(getOvertimeKey()) || '[]');
+            otList.innerHTML = overtime.length === 0 ? '<p style="color:#999;font-size:14px;">No overtime recorded</p>' :
+                overtime.map(ot => '<div class="salary-item"><span class="salary-label">' + ot.date + ' - ' + ot.hours + 'hrs @ ' + ot.rate_multiplier + 'x' + (ot.description ? ' (' + ot.description + ')' : '') + '</span><button class="delete-btn" onclick="event.stopPropagation(); deleteOvertime(\'' + ot.id + '\')">x</button></div>').join('');
+
+            // Short time
+            const stList = document.getElementById('shortTimeList');
+            const shortTime = JSON.parse(localStorage.getItem(getShortTimeKey()) || '[]');
+            stList.innerHTML = shortTime.length === 0 ? '<p style="color:#999;font-size:14px;">No short time recorded</p>' :
+                shortTime.map(st => '<div class="salary-item"><span class="salary-label">' + st.date + ' - ' + st.hours_missed + 'hrs missed' + (st.reason ? ' (' + st.reason + ')' : '') + '</span><button class="delete-btn" onclick="event.stopPropagation(); deleteShortTime(\'' + st.id + '\')">x</button></div>').join('');
+
+            // Multi-rate
+            const mrList = document.getElementById('multiRateList');
+            const multiRate = JSON.parse(localStorage.getItem(getMultiRateKey()) || '[]');
+            mrList.innerHTML = multiRate.length === 0 ? '<p style="color:#999;font-size:14px;">No multi-rate hours recorded</p>' :
+                multiRate.map(mr => '<div class="salary-item"><span class="salary-label">' + mr.description + ' - ' + mr.hours + 'hrs @ R' + parseFloat(mr.hourly_rate).toFixed(2) + '/hr</span><span><span class="salary-value">' + formatMoney(mr.hours * mr.hourly_rate) + '</span><button class="delete-btn" onclick="event.stopPropagation(); deleteMultiRate(\'' + mr.id + '\')">x</button></span></div>').join('');
         }
 
-        function displayMultiRateList(records) {
-            if (records.length === 0) {
-                document.getElementById('multiRateList').innerHTML =
-                    '<p style="color: #999;">Geen different rate hours nie</p>';
-                return;
-            }
-
-            let html = '<table style="font-size: 13px;"><tr><th>Datum</th><th>Ure</th><th>Tarief</th><th>Beskrywing</th><th>Aksie</th></tr>';
-            records.forEach(rec => {
-                html += `
-                    <tr>
-                        <td>${new Date(rec.date_worked).toLocaleDateString('af-ZA')}</td>
-                        <td>${rec.hours}h</td>
-                        <td>R${rec.rate_per_hour}/h</td>
-                        <td>${rec.rate_description || '-'}</td>
-                        <td><button class="btn btn-sm btn-danger" onclick="deleteMultiRate(${rec.id})">×</button></td>
-                    </tr>
-                `;
-            });
-            html += '</table>';
-            document.getElementById('multiRateList').innerHTML = html;
-        }
-
-        async function loadNotes() {
-            try {
-                const response = await fetch(
-                    `${API_URL}/payroll-inputs/employees/${currentEmployeeId}/notes?pay_period=${currentPayPeriod}`,
-                    { headers: { 'Authorization': `Bearer ${token}` } }
-                );
-
-                const result = await response.json();
-
-                if (result.notes && result.notes.length > 0) {
-                    let html = '';
-                    result.notes.forEach(note => {
-                        html += `
-                            <div class="note-item">
-                                <div class="note-header">
-                                    <div class="note-meta">
-                                        <strong>${note.created_by_name || 'Unknown'}</strong> •
-                                        ${new Date(note.created_at).toLocaleString('af-ZA')}
-                                    </div>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteNote(${note.id})">×</button>
-                                </div>
-                                <div class="note-text">${note.note}</div>
-                            </div>
-                        `;
-                    });
-                    document.getElementById('notesList').innerHTML = html;
-                } else {
-                    document.getElementById('notesList').innerHTML =
-                        '<p style="color: #999;">Geen notes vir hierdie periode nie</p>';
-                }
-
-            } catch (error) {
-                console.error('Error loading notes:', error);
-            }
-        }
-
-        async function addNote() {
-            const note = document.getElementById('newNote').value.trim();
-
-            if (!note) {
-                alert('Tik asseblief \'n note');
-                return;
-            }
-
-            try {
-                const response = await fetch(
-                    `${API_URL}/payroll-inputs/employees/${currentEmployeeId}/notes`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            pay_period: currentPayPeriod,
-                            note: note
-                        })
-                    }
-                );
-
-                const result = await response.json();
-
-                if (result.success) {
-                    document.getElementById('newNote').value = '';
-                    await loadNotes();
-                } else {
-                    alert('Fout: ' + result.error);
-                }
-
-            } catch (error) {
-                alert('Fout met stoor van note: ' + error.message);
-            }
-        }
-
-        async function deleteNote(id) {
-            if (!confirm('Is jy seker jy wil hierdie note verwyder?')) return;
-
-            try {
-                await fetch(`${API_URL}/payroll-inputs/notes/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                await loadNotes();
-            } catch (error) {
-                alert('Fout: ' + error.message);
-            }
-        }
-
-        function switchTab(tab) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-
-            // Show selected tab
-            document.getElementById(tab + '-tab').classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        function toggleAdditionalHours() {
-            const checked = document.getElementById('showAdditionalHours').checked;
-            document.getElementById('additionalHoursSection').style.display = checked ? 'block' : 'none';
-        }
-
-        function toggleSection(element) {
-            element.classList.toggle('expanded');
-        }
-
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // Modal functions
-        function openAddRegularInput() { openModal('addRegularModal'); }
-        function openAddCurrentInput() { openModal('addCurrentModal'); }
-        function openAddOvertime() {
-            openModal('addOvertimeModal');
-            document.getElementById('overtimeDate').value = new Date().toISOString().split('T')[0];
-        }
-        function openAddShortTime() {
-            openModal('addShortTimeModal');
-            document.getElementById('shortTimeDate').value = new Date().toISOString().split('T')[0];
-        }
-        function openAddMultiRate() {
-            openModal('addMultiRateModal');
-            document.getElementById('multiRateDate').value = new Date().toISOString().split('T')[0];
-        }
-
-        async function saveRegularInput() {
-            const data = {
-                input_type: document.getElementById('regularInputType').value,
-                description: document.getElementById('regularInputDesc').value,
-                amount: parseFloat(document.getElementById('regularInputAmount').value),
-                effective_from: new Date().toISOString().split('T')[0]
-            };
-
-            try {
-                await fetch(`${API_URL}/payroll-inputs/employees/${currentEmployeeId}/regular-inputs`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                closeModal('addRegularModal');
-                await loadPayrollData();
-            } catch (error) {
-                alert('Fout: ' + error.message);
-            }
-        }
-
-        async function saveCurrentInput() {
-            const data = {
-                input_type: document.getElementById('currentInputType').value,
-                description: document.getElementById('currentInputDesc').value,
-                amount: parseFloat(document.getElementById('currentInputAmount').value),
-                pay_period: currentPayPeriod
-            };
-
-            try {
-                await fetch(`${API_URL}/payroll-inputs/employees/${currentEmployeeId}/current-inputs`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                closeModal('addCurrentModal');
-                await loadPayrollData();
-            } catch (error) {
-                alert('Fout: ' + error.message);
-            }
-        }
-
-        async function saveOvertime() {
-            const data = {
-                date_worked: document.getElementById('overtimeDate').value,
-                hours: parseFloat(document.getElementById('overtimeHours').value),
-                rate_multiplier: parseFloat(document.getElementById('overtimeRate').value),
-                description: document.getElementById('overtimeDesc').value,
-                pay_period: currentPayPeriod
-            };
-
-            try {
-                await fetch(`${API_URL}/payroll-inputs/employees/${currentEmployeeId}/overtime`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                closeModal('addOvertimeModal');
-                await loadPayrollData();
-            } catch (error) {
-                alert('Fout: ' + error.message);
-            }
-        }
-
-        async function saveShortTime() {
-            const data = {
-                date: document.getElementById('shortTimeDate').value,
-                hours_missed: parseFloat(document.getElementById('shortTimeHours').value),
-                reason: document.getElementById('shortTimeReason').value,
-                pay_period: currentPayPeriod
-            };
-
-            try {
-                await fetch(`${API_URL}/payroll-inputs/employees/${currentEmployeeId}/short-time`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                closeModal('addShortTimeModal');
-                await loadPayrollData();
-            } catch (error) {
-                alert('Fout: ' + error.message);
-            }
-        }
-
-        async function saveMultiRate() {
-            const data = {
-                date_worked: document.getElementById('multiRateDate').value,
-                hours: parseFloat(document.getElementById('multiRateHours').value),
-                rate_per_hour: parseFloat(document.getElementById('multiRatePerHour').value),
-                rate_description: document.getElementById('multiRateDesc').value,
-                job_code: document.getElementById('multiRateJobCode').value,
-                pay_period: currentPayPeriod
-            };
-
-            try {
-                await fetch(`${API_URL}/payroll-inputs/employees/${currentEmployeeId}/multi-rate`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                closeModal('addMultiRateModal');
-                await loadPayrollData();
-            } catch (error) {
-                alert('Fout: ' + error.message);
-            }
-        }
-
-        async function deleteCurrentInput(id) {
-            if (!confirm('Verwyder hierdie input?')) return;
-            try {
-                await fetch(`${API_URL}/payroll-inputs/current-inputs/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                await loadPayrollData();
-            } catch (error) {
-                alert('Fout: ' + error.message);
-            }
-        }
-
-        async function deleteOvertime(id) {
-            if (!confirm('Verwyder hierdie overtime record?')) return;
-            try {
-                await fetch(`${API_URL}/payroll-inputs/overtime/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                await loadPayrollData();
-            } catch (error) {
-                alert('Fout: ' + error.message);
-            }
-        }
-
-        async function deleteShortTime(id) {
-            if (!confirm('Verwyder hierdie short time record?')) return;
-            try {
-                await fetch(`${API_URL}/payroll-inputs/short-time/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                await loadPayrollData();
-            } catch (error) {
-                alert('Fout: ' + error.message);
-            }
-        }
-
-        async function deleteMultiRate(id) {
-            if (!confirm('Verwyder hierdie multi-rate record?')) return;
-            try {
-                await fetch(`${API_URL}/payroll-inputs/multi-rate/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                await loadPayrollData();
-            } catch (error) {
-                alert('Fout: ' + error.message);
-            }
-        }
-
-        async function calculatePayslip() {
-            alert('Payslip berekening sal binnekort beskikbaar wees...');
-        }
-
-        // Edit salary functions
+        // ========== BASIC SALARY ==========
         function editBasicSalary() {
-            // Allow editing even if no salary structure exists yet
-            const currentValue = currentSalaryData ? (currentSalaryData.basic_salary || 0) : 0;
-            document.getElementById('editBasicValue').value = currentValue;
-            openModal('editBasicModal');
+            document.getElementById('editBasicValue').value = payrollData.basic_salary || 0;
+            document.getElementById('editBasicModal').classList.add('show');
+        }
+        function saveBasicSalary() {
+            payrollData.basic_salary = parseFloat(document.getElementById('editBasicValue').value) || 0;
+            savePayrollData(); renderPayroll(); closeModal('editBasicModal');
         }
 
-        function editAllowance(type) {
-            alert(`Wysig ${type} allowance sal binnekort beskikbaar wees via salary structures`);
+        // ========== REGULAR INPUTS ==========
+        function openAddRegularInput() { document.getElementById('regularInputDesc').value = ''; document.getElementById('regularInputAmount').value = ''; document.getElementById('addRegularModal').classList.add('show'); }
+        function saveRegularInput() {
+            const desc = document.getElementById('regularInputDesc').value.trim();
+            const amount = parseFloat(document.getElementById('regularInputAmount').value);
+            if (!desc || !amount) { alert('Please fill in all fields'); return; }
+            payrollData.regular_inputs.push({ id: 'ri-' + Math.random().toString(36).substr(2, 9), type: document.getElementById('regularInputType').value, description: desc, amount: amount });
+            savePayrollData(); renderPayroll(); closeModal('addRegularModal');
+        }
+        function deleteRegularInput(id) {
+            if (!confirm('Delete this regular input?')) return;
+            payrollData.regular_inputs = payrollData.regular_inputs.filter(r => r.id !== id);
+            savePayrollData(); renderPayroll();
         }
 
-        async function saveBasicSalary() {
-            const newValue = parseFloat(document.getElementById('editBasicValue').value);
-
-            if (!newValue || newValue <= 0) {
-                alert('Voer asseblief \'n geldige bedrag in');
-                return;
-            }
-
-            try {
-                // Update salary structure
-                const response = await fetch(
-                    `${API_URL}/payroll/employees/${currentEmployeeId}/salary`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            basic_salary: newValue,
-                            housing_allowance: currentSalaryData?.housing_allowance || 0,
-                            travel_allowance: currentSalaryData?.travel_allowance || 0,
-                            phone_allowance: currentSalaryData?.phone_allowance || 0,
-                            other_allowances: currentSalaryData?.other_allowances || 0,
-                            pension_percentage: currentSalaryData?.pension_percentage || 0,
-                            medical_aid_amount: currentSalaryData?.medical_aid_amount || 0,
-                            other_deductions: currentSalaryData?.other_deductions || 0,
-                            pay_frequency: currentSalaryData?.pay_frequency || 'monthly',
-                            effective_date: new Date().toISOString().split('T')[0]
-                        })
-                    }
-                );
-
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    alert('Basic salary updated!');
-                    closeModal('editBasicModal');
-                    await loadPayrollData();
-                } else {
-                    alert('Fout: ' + (result.error || 'Unknown error'));
-                }
-
-            } catch (error) {
-                alert('Fout met update: ' + error.message);
-            }
+        // ========== CURRENT INPUTS ==========
+        function openAddCurrentInput() { document.getElementById('currentInputDesc').value = ''; document.getElementById('currentInputAmount').value = ''; document.getElementById('addCurrentModal').classList.add('show'); }
+        function saveCurrentInput() {
+            const desc = document.getElementById('currentInputDesc').value.trim();
+            const amount = parseFloat(document.getElementById('currentInputAmount').value);
+            if (!desc || !amount) { alert('Please fill in all fields'); return; }
+            const items = JSON.parse(localStorage.getItem(getCurrentKey()) || '[]');
+            items.push({ id: 'ci-' + Math.random().toString(36).substr(2, 9), type: document.getElementById('currentInputType').value, description: desc, amount: amount });
+            localStorage.setItem(getCurrentKey(), JSON.stringify(items)); renderPayroll(); closeModal('addCurrentModal');
+        }
+        function deleteCurrentInput(id) {
+            if (!confirm('Delete this current input?')) return;
+            const items = JSON.parse(localStorage.getItem(getCurrentKey()) || '[]').filter(i => i.id !== id);
+            localStorage.setItem(getCurrentKey(), JSON.stringify(items)); renderPayroll();
         }
 
-        // Edit employee info functions
+        // ========== OVERTIME ==========
+        function openAddOvertime() { document.getElementById('overtimeDate').value = ''; document.getElementById('overtimeHours').value = ''; document.getElementById('overtimeDesc').value = ''; document.getElementById('addOvertimeModal').classList.add('show'); }
+        function saveOvertime() {
+            const date = document.getElementById('overtimeDate').value;
+            const hours = parseFloat(document.getElementById('overtimeHours').value);
+            if (!date || !hours) { alert('Please fill in date and hours'); return; }
+            const items = JSON.parse(localStorage.getItem(getOvertimeKey()) || '[]');
+            items.push({ id: 'ot-' + Math.random().toString(36).substr(2, 9), date: date, hours: hours, rate_multiplier: parseFloat(document.getElementById('overtimeRate').value), description: document.getElementById('overtimeDesc').value.trim() });
+            localStorage.setItem(getOvertimeKey(), JSON.stringify(items)); renderPayroll(); closeModal('addOvertimeModal');
+        }
+        function deleteOvertime(id) { if (!confirm('Delete?')) return; const items = JSON.parse(localStorage.getItem(getOvertimeKey()) || '[]').filter(i => i.id !== id); localStorage.setItem(getOvertimeKey(), JSON.stringify(items)); renderPayroll(); }
+
+        // ========== SHORT TIME ==========
+        function openAddShortTime() { document.getElementById('shortTimeDate').value = ''; document.getElementById('shortTimeHours').value = ''; document.getElementById('shortTimeReason').value = ''; document.getElementById('addShortTimeModal').classList.add('show'); }
+        function saveShortTime() {
+            const date = document.getElementById('shortTimeDate').value;
+            const hours = parseFloat(document.getElementById('shortTimeHours').value);
+            if (!date || !hours) { alert('Please fill in date and hours'); return; }
+            const items = JSON.parse(localStorage.getItem(getShortTimeKey()) || '[]');
+            items.push({ id: 'st-' + Math.random().toString(36).substr(2, 9), date: date, hours_missed: hours, reason: document.getElementById('shortTimeReason').value.trim() });
+            localStorage.setItem(getShortTimeKey(), JSON.stringify(items)); renderPayroll(); closeModal('addShortTimeModal');
+        }
+        function deleteShortTime(id) { if (!confirm('Delete?')) return; const items = JSON.parse(localStorage.getItem(getShortTimeKey()) || '[]').filter(i => i.id !== id); localStorage.setItem(getShortTimeKey(), JSON.stringify(items)); renderPayroll(); }
+
+        // ========== MULTI-RATE ==========
+        function openAddMultiRate() { document.getElementById('multiRateDesc').value = ''; document.getElementById('multiRateHourly').value = ''; document.getElementById('multiRateHours').value = ''; document.getElementById('addMultiRateModal').classList.add('show'); }
+        function saveMultiRate() {
+            const desc = document.getElementById('multiRateDesc').value.trim();
+            const rate = parseFloat(document.getElementById('multiRateHourly').value);
+            const hours = parseFloat(document.getElementById('multiRateHours').value);
+            if (!desc || !rate || !hours) { alert('Please fill in all fields'); return; }
+            const items = JSON.parse(localStorage.getItem(getMultiRateKey()) || '[]');
+            items.push({ id: 'mr-' + Math.random().toString(36).substr(2, 9), description: desc, hourly_rate: rate, hours: hours });
+            localStorage.setItem(getMultiRateKey(), JSON.stringify(items)); renderPayroll(); closeModal('addMultiRateModal');
+        }
+        function deleteMultiRate(id) { if (!confirm('Delete?')) return; const items = JSON.parse(localStorage.getItem(getMultiRateKey()) || '[]').filter(i => i.id !== id); localStorage.setItem(getMultiRateKey(), JSON.stringify(items)); renderPayroll(); }
+
+        // ========== TOGGLE ==========
+        function toggleAdditionalHours() { document.getElementById('additionalHoursSection').style.display = document.getElementById('showAdditionalHours').checked ? 'block' : 'none'; }
+        function toggleSection(el) { if (event.target.tagName === 'BUTTON') return; el.classList.toggle('expanded'); }
+
+        // ========== CALCULATE PAYSLIP ==========
+        function calculatePayslip() {
+            let gross = payrollData.basic_salary || 0;
+            payrollData.regular_inputs.forEach(ri => { if (ri.type !== 'deduction') gross += parseFloat(ri.amount) || 0; });
+            const currentInputs = JSON.parse(localStorage.getItem(getCurrentKey()) || '[]');
+            currentInputs.forEach(ci => { if (ci.type !== 'deduction') gross += parseFloat(ci.amount) || 0; });
+            const hourlyRate = payrollData.basic_salary ? payrollData.basic_salary / 173.33 : 0;
+            JSON.parse(localStorage.getItem(getOvertimeKey()) || '[]').forEach(ot => { gross += (parseFloat(ot.hours) || 0) * hourlyRate * (parseFloat(ot.rate_multiplier) || 1.5); });
+            JSON.parse(localStorage.getItem(getMultiRateKey()) || '[]').forEach(mr => { gross += (parseFloat(mr.hours) || 0) * (parseFloat(mr.hourly_rate) || 0); });
+            JSON.parse(localStorage.getItem(getShortTimeKey()) || '[]').forEach(st => { gross -= (parseFloat(st.hours_missed) || 0) * hourlyRate; });
+            if (gross < 0) gross = 0;
+
+            // PAYE
+            const ag = gross * 12;
+            let ap = 0;
+            if (ag <= 237100) ap = ag * 0.18;
+            else if (ag <= 370500) ap = 42678 + (ag - 237100) * 0.26;
+            else if (ag <= 512800) ap = 77362 + (ag - 370500) * 0.31;
+            else if (ag <= 673000) ap = 121475 + (ag - 512800) * 0.36;
+            else if (ag <= 857900) ap = 179147 + (ag - 673000) * 0.39;
+            else if (ag <= 1817000) ap = 251258 + (ag - 857900) * 0.41;
+            else ap = 644489 + (ag - 1817000) * 0.45;
+            ap -= 17235; if (ap < 0) ap = 0;
+            const paye = Math.round(ap / 12 * 100) / 100;
+            const uif = Math.round(Math.min(gross * 0.01, 177.12) * 100) / 100;
+
+            let deductions = 0;
+            payrollData.regular_inputs.forEach(ri => { if (ri.type === 'deduction') deductions += parseFloat(ri.amount) || 0; });
+            currentInputs.forEach(ci => { if (ci.type === 'deduction') deductions += parseFloat(ci.amount) || 0; });
+
+            const net = Math.max(gross - paye - uif - deductions, 0);
+            document.getElementById('totalGross').textContent = formatMoney(gross);
+            document.getElementById('totalPAYE').textContent = formatMoney(paye);
+            document.getElementById('totalUIF').textContent = formatMoney(uif);
+            document.getElementById('totalDeductions').textContent = formatMoney(deductions);
+            document.getElementById('totalNet').textContent = formatMoney(net);
+        }
+
+        // ========== EDIT EMPLOYEE ==========
         function openEditEmployeeModal() {
-            if (!currentEmployee) {
-                alert('Laai eers die werknemer se data');
-                return;
-            }
+            const e = currentEmployee;
+            document.getElementById('editFirstName').value = e.first_name || '';
+            document.getElementById('editLastName').value = e.last_name || '';
+            document.getElementById('editEmailInput').value = e.email || '';
+            document.getElementById('editPhoneInput').value = e.phone || '';
+            document.getElementById('editJobTitleInput').value = e.job_title || '';
+            document.getElementById('editDepartmentInput').value = e.department || '';
+            document.getElementById('editPositionInput').value = e.position || '';
+            document.getElementById('editDateAppointedInput').value = e.date_appointed || '';
+            document.getElementById('editPayMethodInput').value = e.payment_method || 'EFT';
+            document.getElementById('editIdNumberInput').value = e.id_number || '';
+            document.getElementById('editBankName').value = e.bank_name || '';
+            document.getElementById('editAccountHolder').value = e.account_holder || '';
+            document.getElementById('editAccountNumber').value = e.account_number || '';
+            document.getElementById('editBranchCode').value = e.branch_code || '';
+            document.getElementById('editEmployeeModal').classList.add('show');
+        }
+        function saveEmployeeInfo() {
+            currentEmployee.first_name = document.getElementById('editFirstName').value.trim();
+            currentEmployee.last_name = document.getElementById('editLastName').value.trim();
+            currentEmployee.email = document.getElementById('editEmailInput').value.trim();
+            currentEmployee.phone = document.getElementById('editPhoneInput').value.trim();
+            currentEmployee.job_title = document.getElementById('editJobTitleInput').value.trim();
+            currentEmployee.department = document.getElementById('editDepartmentInput').value.trim();
+            currentEmployee.position = document.getElementById('editPositionInput').value.trim();
+            currentEmployee.date_appointed = document.getElementById('editDateAppointedInput').value;
+            currentEmployee.payment_method = document.getElementById('editPayMethodInput').value;
+            currentEmployee.id_number = document.getElementById('editIdNumberInput').value.trim();
+            currentEmployee.bank_name = document.getElementById('editBankName').value.trim();
+            currentEmployee.account_holder = document.getElementById('editAccountHolder').value.trim();
+            currentEmployee.account_number = document.getElementById('editAccountNumber').value.trim();
+            currentEmployee.branch_code = document.getElementById('editBranchCode').value.trim();
 
-            // Populate form fields with current employee data
-            document.getElementById('editFirstName').value = currentEmployee.first_name || '';
-            document.getElementById('editLastName').value = currentEmployee.last_name || '';
-            document.getElementById('editEmailInput').value = currentEmployee.email || '';
-            document.getElementById('editPhoneInput').value = currentEmployee.phone || '';
-            document.getElementById('editJobTitleInput').value = currentEmployee.job_title || currentEmployee.position || '';
-            document.getElementById('editDepartmentInput').value = currentEmployee.department || '';
-            document.getElementById('editDateAppointedInput').value = currentEmployee.date_appointed || '';
-            document.getElementById('editPayMethodInput').value = currentEmployee.payment_method || 'EFT';
-
-            // Address fields
-            document.getElementById('editResLine1').value = currentEmployee.residential_address_line1 || '';
-            document.getElementById('editResLine2').value = currentEmployee.residential_address_line2 || '';
-            document.getElementById('editResCity').value = currentEmployee.residential_city || '';
-            document.getElementById('editResProvince').value = currentEmployee.residential_province || '';
-            document.getElementById('editResPostalCode').value = currentEmployee.residential_postal_code || '';
-
-            openModal('editEmployeeModal');
+            const stored = localStorage.getItem('employees_' + currentCompanyId);
+            const employees = stored ? JSON.parse(stored) : [];
+            const idx = employees.findIndex(e => e.id === currentEmpId);
+            if (idx !== -1) { employees[idx] = currentEmployee; localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(employees)); }
+            loadEmployee(); closeModal('editEmployeeModal'); alert('Employee information saved!');
         }
 
-        async function saveEmployeeInfo() {
-            try {
-                const updatedData = {
-                    first_name: document.getElementById('editFirstName').value,
-                    last_name: document.getElementById('editLastName').value,
-                    email: document.getElementById('editEmailInput').value,
-                    phone: document.getElementById('editPhoneInput').value,
-                    job_title: document.getElementById('editJobTitleInput').value,
-                    department: document.getElementById('editDepartmentInput').value,
-                    date_appointed: document.getElementById('editDateAppointedInput').value,
-                    payment_method: document.getElementById('editPayMethodInput').value,
-                    residential_address_line1: document.getElementById('editResLine1').value,
-                    residential_address_line2: document.getElementById('editResLine2').value,
-                    residential_city: document.getElementById('editResCity').value,
-                    residential_province: document.getElementById('editResProvince').value,
-                    residential_postal_code: document.getElementById('editResPostalCode').value
-                };
-
-                const response = await fetch(
-                    `${API_URL}/hr/employees/${currentEmployeeId}`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(updatedData)
-                    }
-                );
-
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    alert('Werknemer inligting suksesvol opgedateer!');
-                    closeModal('editEmployeeModal');
-                    await loadEmployeeInfo(); // Refresh employee data
-                } else {
-                    alert('Fout: ' + (result.error || 'Unknown error'));
-                }
-
-            } catch (error) {
-                alert('Fout met update: ' + error.message);
+        // ========== LEAVE ==========
+        function loadLeaveData() {
+            const leave = JSON.parse(localStorage.getItem(getLeaveKey()) || '[]');
+            renderLeave(leave); updateLeaveBalances(leave);
+        }
+        function renderLeave(leave) {
+            const tbody = document.getElementById('leaveTableBody');
+            if (leave.length === 0) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">No leave records yet</td></tr>'; return; }
+            const typeNames = { annual: 'Annual', sick: 'Sick', family: 'Family Resp.', maternity: 'Maternity', study: 'Study', unpaid: 'Unpaid' };
+            tbody.innerHTML = [...leave].sort((a, b) => b.start_date.localeCompare(a.start_date)).map(l =>
+                '<tr><td>' + (typeNames[l.type] || l.type) + '</td><td>' + l.start_date + '</td><td>' + l.end_date + '</td><td>' + l.days + '</td><td><span class="leave-status leave-' + l.status + '">' + l.status + '</span></td><td>' + (l.reason || '-') + '</td><td><button class="btn btn-danger btn-sm" onclick="deleteLeave(\'' + l.id + '\')">Delete</button></td></tr>'
+            ).join('');
+        }
+        function updateLeaveBalances(leave) {
+            const approved = leave.filter(l => l.status === 'approved');
+            document.getElementById('annualLeaveBalance').textContent = Math.max(15 - approved.filter(l => l.type === 'annual').reduce((s, l) => s + parseFloat(l.days), 0), 0);
+            document.getElementById('sickLeaveBalance').textContent = Math.max(30 - approved.filter(l => l.type === 'sick').reduce((s, l) => s + parseFloat(l.days), 0), 0);
+            document.getElementById('familyLeaveBalance').textContent = Math.max(3 - approved.filter(l => l.type === 'family').reduce((s, l) => s + parseFloat(l.days), 0), 0);
+        }
+        function openAddLeaveModal() { document.getElementById('leaveStartDate').value = ''; document.getElementById('leaveEndDate').value = ''; document.getElementById('leaveDays').value = ''; document.getElementById('leaveReason').value = ''; document.getElementById('addLeaveModal').classList.add('show'); }
+        function calcLeaveDays() {
+            const start = document.getElementById('leaveStartDate').value;
+            const end = document.getElementById('leaveEndDate').value;
+            if (start && end) {
+                let days = 0; const curr = new Date(start); const e = new Date(end);
+                while (curr <= e) { const day = curr.getDay(); if (day !== 0 && day !== 6) days++; curr.setDate(curr.getDate() + 1); }
+                document.getElementById('leaveDays').value = days;
             }
         }
+        function saveLeave() {
+            const start = document.getElementById('leaveStartDate').value;
+            const end = document.getElementById('leaveEndDate').value;
+            const days = parseFloat(document.getElementById('leaveDays').value);
+            if (!start || !end || !days) { alert('Please fill in all required fields'); return; }
+            const leave = JSON.parse(localStorage.getItem(getLeaveKey()) || '[]');
+            leave.push({ id: 'lv-' + Math.random().toString(36).substr(2, 9), type: document.getElementById('leaveType').value, start_date: start, end_date: end, days: days, status: document.getElementById('leaveStatus').value, reason: document.getElementById('leaveReason').value.trim(), date_created: new Date().toISOString() });
+            localStorage.setItem(getLeaveKey(), JSON.stringify(leave)); loadLeaveData(); closeModal('addLeaveModal');
+        }
+        function deleteLeave(id) { if (!confirm('Delete this leave record?')) return; const leave = JSON.parse(localStorage.getItem(getLeaveKey()) || '[]').filter(l => l.id !== id); localStorage.setItem(getLeaveKey(), JSON.stringify(leave)); loadLeaveData(); }
 
-        // Initialize on load
-        init();
+        // ========== NOTES ==========
+        function loadNotes() {
+            const notes = JSON.parse(localStorage.getItem(getNotesKey()) || '[]');
+            const list = document.getElementById('notesList');
+            if (notes.length === 0) { list.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">No notes yet. Add a note above.</p>'; return; }
+            list.innerHTML = [...notes].sort((a, b) => b.date_created.localeCompare(a.date_created)).map(n => {
+                const d = new Date(n.date_created);
+                return '<div class="note-item"><div class="note-header"><span class="note-meta">' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + ' - ' + (n.author || 'System') + '</span><button class="btn btn-danger btn-sm" onclick="deleteNote(\'' + n.id + '\')">Delete</button></div><div class="note-text">' + n.text.replace(/\n/g, '<br>') + '</div></div>';
+            }).join('');
+        }
+        function addNote() {
+            const text = document.getElementById('newNote').value.trim();
+            if (!text) { alert('Please enter a note'); return; }
+            const session = AUTH.getSession();
+            const notes = JSON.parse(localStorage.getItem(getNotesKey()) || '[]');
+            notes.push({ id: 'nt-' + Math.random().toString(36).substr(2, 9), text: text, date_created: new Date().toISOString(), author: session.name || session.email });
+            localStorage.setItem(getNotesKey(), JSON.stringify(notes));
+            document.getElementById('newNote').value = ''; loadNotes();
+        }
+        function deleteNote(id) { if (!confirm('Delete this note?')) return; const notes = JSON.parse(localStorage.getItem(getNotesKey()) || '[]').filter(n => n.id !== id); localStorage.setItem(getNotesKey(), JSON.stringify(notes)); loadNotes(); }
+
+        // ========== HELPERS ==========
+        function formatMoney(amount) { return 'R ' + (parseFloat(amount) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+        document.querySelectorAll('.modal').forEach(modal => { modal.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('show'); }); });
     </script>
 </body>
 </html>

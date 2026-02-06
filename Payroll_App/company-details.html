@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Details</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .wrapper { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 300px; background: white; border-radius: 15px;
+            padding: 25px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            height: fit-content; position: sticky; top: 20px;
+        }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 2px solid #eee; }
+        .sidebar-title { color: #667eea; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+        .sidebar-section { margin-top: 20px; }
+        .sidebar-section-title {
+            padding: 10px 20px; color: #999; font-size: 0.75rem;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .sidebar-link {
+            display: block; padding: 12px 20px; color: #666; text-decoration: none;
+            transition: all 0.2s; border-left: 3px solid transparent; font-weight: 500;
+        }
+        .sidebar-link:hover { background: #f8f9fa; color: #667eea; border-left-color: #667eea; }
+        .sidebar-link.active { background: #f0f4ff; color: #667eea; border-left-color: #667eea; font-weight: 600; }
+        .company-carousel { margin-top: 15px; padding: 15px 20px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+        .carousel-title { font-size: 0.85rem; font-weight: 600; color: #999; margin-bottom: 10px; text-transform: uppercase; }
+        .carousel-companies { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+        .carousel-company {
+            background: #f8f9fa; padding: 10px 12px; border-radius: 6px; font-size: 0.85rem;
+            color: #333; cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .carousel-company:hover { background: #eee; border-color: #667eea; color: #667eea; }
+        .sidebar-actions { padding: 15px 20px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .btn-sidebar { padding: 10px 15px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; text-align: center; }
+        .btn-switch { background: #667eea; color: white; }
+        .btn-switch:hover { background: #5568d3; }
+        .btn-logout { background: #eee; color: #333; }
+        .btn-logout:hover { background: #ddd; }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; }
+        .page-header {
+            background: white; padding: 30px; border-radius: 15px;
+            margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .page-header h1 { color: #667eea; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* CARDS */
+        .card {
+            background: white; padding: 25px; border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;
+        }
+        .card h3 {
+            color: #667eea; margin-bottom: 15px; padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .detail-section { background: #f8f9fa; padding: 20px; border-radius: 10px; }
+        .detail-section-title {
+            font-weight: 600; color: #667eea; margin-bottom: 15px; font-size: 1rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .detail-item { margin-bottom: 12px; }
+        .detail-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+        .detail-value { font-size: 15px; font-weight: 600; color: #333; }
+        .detail-value.empty { color: #ccc; font-style: italic; font-weight: 400; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 50px; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 15px; padding: 30px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #667eea; }
+        .modal-header h3 { color: #667eea; margin: 0; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-section-title { font-weight: 700; color: #667eea; font-size: 0.95rem; margin: 20px 0 10px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
+
+        @media (max-width: 768px) {
+            .wrapper { flex-direction: column; }
+            .sidebar { width: 100%; position: relative; top: 0; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Menu</div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Navigation</div>
+                <a href="company-dashboard.html" class="sidebar-link">📊 Dashboard</a>
+                <a href="employee-management.html" class="sidebar-link">👥 Employees</a>
+                <a href="payruns.html" class="sidebar-link">💵 Pay Runs</a>
+                <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="company-details.html" class="sidebar-link active">🏢 Company Details</a>
+            </div>
+            <div class="company-carousel">
+                <div class="carousel-title">Switch Company</div>
+                <div class="carousel-container">
+                    <div class="carousel-companies" id="companies-carousel"></div>
+                </div>
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn-sidebar btn-switch" onclick="window.location.href='company-selection.html'">← Return to Dashboard</button>
+                <button class="btn-sidebar btn-logout" onclick="handleLogout()">🚪 Logout</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="page-header">
+                <h1 id="pageTitle">Company Details</h1>
+                <button class="btn btn-primary" onclick="openEditModal()">Edit Company Details</button>
+            </div>
+
+            <!-- Company Info Display -->
+            <div class="detail-grid">
+                <div class="detail-section">
+                    <div class="detail-section-title">General Information</div>
+                    <div class="detail-item"><div class="detail-label">Company Name</div><div class="detail-value" id="d-name">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Trading Name</div><div class="detail-value" id="d-trading-name">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Registration Number</div><div class="detail-value" id="d-reg-number">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Nature of Business</div><div class="detail-value" id="d-nature">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Financial Year End</div><div class="detail-value" id="d-year-end">-</div></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Tax & Statutory</div>
+                    <div class="detail-item"><div class="detail-label">PAYE Reference Number</div><div class="detail-value" id="d-paye-ref">-</div></div>
+                    <div class="detail-item"><div class="detail-label">UIF Reference Number</div><div class="detail-value" id="d-uif-ref">-</div></div>
+                    <div class="detail-item"><div class="detail-label">SDL Reference Number</div><div class="detail-value" id="d-sdl-ref">-</div></div>
+                    <div class="detail-item"><div class="detail-label">COID Reference Number</div><div class="detail-value" id="d-coid-ref">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Income Tax Number</div><div class="detail-value" id="d-tax-number">-</div></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Contact Details</div>
+                    <div class="detail-item"><div class="detail-label">Email</div><div class="detail-value" id="d-email">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Phone</div><div class="detail-value" id="d-phone">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Website</div><div class="detail-value" id="d-website">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Contact Person</div><div class="detail-value" id="d-contact-person">-</div></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Physical Address</div>
+                    <div class="detail-item"><div class="detail-label">Street Address</div><div class="detail-value" id="d-street">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Suburb</div><div class="detail-value" id="d-suburb">-</div></div>
+                    <div class="detail-item"><div class="detail-label">City</div><div class="detail-value" id="d-city">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Province</div><div class="detail-value" id="d-province">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Postal Code</div><div class="detail-value" id="d-postal-code">-</div></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Banking Details</div>
+                    <div class="detail-item"><div class="detail-label">Bank Name</div><div class="detail-value" id="d-bank-name">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Account Holder</div><div class="detail-value" id="d-bank-holder">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Account Number</div><div class="detail-value" id="d-bank-account">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Branch Code</div><div class="detail-value" id="d-bank-branch">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Account Type</div><div class="detail-value" id="d-bank-type">-</div></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Payroll Settings</div>
+                    <div class="detail-item"><div class="detail-label">Pay Frequencies</div><div class="detail-value" id="d-pay-frequency">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Pay Day</div><div class="detail-value" id="d-pay-day">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Normal Working Hours (per week)</div><div class="detail-value" id="d-work-hours">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Date Created</div><div class="detail-value" id="d-created">-</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Company Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Company Details</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal()">Close</button>
+            </div>
+            <form onsubmit="saveCompanyDetails(event)">
+                <div class="form-section-title">General Information</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Company Name *</label><input type="text" id="f-name" required></div>
+                    <div class="form-group"><label>Trading Name</label><input type="text" id="f-trading-name"></div>
+                    <div class="form-group"><label>Registration Number</label><input type="text" id="f-reg-number" placeholder="e.g. 2024/123456/07"></div>
+                    <div class="form-group"><label>Nature of Business</label><input type="text" id="f-nature" placeholder="e.g. IT Services"></div>
+                    <div class="form-group"><label>Financial Year End</label><select id="f-year-end">
+                        <option value="">Select month</option>
+                        <option value="January">January</option><option value="February">February</option>
+                        <option value="March">March</option><option value="April">April</option>
+                        <option value="May">May</option><option value="June">June</option>
+                        <option value="July">July</option><option value="August">August</option>
+                        <option value="September">September</option><option value="October">October</option>
+                        <option value="November">November</option><option value="December">December</option>
+                    </select></div>
+                </div>
+
+                <div class="form-section-title">Tax & Statutory</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>PAYE Reference Number</label><input type="text" id="f-paye-ref" placeholder="e.g. 7123456789"></div>
+                    <div class="form-group"><label>UIF Reference Number</label><input type="text" id="f-uif-ref" placeholder="e.g. U123456789"></div>
+                    <div class="form-group"><label>SDL Reference Number</label><input type="text" id="f-sdl-ref" placeholder="e.g. L123456789"></div>
+                    <div class="form-group"><label>COID Reference Number</label><input type="text" id="f-coid-ref" placeholder="Compensation Fund ref"></div>
+                    <div class="form-group"><label>Income Tax Number</label><input type="text" id="f-tax-number" placeholder="e.g. 9123456789"></div>
+                </div>
+
+                <div class="form-section-title">Contact Details</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Email</label><input type="email" id="f-email"></div>
+                    <div class="form-group"><label>Phone</label><input type="tel" id="f-phone"></div>
+                    <div class="form-group"><label>Website</label><input type="url" id="f-website" placeholder="https://"></div>
+                    <div class="form-group"><label>Contact Person</label><input type="text" id="f-contact-person"></div>
+                </div>
+
+                <div class="form-section-title">Physical Address</div>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;"><label>Street Address</label><input type="text" id="f-street"></div>
+                    <div class="form-group"><label>Suburb</label><input type="text" id="f-suburb"></div>
+                    <div class="form-group"><label>City</label><input type="text" id="f-city"></div>
+                    <div class="form-group"><label>Province</label><select id="f-province">
+                        <option value="">Select province</option>
+                        <option value="Eastern Cape">Eastern Cape</option>
+                        <option value="Free State">Free State</option>
+                        <option value="Gauteng">Gauteng</option>
+                        <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                        <option value="Limpopo">Limpopo</option>
+                        <option value="Mpumalanga">Mpumalanga</option>
+                        <option value="North West">North West</option>
+                        <option value="Northern Cape">Northern Cape</option>
+                        <option value="Western Cape">Western Cape</option>
+                    </select></div>
+                    <div class="form-group"><label>Postal Code</label><input type="text" id="f-postal-code" maxlength="4"></div>
+                </div>
+
+                <div class="form-section-title">Banking Details</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Bank Name</label><select id="f-bank-name">
+                        <option value="">Select bank</option>
+                        <option value="ABSA">ABSA</option>
+                        <option value="Capitec">Capitec</option>
+                        <option value="FNB">FNB</option>
+                        <option value="Nedbank">Nedbank</option>
+                        <option value="Standard Bank">Standard Bank</option>
+                        <option value="Investec">Investec</option>
+                        <option value="TymeBank">TymeBank</option>
+                        <option value="African Bank">African Bank</option>
+                        <option value="Other">Other</option>
+                    </select></div>
+                    <div class="form-group"><label>Account Holder</label><input type="text" id="f-bank-holder"></div>
+                    <div class="form-group"><label>Account Number</label><input type="text" id="f-bank-account"></div>
+                    <div class="form-group"><label>Branch Code</label><input type="text" id="f-bank-branch"></div>
+                    <div class="form-group"><label>Account Type</label><select id="f-bank-type">
+                        <option value="">Select type</option>
+                        <option value="Current/Cheque">Current/Cheque</option>
+                        <option value="Savings">Savings</option>
+                        <option value="Transmission">Transmission</option>
+                    </select></div>
+                </div>
+
+                <div class="form-section-title">Payroll Settings</div>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Pay Frequencies (select all that apply)</label>
+                        <div style="display: flex; gap: 20px; padding: 10px; background: #f8f9fa; border-radius: 6px; margin-top: 5px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                                <input type="checkbox" name="pay-frequency" value="Monthly" style="width: auto; cursor: pointer;">
+                                <span>Monthly</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                                <input type="checkbox" name="pay-frequency" value="Bi-Weekly" style="width: auto; cursor: pointer;">
+                                <span>Bi-Weekly</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                                <input type="checkbox" name="pay-frequency" value="Weekly" style="width: auto; cursor: pointer;">
+                                <span>Weekly</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Pay Day (day of month)</label><input type="number" id="f-pay-day" min="1" max="31" placeholder="e.g. 25"></div>
+                    <div class="form-group"><label>Normal Working Hours (per week)</label><input type="number" id="f-work-hours" min="1" max="60" step="0.5" placeholder="e.g. 45"></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
+                    <button type="button" class="btn" style="background: #eee; color: #333;" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Company Details</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        let currentCompanyId = null;
+        let companyData = {};
+
+        window.addEventListener('load', function() {
+            if (!AUTH.isLoggedIn()) { window.location.href = 'login.html'; return; }
+            const session = AUTH.getSession();
+            currentCompanyId = session.company_id;
+            loadCompaniesCarousel();
+            loadCompanyDetails();
+        });
+
+        // ========== SIDEBAR ==========
+        function loadCompaniesCarousel() {
+            const session = AUTH.getSession();
+            const user = { role: session.role, company_id: session.company_id };
+            const companies = AUTH.getCompaniesForUser(user);
+            const carousel = document.getElementById('companies-carousel');
+            carousel.innerHTML = '';
+            companies.forEach(company => {
+                const div = document.createElement('div');
+                div.className = 'carousel-company';
+                div.textContent = company.name;
+                if (company.id === session.company_id) {
+                    div.style.background = '#667eea';
+                    div.style.color = 'white';
+                    div.style.fontWeight = '600';
+                }
+                div.onclick = () => switchToCompany(company.id);
+                carousel.appendChild(div);
+            });
+        }
+
+        function switchToCompany(companyId) {
+            const session = AUTH.getSession();
+            session.company_id = companyId;
+            localStorage.setItem('session', JSON.stringify(session));
+            location.reload();
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) { AUTH.logout(); }
+        }
+
+        // ========== COMPANY DETAILS ==========
+        function getStorageKey() { return 'company_details_' + currentCompanyId; }
+
+        function loadCompanyDetails() {
+            // Merge AUTH company data with localStorage extended data
+            const authCompany = AUTH.getCompanyById(currentCompanyId) || {};
+            const stored = localStorage.getItem(getStorageKey());
+            const extra = stored ? JSON.parse(stored) : {};
+
+            companyData = {
+                name: extra.name || authCompany.name || '',
+                trading_name: extra.trading_name || '',
+                reg_number: extra.reg_number || '',
+                nature: extra.nature || '',
+                year_end: extra.year_end || '',
+                paye_ref: extra.paye_ref || '',
+                uif_ref: extra.uif_ref || '',
+                sdl_ref: extra.sdl_ref || '',
+                coid_ref: extra.coid_ref || '',
+                tax_number: extra.tax_number || '',
+                email: extra.email || authCompany.email || '',
+                phone: extra.phone || '',
+                website: extra.website || '',
+                contact_person: extra.contact_person || '',
+                street: extra.street || '',
+                suburb: extra.suburb || '',
+                city: extra.city || '',
+                province: extra.province || '',
+                postal_code: extra.postal_code || '',
+                bank_name: extra.bank_name || '',
+                bank_holder: extra.bank_holder || '',
+                bank_account: extra.bank_account || '',
+                bank_branch: extra.bank_branch || '',
+                bank_type: extra.bank_type || '',
+                pay_frequencies: extra.pay_frequencies || [],
+                pay_day: extra.pay_day || '',
+                work_hours: extra.work_hours || '',
+                created_date: authCompany.created_date || ''
+            };
+
+            renderDetails();
+        }
+
+        function renderDetails() {
+            document.getElementById('pageTitle').textContent = companyData.name || 'Company Details';
+
+            const fields = [
+                ['d-name', companyData.name],
+                ['d-trading-name', companyData.trading_name],
+                ['d-reg-number', companyData.reg_number],
+                ['d-nature', companyData.nature],
+                ['d-year-end', companyData.year_end],
+                ['d-paye-ref', companyData.paye_ref],
+                ['d-uif-ref', companyData.uif_ref],
+                ['d-sdl-ref', companyData.sdl_ref],
+                ['d-coid-ref', companyData.coid_ref],
+                ['d-tax-number', companyData.tax_number],
+                ['d-email', companyData.email],
+                ['d-phone', companyData.phone],
+                ['d-website', companyData.website],
+                ['d-contact-person', companyData.contact_person],
+                ['d-street', companyData.street],
+                ['d-suburb', companyData.suburb],
+                ['d-city', companyData.city],
+                ['d-province', companyData.province],
+                ['d-postal-code', companyData.postal_code],
+                ['d-bank-name', companyData.bank_name],
+                ['d-bank-holder', companyData.bank_holder],
+                ['d-bank-account', companyData.bank_account],
+                ['d-bank-branch', companyData.bank_branch],
+                ['d-bank-type', companyData.bank_type],
+                ['d-pay-frequency', companyData.pay_frequencies && companyData.pay_frequencies.length > 0 ? companyData.pay_frequencies.join(', ') : ''],
+                ['d-pay-day', companyData.pay_day ? 'Day ' + companyData.pay_day : ''],
+                ['d-work-hours', companyData.work_hours ? companyData.work_hours + ' hours' : ''],
+                ['d-created', companyData.created_date]
+            ];
+
+            fields.forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (value) {
+                        el.textContent = value;
+                        el.classList.remove('empty');
+                    } else {
+                        el.textContent = 'Not set';
+                        el.classList.add('empty');
+                    }
+                }
+            });
+        }
+
+        // ========== EDIT MODAL ==========
+        function openEditModal() {
+            // Populate form with current data
+            document.getElementById('f-name').value = companyData.name || '';
+            document.getElementById('f-trading-name').value = companyData.trading_name || '';
+            document.getElementById('f-reg-number').value = companyData.reg_number || '';
+            document.getElementById('f-nature').value = companyData.nature || '';
+            document.getElementById('f-year-end').value = companyData.year_end || '';
+            document.getElementById('f-paye-ref').value = companyData.paye_ref || '';
+            document.getElementById('f-uif-ref').value = companyData.uif_ref || '';
+            document.getElementById('f-sdl-ref').value = companyData.sdl_ref || '';
+            document.getElementById('f-coid-ref').value = companyData.coid_ref || '';
+            document.getElementById('f-tax-number').value = companyData.tax_number || '';
+            document.getElementById('f-email').value = companyData.email || '';
+            document.getElementById('f-phone').value = companyData.phone || '';
+            document.getElementById('f-website').value = companyData.website || '';
+            document.getElementById('f-contact-person').value = companyData.contact_person || '';
+            document.getElementById('f-street').value = companyData.street || '';
+            document.getElementById('f-suburb').value = companyData.suburb || '';
+            document.getElementById('f-city').value = companyData.city || '';
+            document.getElementById('f-province').value = companyData.province || '';
+            document.getElementById('f-postal-code').value = companyData.postal_code || '';
+            document.getElementById('f-bank-name').value = companyData.bank_name || '';
+            document.getElementById('f-bank-holder').value = companyData.bank_holder || '';
+            document.getElementById('f-bank-account').value = companyData.bank_account || '';
+            document.getElementById('f-bank-branch').value = companyData.bank_branch || '';
+            document.getElementById('f-bank-type').value = companyData.bank_type || '';
+            
+            // Set pay frequency checkboxes
+            const frequencyCheckboxes = document.querySelectorAll('input[name="pay-frequency"]');
+            frequencyCheckboxes.forEach(checkbox => {
+                checkbox.checked = companyData.pay_frequencies && companyData.pay_frequencies.includes(checkbox.value);
+            });
+            
+            document.getElementById('f-pay-day').value = companyData.pay_day || '';
+            document.getElementById('f-work-hours').value = companyData.work_hours || '';
+
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        // Close modal on backdrop click
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal') && e.target.classList.contains('show')) {
+                closeModal();
+            }
+        });
+
+        function saveCompanyDetails(e) {
+            e.preventDefault();
+
+            companyData.name = document.getElementById('f-name').value.trim();
+            companyData.trading_name = document.getElementById('f-trading-name').value.trim();
+            companyData.reg_number = document.getElementById('f-reg-number').value.trim();
+            companyData.nature = document.getElementById('f-nature').value.trim();
+            companyData.year_end = document.getElementById('f-year-end').value;
+            companyData.paye_ref = document.getElementById('f-paye-ref').value.trim();
+            companyData.uif_ref = document.getElementById('f-uif-ref').value.trim();
+            companyData.sdl_ref = document.getElementById('f-sdl-ref').value.trim();
+            companyData.coid_ref = document.getElementById('f-coid-ref').value.trim();
+            companyData.tax_number = document.getElementById('f-tax-number').value.trim();
+            companyData.email = document.getElementById('f-email').value.trim();
+            companyData.phone = document.getElementById('f-phone').value.trim();
+            companyData.website = document.getElementById('f-website').value.trim();
+            companyData.contact_person = document.getElementById('f-contact-person').value.trim();
+            companyData.street = document.getElementById('f-street').value.trim();
+            companyData.suburb = document.getElementById('f-suburb').value.trim();
+            companyData.city = document.getElementById('f-city').value.trim();
+            companyData.province = document.getElementById('f-province').value;
+            companyData.postal_code = document.getElementById('f-postal-code').value.trim();
+            companyData.bank_name = document.getElementById('f-bank-name').value;
+            companyData.bank_holder = document.getElementById('f-bank-holder').value.trim();
+            companyData.bank_account = document.getElementById('f-bank-account').value.trim();
+            companyData.bank_branch = document.getElementById('f-bank-branch').value.trim();
+            companyData.bank_type = document.getElementById('f-bank-type').value;
+            
+            // Get selected pay frequencies
+            const selectedFrequencies = [];
+            document.querySelectorAll('input[name="pay-frequency"]:checked').forEach(checkbox => {
+                selectedFrequencies.push(checkbox.value);
+            });
+            companyData.pay_frequencies = selectedFrequencies;
+            
+            companyData.pay_day = document.getElementById('f-pay-day').value;
+            companyData.work_hours = document.getElementById('f-work-hours').value;
+
+            // Save extended details to localStorage
+            localStorage.setItem(getStorageKey(), JSON.stringify(companyData));
+
+            // Also update the company name in AUTH system if changed
+            const authCompany = AUTH.getCompanyById(currentCompanyId);
+            if (authCompany && companyData.name) {
+                authCompany.name = companyData.name;
+                authCompany.email = companyData.email || authCompany.email;
+                // Update in registered companies localStorage
+                const regCompanies = AUTH.getRegisteredCompanies();
+                const regIdx = regCompanies.findIndex(c => c.id === currentCompanyId);
+                if (regIdx !== -1) {
+                    regCompanies[regIdx].name = companyData.name;
+                    regCompanies[regIdx].email = companyData.email || regCompanies[regIdx].email;
+                    localStorage.setItem('registered_companies', JSON.stringify(regCompanies));
+                }
+            }
+
+            renderDetails();
+            closeModal();
+            alert('Company details saved successfully!');
+        }
+    </script>
+</body>
+</html>
