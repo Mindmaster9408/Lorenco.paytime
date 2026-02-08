@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pay Runs</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -291,8 +291,11 @@
         }
         .search-bar:focus { outline: none; border-color: #667eea; }
     </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
 </head>
 <body>
+    <button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+    <div id="mobile-overlay" class="mobile-overlay"></div>
     <div class="wrapper">
         <!-- SIDEBAR -->
         <div class="sidebar">
@@ -305,6 +308,8 @@
                 <a href="employee-management.html" class="sidebar-link">👥 Employees</a>
                 <a href="payruns.html" class="sidebar-link active">💵 Pay Runs</a>
                 <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
+                <a href="reports.html" class="sidebar-link">📊 Reports</a>
                 <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
             </div>
             <div class="company-carousel">
@@ -429,6 +434,53 @@
         </div>
     </div>
 
+    <!-- BANKING FORMAT MODAL -->
+    <div id="bankingModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>🏦 Export Banking File</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('bankingModal')">Close</button>
+            </div>
+            <p style="color: #666; margin-bottom: 15px;">Select your bank to generate the EFT payment file:</p>
+            <div id="bankingRunId" style="display:none;"></div>
+            <div style="display: grid; gap: 10px;">
+                <button class="btn btn-primary" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportBankingFormat('absa')">
+                    <strong>ABSA</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">Fixed-width TXT file</span>
+                </button>
+                <button class="btn btn-primary" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportBankingFormat('fnb')">
+                    <strong>FNB (First National Bank)</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">Fixed-width TXT file</span>
+                </button>
+                <button class="btn btn-primary" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportBankingFormat('standard')">
+                    <strong>Standard Bank</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">CSV file</span>
+                </button>
+                <button class="btn btn-primary" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportBankingFormat('nedbank')">
+                    <strong>Nedbank</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">CSV file</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXPORT FORMAT MODAL -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>📊 Export Accounting Journal</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('exportModal')">Close</button>
+            </div>
+            <p style="color: #666; margin-bottom: 15px;">Choose your accounting software format:</p>
+            <div id="exportRunId" style="display:none;"></div>
+            <div style="display: grid; gap: 10px;">
+                <button class="btn btn-success" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportAccountingFormat('sage')">
+                    <strong>Sage Pastel</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">CSV journal with account codes</span>
+                </button>
+                <button class="btn btn-info" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportAccountingFormat('xero')">
+                    <strong>Xero</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">Manual Journal CSV import</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let currentCompanyId = null;
@@ -811,10 +863,11 @@
             html += '<div class="payment-breakdown"><div class="breakdown-header" onclick="toggleBreakdown(this)">' +
                 '<span class="breakdown-title">📊 Accounting Info</span>' +
                 '<span class="breakdown-total">' +
-                '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'accounting\')">📄</a> ' +
-                '<a href="#" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'accounting-xlsx\')">📊</a> ' +
-                '<a href="#" onclick="event.preventDefault(); sendToXero(\'' + run.id + '\')">Send to Xero</a>' +
-                '</span></div></div>';
+                '<a href="#" onclick="event.preventDefault(); event.stopPropagation(); sendToXero(\'' + run.id + '\')">📤 Export Journal</a>' +
+                '</span></div><div class="breakdown-content"><div style="display: flex; gap: 10px; flex-wrap: wrap;">' +
+                '<button class="btn btn-success btn-sm" onclick="event.stopPropagation(); document.getElementById(\'exportRunId\').textContent=\'' + run.id + '\'; exportAccountingFormat(\'sage\')">Sage Pastel CSV</button>' +
+                '<button class="btn btn-info btn-sm" onclick="event.stopPropagation(); document.getElementById(\'exportRunId\').textContent=\'' + run.id + '\'; exportAccountingFormat(\'xero\')">Xero CSV</button>' +
+                '</div></div></div>';
             
             // Beneficiaries
             html += '<div class="payment-breakdown"><div class="breakdown-header" onclick="toggleBreakdown(this)">' +
@@ -918,15 +971,122 @@
         }
 
         function downloadPDF(runId, type) {
-            alert('Download ' + type + ' - This feature will generate and download the selected report.');
+            var run = payruns.find(function(r) { return r.id === runId; });
+            if (!run) return;
+
+            if (type === 'all' || type === 'eft' || type === 'cash') {
+                // Generate bulk payslip PDFs
+                if (typeof PDFBranding === 'undefined') {
+                    alert('PDF module not loaded. Please refresh and try again.');
+                    return;
+                }
+                var filteredEmps = employees.filter(function(emp) {
+                    var psStatus = getPayslipStatus(emp.id, run.period);
+                    if (psStatus.status !== 'finalized') return false;
+                    if (type === 'eft') return (emp.payment_method || 'EFT') === 'EFT';
+                    if (type === 'cash') return emp.payment_method === 'Cash';
+                    return true;
+                });
+                var calcFn = function(empId) {
+                    var pd = getEmployeePayroll(empId);
+                    var c = calculateEmployeePeriod(empId, run.period, pd);
+                    c.basicSalary = pd.basic_salary || 0;
+                    c.allowances = (pd.regular_inputs || []).filter(function(ri) { return ri.type !== 'deduction'; });
+                    c.deductionsList = (pd.regular_inputs || []).filter(function(ri) { return ri.type === 'deduction'; });
+                    c.totalDeductions = c.deductions || 0;
+                    c.overtimeAmount = 0;
+                    var hr = pd.basic_salary ? pd.basic_salary / 173.33 : 0;
+                    JSON.parse(localStorage.getItem('emp_overtime_' + currentCompanyId + '_' + empId + '_' + run.period) || '[]').forEach(function(ot) {
+                        c.overtimeAmount += (parseFloat(ot.hours) || 0) * hr * (parseFloat(ot.rate_multiplier) || 1.5);
+                    });
+                    return c;
+                };
+                var count = PDFBranding.generateBulkPayslips(filteredEmps, run.period, currentCompanyId, calcFn);
+                if (count) alert(count + ' payslip(s) generated successfully.');
+            } else {
+                alert('Export type "' + type + '" is not yet supported for PDF download.');
+            }
         }
 
         function downloadBanking(runId) {
-            alert('Download Banking File - This will generate a file for bank import.');
+            document.getElementById('bankingRunId').textContent = runId;
+            document.getElementById('bankingModal').classList.add('show');
+        }
+
+        function exportBankingFormat(bank) {
+            var runId = document.getElementById('bankingRunId').textContent;
+            var run = payruns.find(function(r) { return r.id === runId; });
+            if (!run) return;
+
+            if (typeof BankingFormats === 'undefined') {
+                alert('Banking formats module not loaded. Please refresh and try again.');
+                return;
+            }
+
+            var calcFn = function(empId) {
+                var pd = getEmployeePayroll(empId);
+                return calculateEmployeePeriod(empId, run.period, pd);
+            };
+
+            var result;
+            if (bank === 'absa') result = BankingFormats.generateABSA(run, employees, currentCompanyId, calcFn);
+            else if (bank === 'fnb') result = BankingFormats.generateFNB(run, employees, currentCompanyId, calcFn);
+            else if (bank === 'standard') result = BankingFormats.generateStandardBank(run, employees, currentCompanyId, calcFn);
+            else if (bank === 'nedbank') result = BankingFormats.generateNedbank(run, employees, currentCompanyId, calcFn);
+
+            closeModal('bankingModal');
+            if (result && result.count > 0) {
+                alert('Banking file generated: ' + result.count + ' payment(s) totalling R' + result.total.toFixed(2));
+            } else {
+                alert('No EFT payments to export. Ensure employees have payment method set to EFT and payslips are finalized.');
+            }
         }
 
         function sendToXero(runId) {
-            alert('Send to Xero - This will export the payroll data to your Xero account.');
+            document.getElementById('exportRunId').textContent = runId;
+            document.getElementById('exportModal').classList.add('show');
+        }
+
+        function exportAccountingFormat(format) {
+            var runId = document.getElementById('exportRunId').textContent;
+            var run = payruns.find(function(r) { return r.id === runId; });
+            if (!run) return;
+
+            if (typeof ExportFormats === 'undefined') {
+                alert('Export formats module not loaded. Please refresh and try again.');
+                return;
+            }
+
+            // Build payrun data summary
+            var payrunData = {
+                period: run.period,
+                total_gross: 0,
+                total_paye: 0,
+                total_uif: 0,
+                total_net: 0
+            };
+
+            employees.forEach(function(emp) {
+                var psStatus = getPayslipStatus(emp.id, run.period);
+                if (psStatus.status !== 'finalized') return;
+                var pd = getEmployeePayroll(emp.id);
+                var calc = calculateEmployeePeriod(emp.id, run.period, pd);
+                if (calc.gross <= 0) return;
+                payrunData.total_gross += calc.gross;
+                payrunData.total_paye += calc.paye;
+                payrunData.total_uif += calc.uif;
+                payrunData.total_net += calc.net;
+            });
+
+            closeModal('exportModal');
+
+            if (format === 'sage') {
+                ExportFormats.exportSageJournal(payrunData, currentCompanyId);
+                alert('Sage Pastel journal exported for ' + formatPeriod(run.period));
+            } else if (format === 'xero') {
+                ExportFormats.exportXeroJournal(payrunData, currentCompanyId);
+                alert('Xero journal exported for ' + formatPeriod(run.period));
+            }
         }
 
         function getHistoricalGroupKey(run) {
@@ -1542,5 +1702,15 @@
             });
         });
     </script>
+    <script src="js/export-formats.js"></script>
+    <script src="js/banking-formats.js"></script>
+    <script src="js/pdf-branding.js"></script>
+    <nav class="mobile-bottom-nav">
+        <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+        <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+        <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+        <a href="reports.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128203;</span><span class="mobile-nav-label">Reports</span></a>
+    </nav>
+    <script src="js/mobile-utils.js"></script>
 </body>
 </html>

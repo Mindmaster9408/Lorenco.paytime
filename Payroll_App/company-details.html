@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Company Details</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -108,8 +108,11 @@
             .form-grid { grid-template-columns: 1fr; }
         }
     </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
 </head>
 <body>
+    <button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+    <div id="mobile-overlay" class="mobile-overlay"></div>
     <div class="wrapper">
         <!-- SIDEBAR -->
         <div class="sidebar">
@@ -122,6 +125,8 @@
                 <a href="employee-management.html" class="sidebar-link">👥 Employees</a>
                 <a href="payruns.html" class="sidebar-link">💵 Pay Runs</a>
                 <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
+                <a href="reports.html" class="sidebar-link">📊 Reports</a>
                 <a href="company-details.html" class="sidebar-link active">🏢 Company Details</a>
             </div>
             <div class="company-carousel">
@@ -195,6 +200,55 @@
                     <div class="detail-item"><div class="detail-label">Pay Day</div><div class="detail-value" id="d-pay-day">-</div></div>
                     <div class="detail-item"><div class="detail-label">Normal Working Hours (per week)</div><div class="detail-value" id="d-work-hours">-</div></div>
                     <div class="detail-item"><div class="detail-label">Date Created</div><div class="detail-value" id="d-created">-</div></div>
+                </div>
+            </div>
+
+            <!-- Branding & Export Settings -->
+            <div class="card" style="margin-top: 20px;">
+                <h3>Branding & Export Settings</h3>
+                <div class="detail-grid">
+                    <div class="detail-section">
+                        <div class="detail-section-title">Company Logo</div>
+                        <div id="logo-preview" style="margin-bottom: 15px;">
+                            <div style="background: #f8f9fa; border: 2px dashed #ddd; border-radius: 10px; padding: 30px; text-align: center; color: #999;">
+                                No logo uploaded
+                            </div>
+                        </div>
+                        <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/svg+xml" style="display:none;" onchange="handleLogoUpload(event)">
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary btn-sm" onclick="document.getElementById('logoFileInput').click()">Upload Logo</button>
+                            <button class="btn btn-sm" style="background:#eee; color:#333;" onclick="removeLogo()">Remove</button>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Payslip Branding</div>
+                        <div class="detail-item"><div class="detail-label">Display Name on Payslips</div><div class="detail-value" id="d-company-name-display">-</div></div>
+                        <div class="detail-item"><div class="detail-label">Address Line 1</div><div class="detail-value" id="d-address-line1">-</div></div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Sage Pastel Account Codes</div>
+                        <div class="detail-item"><div class="detail-label">Salaries & Wages (Debit)</div><div class="detail-value" id="d-sage-salaries">-</div></div>
+                        <div class="detail-item"><div class="detail-label">PAYE Liability (Credit)</div><div class="detail-value" id="d-sage-paye">-</div></div>
+                        <div class="detail-item"><div class="detail-label">UIF Liability (Credit)</div><div class="detail-value" id="d-sage-uif">-</div></div>
+                        <div class="detail-item"><div class="detail-label">SDL Liability (Credit)</div><div class="detail-value" id="d-sage-sdl">-</div></div>
+                        <div class="detail-item"><div class="detail-label">Bank Account (Credit)</div><div class="detail-value" id="d-sage-bank">-</div></div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Xero Account Codes</div>
+                        <div class="detail-item"><div class="detail-label">Wages Expense (Debit)</div><div class="detail-value" id="d-xero-wages">-</div></div>
+                        <div class="detail-item"><div class="detail-label">PAYE Payable (Credit)</div><div class="detail-value" id="d-xero-paye">-</div></div>
+                        <div class="detail-item"><div class="detail-label">UIF Payable (Credit)</div><div class="detail-value" id="d-xero-uif">-</div></div>
+                        <div class="detail-item"><div class="detail-label">Bank / Wages Payable (Credit)</div><div class="detail-value" id="d-xero-bank">-</div></div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Banking / EFT Codes</div>
+                        <div class="detail-item"><div class="detail-label">ABSA User Code</div><div class="detail-value" id="d-absa-code">-</div></div>
+                        <div class="detail-item"><div class="detail-label">FNB Originator Code</div><div class="detail-value" id="d-fnb-code">-</div></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -310,6 +364,38 @@
                     <div class="form-group"><label>Normal Working Hours (per week)</label><input type="number" id="f-work-hours" min="1" max="60" step="0.5" placeholder="e.g. 45"></div>
                 </div>
 
+                <div class="form-section-title">Payslip Branding</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Display Name on Payslips</label><input type="text" id="f-company-name-display" placeholder="e.g. Acme (Pty) Ltd"></div>
+                    <div class="form-group"><label>Address Line 1 (for payslip header)</label><input type="text" id="f-address-line1" placeholder="e.g. 123 Main Street, Sandton, 2196"></div>
+                </div>
+
+                <div class="form-section-title">Sage Pastel Account Codes</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Salaries & Wages (Debit)</label><input type="text" id="f-sage-salaries" placeholder="e.g. 5000"></div>
+                    <div class="form-group"><label>PAYE Liability (Credit)</label><input type="text" id="f-sage-paye" placeholder="e.g. 2100"></div>
+                    <div class="form-group"><label>UIF Liability (Credit)</label><input type="text" id="f-sage-uif" placeholder="e.g. 2101"></div>
+                    <div class="form-group"><label>UIF Expense (Debit)</label><input type="text" id="f-sage-uif-expense" placeholder="e.g. 5010"></div>
+                    <div class="form-group"><label>SDL Liability (Credit)</label><input type="text" id="f-sage-sdl" placeholder="e.g. 2102"></div>
+                    <div class="form-group"><label>SDL Expense (Debit)</label><input type="text" id="f-sage-sdl-expense" placeholder="e.g. 5020"></div>
+                    <div class="form-group"><label>Bank Account (Credit)</label><input type="text" id="f-sage-bank" placeholder="e.g. 1000"></div>
+                </div>
+
+                <div class="form-section-title">Xero Account Codes</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Wages Expense (Debit)</label><input type="text" id="f-xero-wages" placeholder="e.g. 400"></div>
+                    <div class="form-group"><label>PAYE Payable (Credit)</label><input type="text" id="f-xero-paye" placeholder="e.g. 825"></div>
+                    <div class="form-group"><label>UIF Payable (Credit)</label><input type="text" id="f-xero-uif" placeholder="e.g. 826"></div>
+                    <div class="form-group"><label>UIF Expense (Debit)</label><input type="text" id="f-xero-uif-expense" placeholder="e.g. 401"></div>
+                    <div class="form-group"><label>Bank / Wages Payable (Credit)</label><input type="text" id="f-xero-bank" placeholder="e.g. 090"></div>
+                </div>
+
+                <div class="form-section-title">Banking / EFT Settings</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>ABSA User Code</label><input type="text" id="f-absa-code" placeholder="8-digit code" maxlength="8"></div>
+                    <div class="form-group"><label>FNB Originator Code</label><input type="text" id="f-fnb-code" placeholder="10-digit code" maxlength="10"></div>
+                </div>
+
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
                     <button type="button" class="btn" style="background: #eee; color: #333;" onclick="closeModal()">Cancel</button>
                     <button type="submit" class="btn btn-success">Save Company Details</button>
@@ -400,7 +486,28 @@
                 pay_frequencies: extra.pay_frequencies || [],
                 pay_day: extra.pay_day || '',
                 work_hours: extra.work_hours || '',
-                created_date: authCompany.created_date || ''
+                created_date: authCompany.created_date || '',
+                // Branding & Export
+                company_name: extra.company_name || extra.name || authCompany.name || '',
+                address_line1: extra.address_line1 || '',
+                logo_data: extra.logo_data || '',
+                // Sage
+                sage_salaries_account: extra.sage_salaries_account || '',
+                sage_paye_account: extra.sage_paye_account || '',
+                sage_uif_account: extra.sage_uif_account || '',
+                sage_uif_expense_account: extra.sage_uif_expense_account || '',
+                sage_sdl_account: extra.sage_sdl_account || '',
+                sage_sdl_expense_account: extra.sage_sdl_expense_account || '',
+                sage_bank_account: extra.sage_bank_account || '',
+                // Xero
+                xero_wages_account: extra.xero_wages_account || '',
+                xero_paye_account: extra.xero_paye_account || '',
+                xero_uif_account: extra.xero_uif_account || '',
+                xero_uif_expense_account: extra.xero_uif_expense_account || '',
+                xero_bank_account: extra.xero_bank_account || '',
+                // Banking
+                absa_user_code: extra.absa_user_code || '',
+                fnb_originator_code: extra.fnb_originator_code || ''
             };
 
             renderDetails();
@@ -437,7 +544,24 @@
                 ['d-pay-frequency', companyData.pay_frequencies && companyData.pay_frequencies.length > 0 ? companyData.pay_frequencies.join(', ') : ''],
                 ['d-pay-day', companyData.pay_day ? 'Day ' + companyData.pay_day : ''],
                 ['d-work-hours', companyData.work_hours ? companyData.work_hours + ' hours' : ''],
-                ['d-created', companyData.created_date]
+                ['d-created', companyData.created_date],
+                // Branding
+                ['d-company-name-display', companyData.company_name],
+                ['d-address-line1', companyData.address_line1],
+                // Sage
+                ['d-sage-salaries', companyData.sage_salaries_account || '5000 (default)'],
+                ['d-sage-paye', companyData.sage_paye_account || '2100 (default)'],
+                ['d-sage-uif', companyData.sage_uif_account || '2101 (default)'],
+                ['d-sage-sdl', companyData.sage_sdl_account || '2102 (default)'],
+                ['d-sage-bank', companyData.sage_bank_account || '1000 (default)'],
+                // Xero
+                ['d-xero-wages', companyData.xero_wages_account || '400 (default)'],
+                ['d-xero-paye', companyData.xero_paye_account || '825 (default)'],
+                ['d-xero-uif', companyData.xero_uif_account || '826 (default)'],
+                ['d-xero-bank', companyData.xero_bank_account || '090 (default)'],
+                // Banking
+                ['d-absa-code', companyData.absa_user_code],
+                ['d-fnb-code', companyData.fnb_originator_code]
             ];
 
             fields.forEach(([id, value]) => {
@@ -452,6 +576,9 @@
                     }
                 }
             });
+
+            // Update logo preview
+            updateLogoPreview();
         }
 
         // ========== EDIT MODAL ==========
@@ -490,6 +617,24 @@
             
             document.getElementById('f-pay-day').value = companyData.pay_day || '';
             document.getElementById('f-work-hours').value = companyData.work_hours || '';
+
+            // Branding & Export fields
+            document.getElementById('f-company-name-display').value = companyData.company_name || '';
+            document.getElementById('f-address-line1').value = companyData.address_line1 || '';
+            document.getElementById('f-sage-salaries').value = companyData.sage_salaries_account || '';
+            document.getElementById('f-sage-paye').value = companyData.sage_paye_account || '';
+            document.getElementById('f-sage-uif').value = companyData.sage_uif_account || '';
+            document.getElementById('f-sage-uif-expense').value = companyData.sage_uif_expense_account || '';
+            document.getElementById('f-sage-sdl').value = companyData.sage_sdl_account || '';
+            document.getElementById('f-sage-sdl-expense').value = companyData.sage_sdl_expense_account || '';
+            document.getElementById('f-sage-bank').value = companyData.sage_bank_account || '';
+            document.getElementById('f-xero-wages').value = companyData.xero_wages_account || '';
+            document.getElementById('f-xero-paye').value = companyData.xero_paye_account || '';
+            document.getElementById('f-xero-uif').value = companyData.xero_uif_account || '';
+            document.getElementById('f-xero-uif-expense').value = companyData.xero_uif_expense_account || '';
+            document.getElementById('f-xero-bank').value = companyData.xero_bank_account || '';
+            document.getElementById('f-absa-code').value = companyData.absa_user_code || '';
+            document.getElementById('f-fnb-code').value = companyData.fnb_originator_code || '';
 
             document.getElementById('editModal').classList.add('show');
         }
@@ -543,6 +688,24 @@
             companyData.pay_day = document.getElementById('f-pay-day').value;
             companyData.work_hours = document.getElementById('f-work-hours').value;
 
+            // Branding & Export fields
+            companyData.company_name = document.getElementById('f-company-name-display').value.trim();
+            companyData.address_line1 = document.getElementById('f-address-line1').value.trim();
+            companyData.sage_salaries_account = document.getElementById('f-sage-salaries').value.trim();
+            companyData.sage_paye_account = document.getElementById('f-sage-paye').value.trim();
+            companyData.sage_uif_account = document.getElementById('f-sage-uif').value.trim();
+            companyData.sage_uif_expense_account = document.getElementById('f-sage-uif-expense').value.trim();
+            companyData.sage_sdl_account = document.getElementById('f-sage-sdl').value.trim();
+            companyData.sage_sdl_expense_account = document.getElementById('f-sage-sdl-expense').value.trim();
+            companyData.sage_bank_account = document.getElementById('f-sage-bank').value.trim();
+            companyData.xero_wages_account = document.getElementById('f-xero-wages').value.trim();
+            companyData.xero_paye_account = document.getElementById('f-xero-paye').value.trim();
+            companyData.xero_uif_account = document.getElementById('f-xero-uif').value.trim();
+            companyData.xero_uif_expense_account = document.getElementById('f-xero-uif-expense').value.trim();
+            companyData.xero_bank_account = document.getElementById('f-xero-bank').value.trim();
+            companyData.absa_user_code = document.getElementById('f-absa-code').value.trim();
+            companyData.fnb_originator_code = document.getElementById('f-fnb-code').value.trim();
+
             // Save extended details to localStorage
             localStorage.setItem(getStorageKey(), JSON.stringify(companyData));
 
@@ -565,6 +728,48 @@
             closeModal();
             alert('Company details saved successfully!');
         }
+
+        // ========== LOGO MANAGEMENT ==========
+        function handleLogoUpload(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 500000) {
+                alert('Logo file is too large. Please use an image under 500KB.');
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                companyData.logo_data = e.target.result;
+                localStorage.setItem(getStorageKey(), JSON.stringify(companyData));
+                updateLogoPreview();
+                alert('Logo uploaded successfully!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeLogo() {
+            if (!companyData.logo_data) return;
+            if (!confirm('Remove the company logo?')) return;
+            companyData.logo_data = '';
+            localStorage.setItem(getStorageKey(), JSON.stringify(companyData));
+            updateLogoPreview();
+        }
+
+        function updateLogoPreview() {
+            var container = document.getElementById('logo-preview');
+            if (companyData.logo_data) {
+                container.innerHTML = '<img src="' + companyData.logo_data + '" style="max-width: 200px; max-height: 100px; border-radius: 8px; border: 1px solid #eee;">';
+            } else {
+                container.innerHTML = '<div style="background: #f8f9fa; border: 2px dashed #ddd; border-radius: 10px; padding: 30px; text-align: center; color: #999;">No logo uploaded</div>';
+            }
+        }
     </script>
+    <nav class="mobile-bottom-nav">
+        <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+        <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+        <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+        <a href="reports.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128203;</span><span class="mobile-nav-label">Reports</span></a>
+    </nav>
+    <script src="js/mobile-utils.js"></script>
 </body>
 </html>

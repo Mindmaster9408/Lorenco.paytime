@@ -6,7 +6,8 @@
       "Bash(tasklist:*)",
       "Bash(powershell:*)",
       "Bash(curl:*)",
-      "Bash(python -m http.server:*)"
+      "Bash(python -m http.server:*)",
+      "Bash(cd:*)"
     ]
   }
 }

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Company Dashboard - Payroll System</title>
     <style>
         * {
@@ -313,8 +313,11 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
 </head>
 <body>
+    <button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+    <div id="mobile-overlay" class="mobile-overlay"></div>
     <div class="wrapper">
         <!-- SIDEBAR -->
         <div class="sidebar">
@@ -328,6 +331,8 @@
                 <a href="#" class="sidebar-link" id="sidebar-employees" onclick="showEmployeeManagement(); return false;">👥 Employees</a>
                 <a href="payruns.html" class="sidebar-link">💵 Pay Runs</a>
                 <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
+                <a href="reports.html" class="sidebar-link">📊 Reports</a>
                 <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
             </div>
 
@@ -379,6 +384,12 @@
                         <div class="card-icon">📋</div>
                         <div class="card-title">Payroll Items</div>
                         <div class="card-subtitle">Configure Deductions & Allowances</div>
+                    </a>
+
+                    <a href="reports.html" class="card" style="background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">Reports</div>
+                        <div class="card-subtitle">Generate & Export Reports</div>
                     </a>
 
                     <a href="company-details.html" class="card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
@@ -783,5 +794,12 @@
             }
         }
     </script>
+    <nav class="mobile-bottom-nav">
+        <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+        <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+        <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+        <a href="reports.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128203;</span><span class="mobile-nav-label">Reports</span></a>
+    </nav>
+    <script src="js/mobile-utils.js"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Employee Detail</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -209,8 +209,11 @@
         .auth-input { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
         .auth-input:focus { outline: none; border-color: #667eea; }
     </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
 </head>
 <body>
+    <button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+    <div id="mobile-overlay" class="mobile-overlay"></div>
     <div class="wrapper">
         <!-- SIDEBAR -->
         <div class="sidebar">
@@ -223,6 +226,8 @@
                 <a href="employee-management.html" class="sidebar-link">👥 Employees</a>
                 <a href="payruns.html" class="sidebar-link active">💵 Pay Runs</a>
                 <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
+                <a href="reports.html" class="sidebar-link">📊 Reports</a>
                 <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
             </div>
             <div class="company-carousel">
@@ -260,6 +265,7 @@
             <button class="tab active" onclick="switchTab('payroll')">💰 Payroll</button>
             <button class="tab" onclick="switchTab('edit')">✏️ Edit Info</button>
             <button class="tab" onclick="switchTab('leave')">🏖️ Leave</button>
+            <button class="tab" onclick="switchTab('attendance')">⏰ Attendance</button>
             <button class="tab" onclick="switchTab('notes')">📝 Notes</button>
         </div>
 
@@ -321,6 +327,21 @@
                     </table>
                     <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="calculatePayslip()">Calculate Payslip</button>
                 </div>
+
+                <!-- PAYSLIP NARRATIVE -->
+                <div class="card" id="narrativeCard" style="margin-top: 20px; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); display: none;">
+                    <h3 style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleNarrative()">
+                        <span>📖 Payslip Explanation</span>
+                        <span id="narrativeToggle" style="font-size: 1.2rem;">▼</span>
+                    </h3>
+                    <div id="narrativeContent" style="display: none; margin-top: 15px;">
+                        <div id="narrativeHTML"></div>
+                        <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-secondary btn-sm" onclick="regenerateNarrative()">🔄 Regenerate</button>
+                        </div>
+                    </div>
+                </div>
+
                 </div><!-- /payrollContent -->
             </div>
         </div>
@@ -394,6 +415,44 @@
                 </div>
                 <button class="btn btn-success" onclick="addNote()">Save Note</button>
                 <div id="notesList" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+
+        <!-- ==================== ATTENDANCE TAB ==================== -->
+        <div id="attendance-tab" class="tab-content">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                    <h3>⏰ Attendance Records</h3>
+                    <a href="attendance.html" class="btn btn-primary btn-sm">Open Full Attendance</a>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+                    <div style="background: #f0f4ff; border-radius: 10px; padding: 12px; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #667eea;" id="empAttDaysWorked">0</div>
+                        <div style="font-size: 0.8rem; color: #888;">Days Worked</div>
+                    </div>
+                    <div style="background: #f0fff4; border-radius: 10px; padding: 12px; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #28a745;" id="empAttTotalHours">0</div>
+                        <div style="font-size: 0.8rem; color: #888;">Total Hours</div>
+                    </div>
+                    <div style="background: #fff3f0; border-radius: 10px; padding: 12px; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #fd7e14;" id="empAttOvertime">0</div>
+                        <div style="font-size: 0.8rem; color: #888;">Overtime</div>
+                    </div>
+                    <div style="background: #fff0f0; border-radius: 10px; padding: 12px; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #dc3545;" id="empAttAbsences">0</div>
+                        <div style="font-size: 0.8rem; color: #888;">Absences</div>
+                    </div>
+                </div>
+                <div class="responsive-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Status</th></tr>
+                        </thead>
+                        <tbody id="empAttendanceBody">
+                            <tr><td colspan="5" style="text-align:center; color:#888; padding:20px;">Select a period and switch to this tab to load attendance.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         </div><!-- /main-content -->
@@ -631,6 +690,7 @@
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             event.target.classList.add('active');
             document.getElementById(tab + '-tab').classList.add('active');
+            if (tab === 'attendance') loadEmployeeAttendance();
         }
 
         // ========== PERIOD SELECT ==========
@@ -923,6 +983,146 @@
             document.getElementById('totalUIF').textContent = formatMoney(uif);
             document.getElementById('totalDeductions').textContent = formatMoney(deductions);
             document.getElementById('totalNet').textContent = formatMoney(net);
+
+            // Trigger narrative generation
+            generateNarrative(gross, paye, uif, deductions, net);
+        }
+
+        // ========== NARRATIVE FUNCTIONS ==========
+        function generateNarrative(gross, paye, uif, deductions, net) {
+            if (typeof NarrativeGenerator === 'undefined') return;
+
+            var currentCalc = {
+                gross: gross, paye: paye, uif: uif,
+                totalDeductions: deductions, net: net,
+                basicSalary: payrollData.basic_salary || 0,
+                overtimeAmount: 0, currentInputsTotal: 0
+            };
+
+            // Calculate overtime amount
+            var hourlyRate = payrollData.basic_salary ? payrollData.basic_salary / 173.33 : 0;
+            JSON.parse(localStorage.getItem(getOvertimeKey()) || '[]').forEach(function(ot) {
+                currentCalc.overtimeAmount += (parseFloat(ot.hours) || 0) * hourlyRate * (parseFloat(ot.rate_multiplier) || 1.5);
+            });
+
+            // Calculate current inputs total
+            JSON.parse(localStorage.getItem(getCurrentKey()) || '[]').forEach(function(ci) {
+                if (ci.type !== 'deduction') currentCalc.currentInputsTotal += parseFloat(ci.amount) || 0;
+            });
+
+            // Get previous period calc
+            var prevPeriod = getPreviousPeriod(currentPeriod);
+            var prevCalc = calculatePeriodSilent(prevPeriod);
+
+            var narrative = NarrativeGenerator.generate(currentEmployee, currentPeriod, currentCalc, prevCalc, payrollData);
+            NarrativeGenerator.save(currentCompanyId, currentEmpId, currentPeriod, narrative);
+
+            var html = NarrativeGenerator.formatAsHTML(narrative);
+            document.getElementById('narrativeHTML').innerHTML = html;
+            document.getElementById('narrativeCard').style.display = 'block';
+        }
+
+        function calculatePeriodSilent(period) {
+            var pd = payrollData;
+            var gross = pd.basic_salary || 0;
+            pd.regular_inputs.forEach(function(ri) { if (ri.type !== 'deduction') gross += parseFloat(ri.amount) || 0; });
+            var ciKey = 'emp_current_' + currentCompanyId + '_' + currentEmpId + '_' + period;
+            JSON.parse(localStorage.getItem(ciKey) || '[]').forEach(function(ci) { if (ci.type !== 'deduction') gross += parseFloat(ci.amount) || 0; });
+            var hr = pd.basic_salary ? pd.basic_salary / 173.33 : 0;
+            var otKey = 'emp_overtime_' + currentCompanyId + '_' + currentEmpId + '_' + period;
+            var otAmount = 0;
+            JSON.parse(localStorage.getItem(otKey) || '[]').forEach(function(ot) { var a = (parseFloat(ot.hours)||0) * hr * (parseFloat(ot.rate_multiplier)||1.5); gross += a; otAmount += a; });
+            var mrKey = 'emp_multi_rate_' + currentCompanyId + '_' + currentEmpId + '_' + period;
+            JSON.parse(localStorage.getItem(mrKey) || '[]').forEach(function(mr) { gross += (parseFloat(mr.hours)||0) * (parseFloat(mr.hourly_rate)||0); });
+            var stKey = 'emp_short_time_' + currentCompanyId + '_' + currentEmpId + '_' + period;
+            JSON.parse(localStorage.getItem(stKey) || '[]').forEach(function(st) { gross -= (parseFloat(st.hours_missed)||0) * hr; });
+            if (gross < 0) gross = 0;
+            var ag = gross * 12, ap = 0;
+            if (ag <= 237100) ap = ag * 0.18;
+            else if (ag <= 370500) ap = 42678 + (ag - 237100) * 0.26;
+            else if (ag <= 512800) ap = 77362 + (ag - 370500) * 0.31;
+            else if (ag <= 673000) ap = 121475 + (ag - 512800) * 0.36;
+            else if (ag <= 857900) ap = 179147 + (ag - 673000) * 0.39;
+            else if (ag <= 1817000) ap = 251258 + (ag - 857900) * 0.41;
+            else ap = 644489 + (ag - 1817000) * 0.45;
+            ap -= 17235; if (ap < 0) ap = 0;
+            var paye = Math.round(ap / 12 * 100) / 100;
+            var uif = Math.round(Math.min(gross * 0.01, 177.12) * 100) / 100;
+            var deductions = 0;
+            pd.regular_inputs.forEach(function(ri) { if (ri.type === 'deduction') deductions += parseFloat(ri.amount) || 0; });
+            JSON.parse(localStorage.getItem(ciKey) || '[]').forEach(function(ci) { if (ci.type === 'deduction') deductions += parseFloat(ci.amount) || 0; });
+            var net = Math.max(gross - paye - uif - deductions, 0);
+            return { gross: gross, paye: paye, uif: uif, totalDeductions: deductions, net: net, basicSalary: pd.basic_salary || 0, overtimeAmount: otAmount, currentInputsTotal: 0 };
+        }
+
+        function getPreviousPeriod(period) {
+            var parts = period.split('-').map(Number);
+            var y = parts[0], m = parts[1] - 1;
+            if (m === 0) { m = 12; y--; }
+            return y + '-' + String(m).padStart(2, '0');
+        }
+
+        function toggleNarrative() {
+            var content = document.getElementById('narrativeContent');
+            var toggle = document.getElementById('narrativeToggle');
+            if (content.style.display === 'none') {
+                content.style.display = 'block'; toggle.textContent = '▲';
+            } else {
+                content.style.display = 'none'; toggle.textContent = '▼';
+            }
+        }
+
+        function regenerateNarrative() {
+            NarrativeGenerator.clear(currentCompanyId, currentEmpId, currentPeriod);
+            calculatePayslip();
+        }
+
+        // ========== EMPLOYEE ATTENDANCE TAB ==========
+        function loadEmployeeAttendance() {
+            var period = currentPeriod;
+            if (!period) return;
+            var parts = period.split('-');
+            var year = parseInt(parts[0]), month = parseInt(parts[1]);
+            var daysInMonth = new Date(year, month, 0).getDate();
+            var tbody = document.getElementById('empAttendanceBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            var totalHours = 0, daysWorked = 0, overtime = 0, absences = 0;
+            var today = new Date();
+
+            for (var day = 1; day <= daysInMonth; day++) {
+                var date = new Date(year, month - 1, day);
+                var dateStr = year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+                var key = 'attendance_' + currentCompanyId + '_' + dateStr;
+                var entries = JSON.parse(localStorage.getItem(key) || '[]');
+                var empEntry = entries.find(function(e) { return e.emp_id === currentEmpId; });
+                var isWeekend = (date.getDay() === 0 || date.getDay() === 6);
+
+                if (empEntry) {
+                    daysWorked++;
+                    totalHours += empEntry.hours || 0;
+                    if (empEntry.hours > 8) overtime += (empEntry.hours - 8);
+                    var isLate = false;
+                    if (empEntry.clock_in) {
+                        var p = empEntry.clock_in.split(':').map(Number);
+                        isLate = (p[0] > 8 || (p[0] === 8 && p[1] > 0));
+                    }
+                    tbody.innerHTML += '<tr><td>' + dateStr + '</td><td>' + (empEntry.clock_in || '--') + '</td><td>' + (empEntry.clock_out || '--') + '</td><td><strong>' + (empEntry.hours || 0).toFixed(1) + 'h</strong></td><td>' + (isLate ? '<span class="badge" style="background:#fff3cd;color:#856404;">Late</span>' : '<span class="badge" style="background:#d4edda;color:#155724;">Present</span>') + '</td></tr>';
+                } else if (!isWeekend && date < today) {
+                    absences++;
+                }
+            }
+
+            if (daysWorked === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888; padding:20px;">No attendance records for this period.</td></tr>';
+            }
+
+            var el = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+            el('empAttDaysWorked', daysWorked);
+            el('empAttTotalHours', totalHours.toFixed(1));
+            el('empAttOvertime', overtime.toFixed(1));
+            el('empAttAbsences', absences);
         }
 
         // ========== EDIT EMPLOYEE ==========
@@ -1033,5 +1233,13 @@
         function closeModal(id) { document.getElementById(id).classList.remove('show'); }
         document.querySelectorAll('.modal').forEach(modal => { modal.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('show'); }); });
     </script>
+    <script src="js/narrative-generator.js"></script>
+    <nav class="mobile-bottom-nav">
+        <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+        <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+        <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+        <a href="reports.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128203;</span><span class="mobile-nav-label">Reports</span></a>
+    </nav>
+    <script src="js/mobile-utils.js"></script>
 </body>
 </html>
