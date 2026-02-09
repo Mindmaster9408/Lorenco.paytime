@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Select Company - Payroll System</title>
+    <title>Select Company - Lorenco Paytime</title>
     <style>
         * {
             margin: 0;
@@ -258,6 +258,9 @@
         </div>
     </div>
 
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let availableCompanies = [];
@@ -292,38 +295,23 @@
 
         function loadCompanies() {
             const session = AUTH.getSession();
-            const user = AUTH.USERS.find(u => u.email === session.email);
-
-            if (!user) {
-                // Demo user or unregistered
-                const company = AUTH.getCompanyById(session.company_id);
-                if (company) {
-                    availableCompanies = [company];
-                } else {
-                    availableCompanies = AUTH.COMPANIES.filter(c => c.active);
-                }
-            } else {
-                // Get user's company
-                const userCompany = AUTH.getCompanyById(user.company_id);
-                availableCompanies = userCompany ? [userCompany] : [];
-            }
-
+            availableCompanies = AUTH.getCompaniesForUser(session);
             renderCompanies();
         }
 
         function renderCompanies() {
             const container = document.getElementById('companies-container');
+            const session = AUTH.getSession();
             container.innerHTML = '';
 
             if (availableCompanies.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <h2>No Companies Available</h2>
-                        <p>You don't have access to any companies yet. Please contact your administrator.</p>
+                        <p>You don't have any companies yet. Create your first company to get started.</p>
                         <a onclick="handleLogout()">Back to Login</a>
                     </div>
                 `;
-                return;
             }
 
             availableCompanies.forEach(company => {
@@ -356,6 +344,18 @@
                 `;
                 container.appendChild(card);
             });
+
+            // Add "+ Add Company" card for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addCard = document.createElement('div');
+                addCard.className = 'company-card';
+                addCard.style.cssText = 'border: 2px dashed #28a745; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; cursor: pointer;';
+                addCard.onclick = function() { openAddCompanyModal(); };
+                addCard.innerHTML = '<div style="font-size: 3rem; color: #28a745; margin-bottom: 10px;">+</div>' +
+                    '<div style="font-size: 1.1rem; font-weight: 600; color: #28a745;">Add Company</div>' +
+                    '<div style="font-size: 0.85rem; color: #999; margin-top: 5px;">Create a new company</div>';
+                container.appendChild(addCard);
+            }
         }
 
         function selectCompany(company_id) {
@@ -368,7 +368,74 @@
         function handleLogout() {
             AUTH.logout();
         }
+
+        // ---- Add Company Modal ----
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            window.location.href = 'company-dashboard.html';
+        }
     </script>
+
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/mobile-utils.js"></script>
 </body>
 </html>

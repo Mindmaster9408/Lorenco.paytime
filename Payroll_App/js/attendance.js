@@ -824,18 +824,9 @@ const AttendanceManager = {
     },
 
     logAudit: function(action, entity, description) {
-        var key = 'audit_log_' + this.currentCompanyId;
-        var trail = JSON.parse(localStorage.getItem(key) || '[]');
-        trail.push({
-            id: 'audit-' + Math.random().toString(36).substr(2, 9),
-            timestamp: new Date().toISOString(),
-            user_id: AUTH.getSession().user_id,
-            user_email: AUTH.getSession().email,
-            action_type: action,
-            entity_type: entity,
-            description: description
-        });
-        localStorage.setItem(key, JSON.stringify(trail));
+        if (typeof AuditTrail !== 'undefined') {
+            AuditTrail.log(this.currentCompanyId, action, entity, description);
+        }
     },
 
     // ---- Populate Employee Filter ----

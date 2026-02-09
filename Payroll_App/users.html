@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management</title>
+    <title>User Management - Lorenco Paytime</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -112,7 +112,7 @@
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <span class="company-badge" id="userCount">0 users</span>
-                    <button class="btn btn-primary" id="addUserBtn" onclick="openAddUserModal()">+ Add User</button>
+                    <button class="btn btn-primary" id="addUserBtn" data-permission="MANAGE_USERS" onclick="openAddUserModal()">+ Add User</button>
                     <a href="company-selection.html" class="btn" style="background: #eee; color: #333; text-decoration: none;">← Back</a>
                 </div>
             </div>
@@ -190,6 +190,9 @@
         </div>
     </div>
 
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let currentCompanyId = null;
@@ -270,17 +273,19 @@
                         '<div><div class="user-detail-label">Status</div><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></div>' +
                     '</div>' +
                     '<div class="user-actions">' +
-                        '<button class="btn btn-primary btn-sm" onclick="editUser(\'' + user.id + '\')">Edit</button>' +
+                        '<button class="btn btn-primary btn-sm" data-permission="MANAGE_USERS" onclick="editUser(\'' + user.id + '\')">Edit</button>' +
                         (!isCurrentUser ?
                             (isActive ?
-                                '<button class="btn btn-warning btn-sm" onclick="toggleUserStatus(\'' + user.id + '\', false)">Deactivate</button>' :
-                                '<button class="btn btn-success btn-sm" onclick="toggleUserStatus(\'' + user.id + '\', true)">Activate</button>'
+                                '<button class="btn btn-warning btn-sm" data-permission="MANAGE_USERS" onclick="toggleUserStatus(\'' + user.id + '\', false)">Deactivate</button>' :
+                                '<button class="btn btn-success btn-sm" data-permission="MANAGE_USERS" onclick="toggleUserStatus(\'' + user.id + '\', true)">Activate</button>'
                             ) +
-                            '<button class="btn btn-danger btn-sm" onclick="deleteUser(\'' + user.id + '\')">Remove</button>'
+                            '<button class="btn btn-danger btn-sm" data-permission="MANAGE_USERS" onclick="deleteUser(\'' + user.id + '\')">Remove</button>'
                         : '') +
                     '</div>' +
                 '</div>';
             }).join('');
+
+            Permissions.enforceUI();
         }
 
         function formatRole(role) {
@@ -376,6 +381,11 @@
 
             closeModal('userModal');
             loadUsers();
+            if (editId) {
+                AuditTrail.logUpdate(currentCompanyId, 'user', 'Updated user "' + name + '" (' + email + ') - role: ' + role);
+            } else {
+                AuditTrail.logCreate(currentCompanyId, 'user', 'Created user "' + name + '" (' + email + ') - role: ' + role);
+            }
             alert(editId ? 'User updated successfully!' : 'User added successfully!');
         }
 
@@ -412,16 +422,19 @@
         }
 
         function toggleUserStatus(userId, active) {
+            if (!Permissions.require('MANAGE_USERS')) return;
             const user = companyUsers.find(u => u.id === userId);
             if (!user) return;
             const action = active ? 'activate' : 'deactivate';
             if (!confirm('Are you sure you want to ' + action + ' ' + user.name + '?')) return;
 
             updateExistingUser(userId, user.name, user.email, null, user.role, active);
+            AuditTrail.logUpdate(currentCompanyId, 'user', (active ? 'Activated' : 'Deactivated') + ' user "' + user.name + '" (' + user.email + ')');
             loadUsers();
         }
 
         function deleteUser(userId) {
+            if (!Permissions.require('MANAGE_USERS')) return;
             const user = companyUsers.find(u => u.id === userId);
             if (!user) return;
             if (!confirm('Remove ' + user.name + ' (' + user.email + ') from this company?\n\nThis cannot be undone.')) return;
@@ -435,6 +448,7 @@
             const filtered = registeredUsers.filter(u => u.id !== userId);
             localStorage.setItem('registered_users', JSON.stringify(filtered));
 
+            AuditTrail.logDelete(currentCompanyId, 'user', 'Deleted user "' + user.name + '" (' + user.email + ')');
             loadUsers();
             alert(user.name + ' has been removed.');
         }

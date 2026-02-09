@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Super Admin Dashboard - Payroll System</title>
+    <title>Super Admin Dashboard - Lorenco Paytime</title>
     <style>
         * {
             margin: 0;
@@ -441,6 +441,7 @@
                     <tr>
                         <th>Company Name</th>
                         <th>Email</th>
+                        <th>Owner</th>
                         <th>Employees</th>
                         <th>Status</th>
                         <th>Subscription</th>
@@ -488,6 +489,9 @@
         </div>
     </div>
 
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let allCompanies = [];
@@ -506,7 +510,7 @@
         });
 
         function loadDashboard() {
-            allCompanies = AUTH.getAllCompanies();
+            allCompanies = AUTH.getAllCompaniesWithRegistered();
             updateStats();
             renderCompanies(allCompanies);
         }
@@ -528,10 +532,21 @@
             tbody.innerHTML = '';
 
             companies.forEach(company => {
+                const owners = AUTH.getCompanyOwner(company.id);
+                var ownerHtml = '';
+                if (owners.length > 0) {
+                    ownerHtml = owners.map(function(o) {
+                        return '<div style="font-size:0.85rem;"><strong>' + o.name + '</strong><br><span style="color:#999;">' + o.email + '</span></div>';
+                    }).join('');
+                } else {
+                    ownerHtml = '<span style="color:#999; font-size:0.85rem;">No owner</span>';
+                }
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="company-name">${company.name}</td>
                     <td>${company.email}</td>
+                    <td>${ownerHtml}</td>
                     <td>${company.employees}</td>
                     <td>
                         <span class="status-badge ${company.active ? 'status-active' : 'status-suspended'}">
@@ -543,7 +558,7 @@
                     <td>
                         <div class="action-buttons">
                             <button class="btn-action btn-view" onclick="viewDetails('${company.id}')">View</button>
-                            ${company.active ? 
+                            ${company.active ?
                                 `<button class="btn-action btn-suspend" onclick="suspendCompany('${company.id}')">Suspend</button>` :
                                 `<button class="btn-action btn-activate" onclick="activateCompany('${company.id}')">Activate</button>`
                             }
@@ -568,10 +583,19 @@
             const company = AUTH.getCompanyById(company_id);
             if (!company) return;
 
+            const owners = AUTH.getCompanyOwner(company_id);
+            var ownerInfo = 'No owner assigned';
+            if (owners.length > 0) {
+                ownerInfo = owners.map(function(o) {
+                    return '<strong>' + o.name + '</strong> (' + o.email + ') - ' + o.role;
+                }).join('<br>');
+            }
+
             const detailsHtml = `
                 <p><strong>Company Name:</strong> ${company.name}</p>
                 <p><strong>Email:</strong> ${company.email}</p>
                 <p><strong>Company ID:</strong> ${company.id}</p>
+                <p><strong>Owner/Accountant:</strong><br>${ownerInfo}</p>
                 <p><strong>Total Employees:</strong> ${company.employees}</p>
                 <p><strong>Status:</strong> <span style="color: ${company.active ? '#28a745' : '#dc3545'}; font-weight: 600;">${company.active ? 'ACTIVE' : 'SUSPENDED'}</span></p>
                 <p><strong>Subscription Status:</strong> ${company.subscription_status === 'active' ? '✓ Active' : '⚠ Suspended'}</p>
@@ -619,6 +643,7 @@
         function confirmAction() {
             if (currentAction === 'suspend' || currentAction === 'activate') {
                 AUTH.toggleCompanyStatus(currentCompanyId);
+                AuditTrail.logUpdate(currentCompanyId, 'company', (currentAction === 'suspend' ? 'Suspended' : 'Activated') + ' company via super admin dashboard');
                 closeModal('confirm-modal');
                 loadDashboard();
                 

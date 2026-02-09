@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Employee Management - Payroll System</title>
+    <title>Employee Management - Lorenco Paytime</title>
     <style>
         * {
             margin: 0;
@@ -495,6 +495,7 @@
                 <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
                 <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
                 <a href="reports.html" class="sidebar-link">📊 Reports</a>
+                <a href="historical-import.html" class="sidebar-link">📥 Historical Import</a>
                 <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
             </div>
 
@@ -521,7 +522,8 @@
                     <p style="color: #667eea; font-weight: 600; margin-top: 5px;" id="company-name-header"></p>
                 </div>
                 <div class="page-header-right">
-                    <button class="btn btn-success" onclick="openAddEmployeeModal()">+ Add Employee</button>
+                    <button class="btn" data-permission="EDIT_EMPLOYEES" onclick="openBulkUploadModal()">Upload CSV/Excel</button>
+                    <button class="btn btn-success" data-permission="EDIT_EMPLOYEES" onclick="openAddEmployeeModal()">+ Add Employee</button>
                 </div>
             </div>
 
@@ -625,6 +627,14 @@
                         <label>Date Appointed</label>
                         <input type="date" id="date_appointed">
                     </div>
+                    <div class="form-group">
+                        <label>Medical Aid Members</label>
+                        <input type="number" id="medical_aid_members" min="0" max="20" step="1" placeholder="0 = none">
+                    </div>
+                    <div class="form-group">
+                        <label>Tax Directive (%)</label>
+                        <input type="number" id="tax_directive" min="0" max="100" step="0.01" placeholder="0 = standard PAYE">
+                    </div>
                 </div>
 
                 <div class="action-buttons">
@@ -635,6 +645,67 @@
         </div>
     </div>
 
+    <!-- Bulk Upload Modal -->
+    <div id="bulkUploadModal" class="modal">
+        <div class="modal-content" style="max-width:900px;">
+            <div class="modal-header">
+                <h2 id="bulkModalTitle">Bulk Employee Upload</h2>
+                <button class="close-btn" onclick="closeBulkUpload()">Close</button>
+            </div>
+
+            <!-- Step 1: File Upload -->
+            <div id="bulkStep1">
+                <div id="empDropZone" style="border:3px dashed #ccc; border-radius:15px; padding:40px; text-align:center; cursor:pointer; transition:all 0.3s; margin-bottom:20px;">
+                    <div style="font-size:3rem;">📁</div>
+                    <p style="margin:10px 0; font-weight:600; color:#333;">Drag and drop your CSV or Excel file here</p>
+                    <p style="color:#999;">or</p>
+                    <input type="file" id="empFileInput" accept=".csv,.xlsx,.xls" style="display:none;">
+                    <button class="btn" onclick="document.getElementById('empFileInput').click()" style="margin-top:10px;">Browse Files</button>
+                </div>
+                <button class="btn btn-secondary" onclick="downloadEmployeeTemplate()" style="margin-bottom:20px;">Download Template</button>
+                <div style="background:#f8f9fa; border-radius:10px; padding:20px;">
+                    <h4 style="margin-bottom:10px; color:#333;">Expected Columns</h4>
+                    <table class="employee-table" style="margin-top:5px; font-size:13px;">
+                        <thead>
+                            <tr><th>Field</th><th>Accepted Names</th><th>Required</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Employee Number</td><td>employee_number, emp_number, EmpNo</td><td style="color:#dc3545; font-weight:600;">Yes</td></tr>
+                            <tr><td>First Name</td><td>first_name, FirstName, fname, Name</td><td style="color:#dc3545; font-weight:600;">Yes</td></tr>
+                            <tr><td>Last Name</td><td>last_name, LastName, Surname</td><td style="color:#dc3545; font-weight:600;">Yes</td></tr>
+                            <tr><td>ID Number</td><td>id_number, IDNumber, sa_id</td><td>No</td></tr>
+                            <tr><td>Email, Phone, Job Title, Department, Position, Payment Method, Bank Details, Date Appointed</td><td>Various</td><td>No</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Step 2: Column Mapping -->
+            <div id="bulkStep2" style="display:none;">
+                <div id="columnMappingArea" style="margin-bottom:20px;"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="resetBulkUpload()">Back</button>
+                    <button class="btn btn-success" onclick="applyMappingAndPreview()">Preview Import</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Preview & Validate -->
+            <div id="bulkStep3" style="display:none;">
+                <div id="validationSummary" style="margin-bottom:15px;"></div>
+                <div id="empPreviewArea" style="margin-bottom:15px;"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="goToStep2()">Back</button>
+                    <button class="btn btn-success" id="confirmImportBtn" onclick="confirmEmployeeImport()">Import Employees</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="js/bulk-import-utils.js"></script>
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let employees = [];
@@ -669,23 +740,36 @@
 
         function loadCompaniesCarousel() {
             const session = AUTH.getSession();
-            const user = { role: session.role, company_id: session.company_id };
-            const companies = AUTH.getCompaniesForUser(user);
+            const companies = AUTH.getCompaniesForUser(session);
             const carousel = document.getElementById('companies-carousel');
             carousel.innerHTML = '';
 
-            companies.slice(0, 5).forEach(company => {
-                const div = document.createElement('div');
-                div.className = 'carousel-company';
-                div.textContent = company.name;
-                if (company.id === session.company_id) {
-                    div.style.background = '#667eea';
-                    div.style.color = 'white';
-                    div.style.fontWeight = 'bold';
-                }
-                div.onclick = () => switchToCompany(company.id);
-                carousel.appendChild(div);
-            });
+            if (companies.length === 0) {
+                carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
+            } else {
+                companies.forEach(company => {
+                    const div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = () => switchToCompany(company.id);
+                    carousel.appendChild(div);
+                });
+            }
+
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
         }
 
         function switchToCompany(company_id) {
@@ -722,13 +806,14 @@
                             <td>${emp.payment_method || 'EFT'}</td>
                             <td>
                                 <button class="btn-small btn-edit" onclick="editEmployee('${emp.id}')">Edit</button>
-                                <button class="btn-small btn-delete" onclick="deleteEmployee('${emp.id}')">Delete</button>
+                                <button class="btn-small btn-delete" data-permission="DELETE_EMPLOYEES" onclick="deleteEmployee('${emp.id}')">Delete</button>
                             </td>
                         </tr>
                     `;
                 });
             }
             document.getElementById('employee-list').innerHTML = html;
+            Permissions.enforceUI();
         }
 
         function openAddEmployeeModal() {
@@ -764,6 +849,8 @@
                 document.getElementById('account_number').value = emp.account_number || '';
                 document.getElementById('branch_code').value = emp.branch_code || '';
                 document.getElementById('date_appointed').value = emp.date_appointed || '';
+                document.getElementById('medical_aid_members').value = emp.medical_aid_members || '';
+                document.getElementById('tax_directive').value = emp.tax_directive || '';
                 document.getElementById('employeeModal').classList.add('show');
             }
         }
@@ -795,7 +882,9 @@
                 account_holder: document.getElementById('account_holder').value || null,
                 account_number: document.getElementById('account_number').value || null,
                 branch_code: document.getElementById('branch_code').value || null,
-                date_appointed: document.getElementById('date_appointed').value || null
+                date_appointed: document.getElementById('date_appointed').value || null,
+                medical_aid_members: parseInt(document.getElementById('medical_aid_members').value) || 0,
+                tax_directive: parseFloat(document.getElementById('tax_directive').value) || 0
             };
 
             if (isEdit) {
@@ -810,6 +899,13 @@
             // Store in localStorage
             localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(employees));
 
+            // Audit log
+            if (isEdit) {
+                AuditTrail.logUpdate(currentCompanyId, 'employee', 'Updated employee ' + newEmployee.first_name + ' ' + newEmployee.last_name + ' (' + newEmployee.employee_number + ')');
+            } else {
+                AuditTrail.logCreate(currentCompanyId, 'employee', 'Created employee ' + newEmployee.first_name + ' ' + newEmployee.last_name + ' (' + newEmployee.employee_number + ')');
+            }
+
             successDiv.textContent = isEdit ? 'Employee updated successfully!' : 'Employee added successfully!';
             successDiv.style.display = 'block';
 
@@ -820,9 +916,12 @@
         }
 
         function deleteEmployee(id) {
+            if (!Permissions.require('DELETE_EMPLOYEES')) return;
+            var emp = employees.find(function(e) { return e.id === id; });
             if (confirm('Are you sure you want to delete this employee?')) {
                 employees = employees.filter(e => e.id !== id);
                 localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(employees));
+                AuditTrail.logDelete(currentCompanyId, 'employee', 'Deleted employee ' + (emp ? emp.first_name + ' ' + emp.last_name + ' (' + emp.employee_number + ')' : id));
                 displayEmployees();
             }
         }
@@ -836,7 +935,311 @@
                 AUTH.logout();
             }
         }
+
+        // ========== BULK UPLOAD ==========
+
+        var bulkImportData = null;
+        var bulkParsedData = null;
+
+        var EMPLOYEE_FIELD_ALIASES = {
+            'employee_number': ['employee_number', 'emp_number', 'EmpNo', 'EmployeeNumber', 'emp_no', 'empno', 'emp_id', 'Employee Number', 'Employee_Number', 'staff_number', 'StaffNo'],
+            'first_name': ['first_name', 'FirstName', 'fname', 'Name', 'first', 'First Name', 'First_Name', 'given_name'],
+            'last_name': ['last_name', 'LastName', 'lname', 'Surname', 'surname', 'last', 'Last Name', 'Last_Name', 'family_name'],
+            'id_number': ['id_number', 'IDNumber', 'id_no', 'sa_id', 'ID Number', 'ID_Number', 'identity_number', 'rsa_id'],
+            'email': ['email', 'Email', 'email_address', 'EmailAddress', 'e_mail'],
+            'phone': ['phone', 'Phone', 'mobile', 'cell', 'telephone', 'phone_number', 'PhoneNumber', 'contact_number'],
+            'job_title': ['job_title', 'JobTitle', 'title', 'job', 'Job Title', 'Job_Title', 'designation'],
+            'department': ['department', 'Department', 'dept', 'Dept'],
+            'position': ['position', 'Position', 'pos'],
+            'payment_method': ['payment_method', 'PaymentMethod', 'payment', 'pay_method', 'Payment Method', 'Payment_Method'],
+            'bank_name': ['bank_name', 'BankName', 'bank', 'Bank Name', 'Bank_Name'],
+            'account_holder': ['account_holder', 'AccountHolder', 'Account Holder', 'Account_Holder'],
+            'account_number': ['account_number', 'AccountNumber', 'acc_number', 'Account Number', 'Account_Number'],
+            'branch_code': ['branch_code', 'BranchCode', 'branch', 'Branch Code', 'Branch_Code'],
+            'date_appointed': ['date_appointed', 'DateAppointed', 'start_date', 'StartDate', 'hire_date', 'Date Appointed', 'Date_Appointed', 'appointment_date']
+        };
+
+        // Setup drag-drop on page load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                BulkImportUtils.setupDragDrop('empDropZone', 'empFileInput', handleEmployeeFile);
+            }, 100);
+        });
+
+        function openBulkUploadModal() {
+            resetBulkUpload();
+            document.getElementById('bulkUploadModal').classList.add('show');
+        }
+
+        function closeBulkUpload() {
+            document.getElementById('bulkUploadModal').classList.remove('show');
+            resetBulkUpload();
+        }
+
+        function resetBulkUpload() {
+            bulkImportData = null;
+            bulkParsedData = null;
+            document.getElementById('bulkStep1').style.display = 'block';
+            document.getElementById('bulkStep2').style.display = 'none';
+            document.getElementById('bulkStep3').style.display = 'none';
+            document.getElementById('empFileInput').value = '';
+        }
+
+        function goToStep2() {
+            document.getElementById('bulkStep3').style.display = 'none';
+            document.getElementById('bulkStep2').style.display = 'block';
+        }
+
+        function handleEmployeeFile(file) {
+            if (typeof XLSX === 'undefined') {
+                alert('File parser not loaded. Please refresh the page and try again.');
+                return;
+            }
+            BulkImportUtils.parseFile(file, function(data, error) {
+                if (error) {
+                    alert(error);
+                    return;
+                }
+                bulkImportData = data;
+                var headers = Object.keys(data[0]);
+                var autoMapping = BulkImportUtils.autoMapColumns(headers, EMPLOYEE_FIELD_ALIASES);
+                BulkImportUtils.renderColumnMappingUI('columnMappingArea', headers, EMPLOYEE_FIELD_ALIASES, autoMapping, ['employee_number', 'first_name', 'last_name']);
+
+                document.getElementById('bulkStep1').style.display = 'none';
+                document.getElementById('bulkStep2').style.display = 'block';
+            });
+        }
+
+        function applyMappingAndPreview() {
+            var mapping = BulkImportUtils.readColumnMapping(EMPLOYEE_FIELD_ALIASES);
+
+            // Check required mappings
+            if (!mapping.employee_number || !mapping.first_name || !mapping.last_name) {
+                alert('Please map the required fields: Employee Number, First Name, and Last Name.');
+                return;
+            }
+
+            var existingNumbers = {};
+            employees.forEach(function(e) {
+                existingNumbers[e.employee_number.toUpperCase()] = true;
+            });
+
+            var valid = [];
+            var errors = [];
+            var seenNumbers = {};
+
+            bulkImportData.forEach(function(row, idx) {
+                var empNum = String(BulkImportUtils.getMappedValue(row, 'employee_number', mapping) || '').trim();
+                var firstName = String(BulkImportUtils.getMappedValue(row, 'first_name', mapping) || '').trim();
+                var lastName = String(BulkImportUtils.getMappedValue(row, 'last_name', mapping) || '').trim();
+
+                var rowErrors = [];
+                if (!empNum) rowErrors.push('Missing employee number');
+                if (!firstName) rowErrors.push('Missing first name');
+                if (!lastName) rowErrors.push('Missing last name');
+                if (empNum && existingNumbers[empNum.toUpperCase()]) rowErrors.push('Employee number already exists');
+                if (empNum && seenNumbers[empNum.toUpperCase()]) rowErrors.push('Duplicate in file');
+
+                var idNum = String(BulkImportUtils.getMappedValue(row, 'id_number', mapping) || '').trim();
+                if (idNum) {
+                    var idCheck = BulkImportUtils.validateSAId(idNum);
+                    if (!idCheck.valid) rowErrors.push('ID: ' + idCheck.message);
+                }
+
+                if (empNum) seenNumbers[empNum.toUpperCase()] = true;
+
+                var parsed = {
+                    employee_number: empNum,
+                    first_name: firstName,
+                    last_name: lastName,
+                    id_number: idNum || null,
+                    email: String(BulkImportUtils.getMappedValue(row, 'email', mapping) || '').trim() || null,
+                    phone: String(BulkImportUtils.getMappedValue(row, 'phone', mapping) || '').trim() || null,
+                    job_title: String(BulkImportUtils.getMappedValue(row, 'job_title', mapping) || '').trim() || null,
+                    department: String(BulkImportUtils.getMappedValue(row, 'department', mapping) || '').trim() || null,
+                    position: String(BulkImportUtils.getMappedValue(row, 'position', mapping) || '').trim() || null,
+                    payment_method: BulkImportUtils.normalizePaymentMethod(BulkImportUtils.getMappedValue(row, 'payment_method', mapping)),
+                    bank_name: String(BulkImportUtils.getMappedValue(row, 'bank_name', mapping) || '').trim() || null,
+                    account_holder: String(BulkImportUtils.getMappedValue(row, 'account_holder', mapping) || '').trim() || null,
+                    account_number: String(BulkImportUtils.getMappedValue(row, 'account_number', mapping) || '').trim() || null,
+                    branch_code: String(BulkImportUtils.getMappedValue(row, 'branch_code', mapping) || '').trim() || null,
+                    date_appointed: BulkImportUtils.normalizeDate(BulkImportUtils.getMappedValue(row, 'date_appointed', mapping)) || null,
+                    _row: idx + 1,
+                    _errors: rowErrors
+                };
+
+                if (rowErrors.length > 0) {
+                    errors.push(parsed);
+                } else {
+                    valid.push(parsed);
+                }
+            });
+
+            bulkParsedData = { valid: valid, errors: errors };
+
+            // Render summary
+            var summaryHtml = '<div style="display:flex; gap:15px; margin-bottom:15px;">';
+            summaryHtml += '<div style="padding:15px 20px; background:#d4edda; border-radius:8px; flex:1; text-align:center;"><strong style="font-size:1.5rem; color:#155724;">' + valid.length + '</strong><br><span style="color:#155724;">Ready to import</span></div>';
+            summaryHtml += '<div style="padding:15px 20px; background:' + (errors.length > 0 ? '#f8d7da' : '#e2e3e5') + '; border-radius:8px; flex:1; text-align:center;"><strong style="font-size:1.5rem; color:' + (errors.length > 0 ? '#721c24' : '#383d41') + ';">' + errors.length + '</strong><br><span style="color:' + (errors.length > 0 ? '#721c24' : '#383d41') + ';">Errors (will be skipped)</span></div>';
+            summaryHtml += '</div>';
+            document.getElementById('validationSummary').innerHTML = summaryHtml;
+
+            // Render preview table
+            var allRows = valid.concat(errors);
+            allRows.sort(function(a, b) { return a._row - b._row; });
+
+            var previewHtml = '<div style="overflow-x:auto; max-height:400px; overflow-y:auto;"><table class="employee-table" style="font-size:13px;">';
+            previewHtml += '<thead><tr style="background:linear-gradient(135deg, #667eea, #764ba2); color:white;"><th>Row</th><th>Emp #</th><th>First Name</th><th>Last Name</th><th>ID Number</th><th>Email</th><th>Payment</th><th>Status</th></tr></thead><tbody>';
+
+            allRows.slice(0, 50).forEach(function(row) {
+                var hasErrors = row._errors && row._errors.length > 0;
+                var bg = hasErrors ? '#f8d7da' : '';
+                previewHtml += '<tr style="background:' + bg + ';">';
+                previewHtml += '<td>' + row._row + '</td>';
+                previewHtml += '<td>' + (row.employee_number || '-') + '</td>';
+                previewHtml += '<td>' + (row.first_name || '-') + '</td>';
+                previewHtml += '<td>' + (row.last_name || '-') + '</td>';
+                previewHtml += '<td>' + (row.id_number || '-') + '</td>';
+                previewHtml += '<td>' + (row.email || '-') + '</td>';
+                previewHtml += '<td>' + (row.payment_method || '-') + '</td>';
+                if (hasErrors) {
+                    previewHtml += '<td style="color:#dc3545; font-weight:600;">' + row._errors.join(', ') + '</td>';
+                } else {
+                    previewHtml += '<td style="color:#28a745; font-weight:600;">Ready</td>';
+                }
+                previewHtml += '</tr>';
+            });
+
+            if (allRows.length > 50) {
+                previewHtml += '<tr><td colspan="8" style="text-align:center; color:#999;">... and ' + (allRows.length - 50) + ' more rows</td></tr>';
+            }
+
+            previewHtml += '</tbody></table></div>';
+            document.getElementById('empPreviewArea').innerHTML = previewHtml;
+
+            if (valid.length === 0) {
+                document.getElementById('confirmImportBtn').disabled = true;
+                document.getElementById('confirmImportBtn').style.opacity = '0.5';
+            } else {
+                document.getElementById('confirmImportBtn').disabled = false;
+                document.getElementById('confirmImportBtn').style.opacity = '1';
+            }
+
+            document.getElementById('bulkStep2').style.display = 'none';
+            document.getElementById('bulkStep3').style.display = 'block';
+        }
+
+        function confirmEmployeeImport() {
+            if (!bulkParsedData || bulkParsedData.valid.length === 0) return;
+
+            var imported = 0;
+            bulkParsedData.valid.forEach(function(row) {
+                var emp = {
+                    id: BulkImportUtils.generateId('emp'),
+                    employee_number: row.employee_number,
+                    first_name: row.first_name,
+                    last_name: row.last_name,
+                    id_number: row.id_number,
+                    email: row.email,
+                    phone: row.phone,
+                    job_title: row.job_title,
+                    department: row.department,
+                    position: row.position,
+                    payment_method: row.payment_method,
+                    bank_name: row.bank_name,
+                    account_holder: row.account_holder,
+                    account_number: row.account_number,
+                    branch_code: row.branch_code,
+                    date_appointed: row.date_appointed
+                };
+                employees.push(emp);
+                imported++;
+            });
+
+            localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(employees));
+            BulkImportUtils.logAudit(currentCompanyId, 'BULK_IMPORT', 'Imported ' + imported + ' employees from CSV/Excel');
+
+            closeBulkUpload();
+            displayEmployees();
+            alert('Successfully imported ' + imported + ' employees!' + (bulkParsedData.errors.length > 0 ? '\n' + bulkParsedData.errors.length + ' rows were skipped due to errors.' : ''));
+        }
+
+        function downloadEmployeeTemplate() {
+            BulkImportUtils.downloadCSVTemplate(
+                'employee_import_template.csv',
+                ['employee_number', 'first_name', 'last_name', 'id_number', 'email', 'phone', 'job_title', 'department', 'position', 'payment_method', 'bank_name', 'account_holder', 'account_number', 'branch_code', 'date_appointed'],
+                [
+                    ['EMP001', 'John', 'Smith', '9001015009087', 'john@example.com', '0821234567', 'Manager', 'Sales', 'Sales Manager', 'EFT', 'ABSA', 'John Smith', '4012345678', '632005', '2024-01-15'],
+                    ['EMP002', 'Jane', 'Doe', '9502024001089', 'jane@example.com', '0839876543', 'Accountant', 'Finance', 'Senior Accountant', 'EFT', 'FNB', 'Jane Doe', '6234567890', '250655', '2023-06-01']
+                ]
+            );
+        }
+
+        // ---- Add Company Modal ----
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
     </script>
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
     <nav class="mobile-bottom-nav">
         <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
         <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>

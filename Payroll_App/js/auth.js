@@ -11,11 +11,13 @@ const AUTH = {
     
     // Demo User
     DEMO_USER: {
+        id: 'user-demo',
         email: 'demo@example.com',
         password: 'demo123',
         name: 'Demo User',
         role: 'business_owner',
-        company_id: 'demo-company'
+        company_id: 'demo-company',
+        company_ids: ['demo-company']
     },
 
     // Mock Companies Database
@@ -94,6 +96,7 @@ const AUTH = {
             name: 'John Smith',
             role: 'business_owner',
             company_id: 'comp-001',
+            company_ids: ['comp-001'],
             active: true
         },
         {
@@ -103,6 +106,7 @@ const AUTH = {
             name: 'Sarah Johnson',
             role: 'accountant',
             company_id: 'comp-001',
+            company_ids: ['comp-001'],
             active: true
         },
         {
@@ -112,6 +116,7 @@ const AUTH = {
             name: 'Mike Tech',
             role: 'business_owner',
             company_id: 'comp-002',
+            company_ids: ['comp-002'],
             active: true
         },
         {
@@ -121,6 +126,7 @@ const AUTH = {
             name: 'Emma Watson',
             role: 'accountant',
             company_id: 'comp-002',
+            company_ids: ['comp-002'],
             active: true
         },
         {
@@ -130,6 +136,7 @@ const AUTH = {
             name: 'David Brown',
             role: 'business_owner',
             company_id: 'comp-003',
+            company_ids: ['comp-003'],
             active: true
         }
     ],
@@ -159,7 +166,9 @@ const AUTH = {
 
         if (user && user.active) {
             this.setSession(user);
-            return { success: true, user: user, redirect: 'company-dashboard.html' };
+            var ids = user.company_ids || (user.company_id ? [user.company_id] : []);
+            var redirect = ids.length > 1 ? 'company-selection.html' : 'company-dashboard.html';
+            return { success: true, user: user, redirect: redirect };
         }
 
         return { success: false, message: 'Invalid email or password' };
@@ -226,6 +235,7 @@ const AUTH = {
             name: name,
             role: role,
             company_id: newCompany.id,
+            company_ids: [newCompany.id],
             active: true
         };
 
@@ -247,6 +257,7 @@ const AUTH = {
             name: user.name,
             role: user.role,
             company_id: user.company_id || null,
+            company_ids: user.company_ids || (user.company_id ? [user.company_id] : []),
             login_time: new Date().toISOString()
         };
         localStorage.setItem('session', JSON.stringify(sessionData));
@@ -315,22 +326,30 @@ const AUTH = {
         return this.COMPANIES.filter(c => c.active).length;
     },
 
-    // Get Companies for Current User (only their companies)
+    // Get Companies for Current User (all their companies)
     getCompaniesForUser: function(user) {
         if (!user) return [];
-        
+
         // Super Admin sees all companies
         if (user.role === 'super_admin') {
             return this.COMPANIES.filter(c => c.active);
         }
 
-        // Regular users only see their own company
-        if (user.company_id) {
-            const userCompany = this.COMPANIES.find(c => c.id === user.company_id && c.active);
-            return userCompany ? [userCompany] : [];
-        }
+        // Get all company IDs for this user (backward compat: fall back to company_id)
+        var ids = user.company_ids || (user.company_id ? [user.company_id] : []);
+        if (ids.length === 0) return [];
 
-        return [];
+        // Merge in-memory and registered companies, deduplicate
+        var allCompanies = this.COMPANIES.concat(this.getRegisteredCompanies());
+        var seen = {};
+        var unique = [];
+        allCompanies.forEach(function(c) {
+            if (!seen[c.id]) { seen[c.id] = true; unique.push(c); }
+        });
+
+        return unique.filter(function(c) {
+            return c.active && ids.indexOf(c.id) >= 0;
+        });
     },
 
     // Get Registered Users from localStorage
@@ -397,5 +416,98 @@ const AUTH = {
         }
 
         return { success: true, message: 'Password updated successfully' };
+    },
+
+    // Create a new company (without creating a user)
+    createCompany: function(companyData) {
+        var newCompany = {
+            id: 'comp-' + Math.random().toString(36).substr(2, 9),
+            name: companyData.name,
+            email: companyData.email || '',
+            active: true,
+            employees: 0,
+            created_date: new Date().toISOString().split('T')[0],
+            subscription_status: 'active'
+        };
+
+        this.COMPANIES.push(newCompany);
+
+        // Persist to localStorage
+        var registeredCompanies = this.getRegisteredCompanies();
+        registeredCompanies.push(newCompany);
+        localStorage.setItem('registered_companies', JSON.stringify(registeredCompanies));
+
+        return { success: true, company: newCompany };
+    },
+
+    // Add a company to a user's company_ids
+    addCompanyToUser: function(userId, companyId) {
+        // Update in-memory users
+        var user = this.USERS.find(function(u) { return u.id === userId; });
+        if (user) {
+            if (!user.company_ids) user.company_ids = user.company_id ? [user.company_id] : [];
+            if (user.company_ids.indexOf(companyId) === -1) {
+                user.company_ids.push(companyId);
+            }
+        }
+
+        // Also check DEMO_USER
+        if (this.DEMO_USER.id === userId) {
+            if (!this.DEMO_USER.company_ids) this.DEMO_USER.company_ids = this.DEMO_USER.company_id ? [this.DEMO_USER.company_id] : [];
+            if (this.DEMO_USER.company_ids.indexOf(companyId) === -1) {
+                this.DEMO_USER.company_ids.push(companyId);
+            }
+        }
+
+        // Update in localStorage registered users
+        var registeredUsers = this.getRegisteredUsers();
+        var regUser = registeredUsers.find(function(u) { return u.id === userId; });
+        if (regUser) {
+            if (!regUser.company_ids) regUser.company_ids = regUser.company_id ? [regUser.company_id] : [];
+            if (regUser.company_ids.indexOf(companyId) === -1) {
+                regUser.company_ids.push(companyId);
+            }
+            localStorage.setItem('registered_users', JSON.stringify(registeredUsers));
+        }
+
+        return true;
+    },
+
+    // Update session company_ids with a new company ID
+    refreshSessionCompanyIds: function(newCompanyId) {
+        var session = this.getSession();
+        if (!session) return false;
+
+        if (!session.company_ids) session.company_ids = session.company_id ? [session.company_id] : [];
+        if (session.company_ids.indexOf(newCompanyId) === -1) {
+            session.company_ids.push(newCompanyId);
+        }
+        localStorage.setItem('session', JSON.stringify(session));
+        return true;
+    },
+
+    // Get all companies (in-memory + registered), deduplicated
+    getAllCompaniesWithRegistered: function() {
+        var allCompanies = this.COMPANIES.concat(this.getRegisteredCompanies());
+        var seen = {};
+        var unique = [];
+        allCompanies.forEach(function(c) {
+            if (!seen[c.id]) { seen[c.id] = true; unique.push(c); }
+        });
+        return unique;
+    },
+
+    // Find owner/accountant for a company
+    getCompanyOwner: function(companyId) {
+        // Check in-memory users
+        var allUsers = [this.SUPER_ADMIN, this.DEMO_USER].concat(this.USERS).concat(this.getRegisteredUsers());
+        var owners = [];
+        allUsers.forEach(function(u) {
+            var ids = u.company_ids || (u.company_id ? [u.company_id] : []);
+            if (ids.indexOf(companyId) >= 0) {
+                owners.push({ name: u.name, email: u.email, role: u.role });
+            }
+        });
+        return owners;
     }
 };

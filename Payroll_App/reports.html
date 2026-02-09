@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Reports - Payroll System</title>
+    <title>Reports - Lorenco Paytime</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -172,6 +172,7 @@
                 <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
                 <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
                 <a href="reports.html" class="sidebar-link active">📊 Reports</a>
+                <a href="historical-import.html" class="sidebar-link">📥 Historical Import</a>
                 <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
             </div>
             <div class="company-carousel">
@@ -258,9 +259,9 @@
                 <!-- Export Bar -->
                 <div class="export-bar" id="export-bar" style="display: none;">
                     <span class="label">Export:</span>
-                    <button class="btn btn-success btn-sm" onclick="exportCSV()">CSV</button>
-                    <button class="btn btn-info btn-sm" onclick="exportExcel()">Excel</button>
-                    <button class="btn btn-danger btn-sm" onclick="exportPDF()">PDF</button>
+                    <button class="btn btn-success btn-sm" onclick="exportCSV()" data-permission="EXPORT_DATA">CSV</button>
+                    <button class="btn btn-info btn-sm" onclick="exportExcel()" data-permission="EXPORT_DATA">Excel</button>
+                    <button class="btn btn-danger btn-sm" onclick="exportPDF()" data-permission="EXPORT_DATA">PDF</button>
                 </div>
 
                 <!-- Summary Cards -->
@@ -277,7 +278,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/payroll-engine.js"></script>
     <script>
         let currentCompanyId = null;
         let employees = [];
@@ -299,20 +304,43 @@
         // ========== SIDEBAR ==========
         function loadCompaniesCarousel() {
             const session = AUTH.getSession();
-            const user = { role: session.role, company_id: session.company_id };
-            const companies = AUTH.getCompaniesForUser(user);
+            const companies = AUTH.getCompaniesForUser(session);
             const carousel = document.getElementById('companies-carousel');
             carousel.innerHTML = '';
-            companies.forEach(company => {
-                const div = document.createElement('div');
-                div.className = 'carousel-company';
-                div.textContent = company.name;
-                if (company.id === session.company_id) {
-                    div.style.background = '#667eea'; div.style.color = 'white'; div.style.fontWeight = '600';
-                }
-                div.onclick = () => { const s = AUTH.getSession(); s.company_id = company.id; localStorage.setItem('session', JSON.stringify(s)); location.reload(); };
-                carousel.appendChild(div);
-            });
+
+            if (companies.length === 0) {
+                carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
+            } else {
+                companies.forEach(company => {
+                    const div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = () => switchToCompany(company.id);
+                    carousel.appendChild(div);
+                });
+            }
+
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
+        }
+
+        function switchToCompany(companyId) {
+            const session = AUTH.getSession();
+            session.company_id = companyId;
+            localStorage.setItem('session', JSON.stringify(session));
+            location.reload();
         }
         function handleLogout() { if (confirm('Are you sure you want to logout?')) AUTH.logout(); }
 
@@ -331,34 +359,7 @@
         }
 
         function calculateEmployeePeriod(empId, period) {
-            const pd = getEmployeePayroll(empId);
-            let gross = pd.basic_salary || 0;
-            pd.regular_inputs.forEach(ri => { if (ri.type !== 'deduction') gross += parseFloat(ri.amount) || 0; });
-            const ci = JSON.parse(localStorage.getItem('emp_current_' + currentCompanyId + '_' + empId + '_' + period) || '[]');
-            ci.forEach(c => { if (c.type !== 'deduction') gross += parseFloat(c.amount) || 0; });
-            const hr = pd.basic_salary ? pd.basic_salary / 173.33 : 0;
-            JSON.parse(localStorage.getItem('emp_overtime_' + currentCompanyId + '_' + empId + '_' + period) || '[]').forEach(ot => { gross += (parseFloat(ot.hours)||0) * hr * (parseFloat(ot.rate_multiplier)||1.5); });
-            JSON.parse(localStorage.getItem('emp_multi_rate_' + currentCompanyId + '_' + empId + '_' + period) || '[]').forEach(mr => { gross += (parseFloat(mr.hours)||0) * (parseFloat(mr.hourly_rate)||0); });
-            JSON.parse(localStorage.getItem('emp_short_time_' + currentCompanyId + '_' + empId + '_' + period) || '[]').forEach(st => { gross -= (parseFloat(st.hours_missed)||0) * hr; });
-            if (gross < 0) gross = 0;
-            const ag = gross * 12;
-            let ap = 0;
-            if (ag <= 237100) ap = ag * 0.18;
-            else if (ag <= 370500) ap = 42678 + (ag - 237100) * 0.26;
-            else if (ag <= 512800) ap = 77362 + (ag - 370500) * 0.31;
-            else if (ag <= 673000) ap = 121475 + (ag - 512800) * 0.36;
-            else if (ag <= 857900) ap = 179147 + (ag - 673000) * 0.39;
-            else if (ag <= 1817000) ap = 251258 + (ag - 857900) * 0.41;
-            else ap = 644489 + (ag - 1817000) * 0.45;
-            ap -= 17235; if (ap < 0) ap = 0;
-            const paye = Math.round(ap / 12 * 100) / 100;
-            const uif = Math.round(Math.min(gross * 0.01, 177.12) * 100) / 100;
-            const sdl = Math.round(gross * 0.01 * 100) / 100;
-            let deductions = 0;
-            pd.regular_inputs.forEach(ri => { if (ri.type === 'deduction') deductions += parseFloat(ri.amount) || 0; });
-            ci.forEach(c => { if (c.type === 'deduction') deductions += parseFloat(c.amount) || 0; });
-            const net = Math.max(gross - paye - uif - deductions, 0);
-            return { gross: r2(gross), paye: r2(paye), uif: r2(uif), sdl: r2(sdl), deductions: r2(deductions), net: r2(net) };
+            return PayrollEngine.calculateEmployeePeriod(currentCompanyId, empId, period);
         }
 
         function r2(n) { return Math.round(n * 100) / 100; }
@@ -367,20 +368,12 @@
 
         // ========== AUDIT LOGGING ==========
         function logAudit(action_type, entity_type, description, employee_id, parameters) {
-            const session = AUTH.getSession();
-            const logs = JSON.parse(localStorage.getItem('audit_log_' + currentCompanyId) || '[]');
-            logs.push({
-                id: 'aud-' + Math.random().toString(36).substr(2, 9),
-                timestamp: new Date().toISOString(),
-                user_id: session.user_id,
-                user_name: session.name || session.email,
-                action_type: action_type,
-                entity_type: entity_type,
-                employee_id: employee_id || null,
-                description: description,
-                parameters: parameters || null
-            });
-            localStorage.setItem('audit_log_' + currentCompanyId, JSON.stringify(logs));
+            if (typeof AuditTrail !== 'undefined') {
+                AuditTrail.log(currentCompanyId, action_type, entity_type, description, {
+                    employee_id: employee_id || null,
+                    parameters: parameters || null
+                });
+            }
         }
 
         function logReportGeneration(reportType, parameters) {
@@ -421,6 +414,9 @@
                 const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 periods.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
             }
+            // Include historical periods
+            const histPeriods = PayrollEngine.getHistoricalPeriods(currentCompanyId);
+            histPeriods.forEach(p => periods.add(p));
             return Array.from(periods).sort().reverse();
         }
 
@@ -637,7 +633,7 @@
                 '</div>' +
                 '<div style="background:#fff3cd; padding:12px; border-radius:8px; margin-bottom:15px; color:#856404; font-size:13px;">' +
                 '<strong>Security Notice:</strong> Account numbers are masked. This report access has been logged in the audit trail. ' +
-                '<button class="btn btn-sm btn-danger" onclick="toggleAccountMask()" style="margin-left:10px;" id="mask-toggle-btn">Show Full Numbers</button></div>';
+                '<button class="btn btn-sm btn-danger" onclick="toggleAccountMask()" style="margin-left:10px;" id="mask-toggle-btn" data-permission="VIEW_BANK_DETAILS">Show Full Numbers</button></div>';
 
             renderTable(headers, rows);
             logAudit('VIEW', 'bank_details', 'Viewed bank details report for ' + filteredEmps.length + ' employees');
@@ -652,6 +648,7 @@
         }
 
         function toggleAccountMask() {
+            if (!Permissions.require('VIEW_BANK_DETAILS')) return;
             accountsMasked = !accountsMasked;
             const btn = document.getElementById('mask-toggle-btn');
             btn.textContent = accountsMasked ? 'Show Full Numbers' : 'Hide Numbers';
@@ -965,6 +962,7 @@
             html += '</tbody></table></div>';
             document.getElementById('results-section').innerHTML = html;
             document.getElementById('export-bar').style.display = 'flex';
+            Permissions.enforceUI();
             logReportGeneration('Variance Report', { period1, period2 });
         }
 
@@ -999,10 +997,12 @@
             html += '</tbody></table></div>';
             document.getElementById('results-section').innerHTML = html;
             document.getElementById('export-bar').style.display = rows.length > 0 ? 'flex' : 'none';
+            Permissions.enforceUI();
         }
 
         // ========== EXPORT: CSV ==========
         function exportCSV() {
+            if (!Permissions.require('EXPORT_DATA')) return;
             if (!currentReportData.rows.length) return;
             const escape = v => '"' + String(v).replace(/"/g, '""') + '"';
             let csv = currentReportData.headers.map(escape).join(',') + '\n';
@@ -1015,6 +1015,7 @@
 
         // ========== EXPORT: EXCEL ==========
         function exportExcel() {
+            if (!Permissions.require('EXPORT_DATA')) return;
             if (!currentReportData.rows.length) return;
             if (typeof XLSX === 'undefined') { alert('Excel library not loaded. Please check your internet connection.'); return; }
 
@@ -1039,6 +1040,7 @@
 
         // ========== EXPORT: PDF ==========
         function exportPDF() {
+            if (!Permissions.require('EXPORT_DATA')) return;
             if (!currentReportData.rows.length) return;
             if (typeof jspdf === 'undefined' && typeof window.jspdf === 'undefined') {
                 alert('PDF library not loaded. Please check your internet connection.'); return;
@@ -1051,7 +1053,7 @@
             const company = AUTH.getCompanyById(currentCompanyId);
             doc.setFontSize(18);
             doc.setTextColor(102, 126, 234);
-            doc.text(company ? company.name : 'Payroll System', 14, 22);
+            doc.text(company ? company.name : 'Lorenco Paytime', 14, 22);
             doc.setFontSize(14);
             doc.setTextColor(51, 51, 51);
             doc.text(currentReportData.title, 14, 32);
@@ -1097,7 +1099,73 @@
             document.body.appendChild(a); a.click();
             document.body.removeChild(a); URL.revokeObjectURL(url);
         }
+
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
     </script>
+
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
+
     <nav class="mobile-bottom-nav">
         <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
         <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>

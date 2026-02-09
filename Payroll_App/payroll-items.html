@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="af">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Payroll Items - IRP5 Compliant</title>
+    <title>Payroll Items - Lorenco Paytime</title>
     <style>
         * {
             margin: 0;
@@ -490,6 +490,7 @@
                 <a href="payroll-items.html" class="sidebar-link active">📋 Payroll Items</a>
                 <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
                 <a href="reports.html" class="sidebar-link">📊 Reports</a>
+                <a href="historical-import.html" class="sidebar-link">📥 Historical Import</a>
                 <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
             </div>
 
@@ -524,11 +525,11 @@
                     <div class="category-title">
                         <div class="category-icon">💵</div>
                         <div>
-                            <h2>Income (Inkomste)</h2>
+                            <h2>Income</h2>
                             <p>IRP5 Codes 3801-3810 | Basic Salary, Bonuses, Commission, etc.</p>
                         </div>
                     </div>
-                    <button class="btn btn-success" onclick="openAddItemModal('income')">+ Voeg Income By</button>
+                    <button class="btn btn-success" data-permission="MANAGE_PAYROLL_ITEMS" onclick="openAddItemModal('income')">+ Add Income</button>
                 </div>
                 <div id="incomeItems" class="items-grid"></div>
             </div>
@@ -539,11 +540,11 @@
                     <div class="category-title">
                         <div class="category-icon">🚗</div>
                         <div>
-                            <h2>Allowances (Toelaes)</h2>
+                            <h2>Allowances</h2>
                             <p>IRP5 Codes 3701-3715 | Travel, Housing, Subsistence, etc.</p>
                         </div>
                     </div>
-                    <button class="btn btn-success" onclick="openAddItemModal('allowance')">+ Voeg Allowance By</button>
+                    <button class="btn btn-success" data-permission="MANAGE_PAYROLL_ITEMS" onclick="openAddItemModal('allowance')">+ Add Allowance</button>
                 </div>
                 <div id="allowanceItems" class="items-grid"></div>
             </div>
@@ -554,11 +555,11 @@
                     <div class="category-title">
                         <div class="category-icon">➖</div>
                         <div>
-                            <h2>Deductions (Aftrekkings)</h2>
+                            <h2>Deductions</h2>
                             <p>IRP5 Codes 4001-4024 | Medical Aid, Pension, Loans, etc.</p>
                         </div>
                     </div>
-                    <button class="btn btn-success" onclick="openAddItemModal('deduction')">+ Voeg Deduction By</button>
+                    <button class="btn btn-success" data-permission="MANAGE_PAYROLL_ITEMS" onclick="openAddItemModal('deduction')">+ Add Deduction</button>
                 </div>
                 <div id="deductionItems" class="items-grid"></div>
             </div>
@@ -569,11 +570,11 @@
                     <div class="category-title">
                         <div class="category-icon">🏢</div>
                         <div>
-                            <h2>Employer Contributions (Werkgewer Bydraes)</h2>
+                            <h2>Employer Contributions</h2>
                             <p>IRP5 Codes 4474-4493 | Pension (Employer), UIF (Employer), etc.</p>
                         </div>
                     </div>
-                    <button class="btn btn-success" onclick="openAddItemModal('employer_contribution')">+ Voeg Contribution By</button>
+                    <button class="btn btn-success" data-permission="MANAGE_PAYROLL_ITEMS" onclick="openAddItemModal('employer_contribution')">+ Add Contribution</button>
                 </div>
                 <div id="employerContributionItems" class="items-grid"></div>
             </div>
@@ -584,8 +585,8 @@
     <div id="itemModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalTitle">Voeg Payroll Item By</h2>
-                <button class="close-btn" onclick="closeItemModal()">Sluit</button>
+                <h2 id="modalTitle">Add Payroll Item</h2>
+                <button class="close-btn" onclick="closeItemModal()">Close</button>
             </div>
             <div class="modal-body">
                 <div id="modalError" style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: none; border: 1px solid #f5c6cb;"></div>
@@ -596,65 +597,68 @@
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Item Kode *</label>
-                            <input type="text" id="itemCode" required placeholder="bv. BONUS01">
+                            <label>Item Code *</label>
+                            <input type="text" id="itemCode" required placeholder="e.g. BONUS01">
                         </div>
                         <div class="form-group">
-                            <label>IRP5 Kode</label>
-                            <input type="text" id="irp5Code" placeholder="bv. 3802" maxlength="4">
-                            <small style="color: #666;">Sien SARS IRP5/IT3(a) kodes</small>
+                            <label>IRP5 Code</label>
+                            <input type="text" id="irp5Code" placeholder="e.g. 3802" maxlength="4">
+                            <small style="color: #666;">See SARS IRP5/IT3(a) codes</small>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Item Naam *</label>
-                        <input type="text" id="itemName" required placeholder="bv. Performance Bonus">
+                        <label>Item Name *</label>
+                        <input type="text" id="itemName" required placeholder="e.g. Performance Bonus">
                     </div>
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Kategorie *</label>
+                            <label>Category *</label>
                             <select id="itemCategory" required>
-                                <option value="">Kies...</option>
-                                <option value="fixed">Fixed Amount (Vaste Bedrag)</option>
+                                <option value="">Select...</option>
+                                <option value="fixed">Fixed Amount</option>
                                 <option value="percentage">Percentage (%)</option>
-                                <option value="increasing_balance">Increasing Balance (Loan Gegee)</option>
-                                <option value="decreasing_balance">Decreasing Balance (Loan Terugbetaal)</option>
-                                <option value="hours_based">Hours Based (Ure)</option>
+                                <option value="increasing_balance">Increasing Balance (Loan Given)</option>
+                                <option value="decreasing_balance">Decreasing Balance (Loan Repayment)</option>
+                                <option value="hours_based">Hours Based</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Default Bedrag/Persentasie</label>
+                            <label>Default Amount/Percentage</label>
                             <input type="number" id="defaultAmount" step="0.01" placeholder="0.00">
                         </div>
                     </div>
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Belasbaar?</label>
+                            <label>Taxable?</label>
                             <select id="isTaxable">
-                                <option value="1">Ja</option>
-                                <option value="0">Nee</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Affect UIF?</label>
+                            <label>Affects UIF?</label>
                             <select id="affectsUif">
-                                <option value="1">Ja</option>
-                                <option value="0">Nee</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
                             </select>
                         </div>
                     </div>
 
                     <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: flex-end;">
-                        <button type="button" class="btn btn-secondary" onclick="closeItemModal()">Kanselleer</button>
-                        <button type="submit" class="btn btn-success">💾 Stoor</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeItemModal()">Cancel</button>
+                        <button type="submit" class="btn btn-success">Save</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let currentCompanyId = null;
@@ -686,23 +690,36 @@
 
         function loadCompaniesCarousel() {
             const session = AUTH.getSession();
-            const user = { role: session.role, company_id: session.company_id };
-            const companies = AUTH.getCompaniesForUser(user);
+            const companies = AUTH.getCompaniesForUser(session);
             const carousel = document.getElementById('companies-carousel');
             carousel.innerHTML = '';
 
-            companies.slice(0, 5).forEach(company => {
-                const div = document.createElement('div');
-                div.className = 'carousel-company';
-                div.textContent = company.name;
-                if (company.id === session.company_id) {
-                    div.style.background = '#667eea';
-                    div.style.color = 'white';
-                    div.style.fontWeight = 'bold';
-                }
-                div.onclick = () => switchToCompany(company.id);
-                carousel.appendChild(div);
-            });
+            if (companies.length === 0) {
+                carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
+            } else {
+                companies.forEach(company => {
+                    const div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = () => switchToCompany(company.id);
+                    carousel.appendChild(div);
+                });
+            }
+
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
         }
 
         function switchToCompany(company_id) {
@@ -764,13 +781,14 @@
                     categories[type].innerHTML = `
                         <div class="empty-state">
                             <div class="empty-state-icon">📋</div>
-                            <p>Geen items in hierdie kategorie nie</p>
+                            <p>No items in this category</p>
                         </div>
                     `;
                 } else {
                     categories[type].innerHTML = grouped[type].map(item => createItemCard(item)).join('');
                 }
             });
+            Permissions.enforceUI();
         }
 
         function createItemCard(item) {
@@ -790,7 +808,7 @@
                     </div>
                     <div class="item-details">
                         <div class="item-detail">
-                            <div class="item-detail-label">Kategorie</div>
+                            <div class="item-detail-label">Category</div>
                             <div class="item-detail-value">${categoryBadge}</div>
                         </div>
                         <div class="item-detail">
@@ -803,8 +821,8 @@
                         </div>
                     </div>
                     <div class="item-actions">
-                        <button class="btn-small btn-edit-small" onclick="editItem('${item.id}')">✏️ Edit</button>
-                        <button class="btn-small btn-delete-small" onclick="deleteItem('${item.id}')">🗑️ Delete</button>
+                        <button class="btn-small btn-edit-small" data-permission="MANAGE_PAYROLL_ITEMS" onclick="editItem('${item.id}')">✏️ Edit</button>
+                        <button class="btn-small btn-delete-small" data-permission="MANAGE_PAYROLL_ITEMS" onclick="deleteItem('${item.id}')">🗑️ Delete</button>
                     </div>
                 </div>
             `;
@@ -834,7 +852,7 @@
         // ========== MODAL FUNCTIONS ==========
 
         function openAddItemModal(type) {
-            document.getElementById('modalTitle').textContent = `Voeg ${getTypeName(type)} By`;
+            document.getElementById('modalTitle').textContent = `Add ${getTypeName(type)}`;
             document.getElementById('itemForm').reset();
             document.getElementById('itemId').value = '';
             document.getElementById('itemType').value = type;
@@ -851,7 +869,7 @@
             const item = currentItems.find(i => i.id === id);
             if (!item) return;
 
-            document.getElementById('modalTitle').textContent = 'Wysig Payroll Item';
+            document.getElementById('modalTitle').textContent = 'Edit Payroll Item';
             document.getElementById('itemId').value = item.id;
             document.getElementById('itemType').value = item.item_type;
             document.getElementById('itemCode').value = item.item_code;
@@ -890,7 +908,7 @@
             // Check for duplicate item code (but allow same code when editing same item)
             const duplicate = currentItems.find(i => i.item_code === itemData.item_code && i.id !== itemData.id);
             if (duplicate) {
-                errorDiv.textContent = `Item kode "${itemData.item_code}" bestaan reeds. Gebruik 'n ander kode.`;
+                errorDiv.textContent = `Item code "${itemData.item_code}" already exists. Use a different code.`;
                 errorDiv.style.display = 'block';
                 return;
             }
@@ -906,9 +924,15 @@
 
             saveItemsToStorage();
 
+            if (isEdit) {
+                AuditTrail.logUpdate(currentCompanyId, 'payroll_item', 'Updated payroll item "' + itemData.item_name + '" (' + itemData.item_code + ') - ' + itemData.category + ', R' + itemData.default_amount.toFixed(2));
+            } else {
+                AuditTrail.logCreate(currentCompanyId, 'payroll_item', 'Created payroll item "' + itemData.item_name + '" (' + itemData.item_code + ') - ' + itemData.category + ', R' + itemData.default_amount.toFixed(2));
+            }
+
             // Show success
             const successDiv = document.getElementById('modalSuccess');
-            successDiv.textContent = isEdit ? '✅ Item suksesvol opgedateer!' : '✅ Item suksesvol bygevoeg!';
+            successDiv.textContent = isEdit ? 'Item successfully updated!' : 'Item successfully added!';
             successDiv.style.display = 'block';
             setTimeout(() => { successDiv.style.display = 'none'; }, 3000);
 
@@ -917,18 +941,86 @@
         }
 
         function deleteItem(id) {
-            if (!confirm('Is jy seker jy wil hierdie item verwyder?')) return;
+            if (!Permissions.require('MANAGE_PAYROLL_ITEMS')) return;
+            if (!confirm('Are you sure you want to delete this item?')) return;
 
+            var deleted = currentItems.find(i => i.id === id);
             currentItems = currentItems.filter(i => i.id !== id);
             saveItemsToStorage();
+            AuditTrail.logDelete(currentCompanyId, 'payroll_item', 'Deleted payroll item "' + (deleted ? deleted.item_name : id) + '"' + (deleted ? ' (' + deleted.item_code + ')' : ''));
             displayItemsByCategory();
 
             const successDiv = document.getElementById('modalSuccess');
-            successDiv.textContent = '✅ Item verwyder!';
+            successDiv.textContent = 'Item deleted!';
             successDiv.style.display = 'block';
             setTimeout(() => { successDiv.style.display = 'none'; }, 3000);
         }
+
+        // ---- Add Company Modal ----
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
     </script>
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
     <nav class="mobile-bottom-nav">
         <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
         <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>

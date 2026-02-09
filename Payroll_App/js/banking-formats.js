@@ -18,7 +18,7 @@ const BankingFormats = {
         var header = this.pad('1', 1) +                                    // Record type
                     this.pad(details.absa_user_code || '00000000', 8) +   // User code
                     this.pad(new Date().toISOString().slice(0,10).replace(/-/g, ''), 8) + // Date YYYYMMDD
-                    this.pad(details.company_name || 'PAYROLL', 30) +    // Company name
+                    this.pad(details.company_name || 'LORENCO PAYTIME', 30) +    // Company name
                     this.pad('SALARY', 10) +                             // Payment type
                     this.pad('', 18);                                    // Filler
         records.push(header);

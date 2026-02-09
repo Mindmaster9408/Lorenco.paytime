@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Employee Detail</title>
+    <title>Employee Detail - Lorenco Paytime</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -228,6 +228,7 @@
                 <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
                 <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
                 <a href="reports.html" class="sidebar-link">📊 Reports</a>
+                <a href="historical-import.html" class="sidebar-link">📥 Historical Import</a>
                 <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
             </div>
             <div class="company-carousel">
@@ -281,7 +282,7 @@
                 <div class="section-grid">
                     <div class="section">
                         <div class="section-title"><span>📅 Regular Inputs (Monthly)</span><button class="btn btn-sm btn-success" onclick="openAddRegularInput()">+ Add</button></div>
-                        <div class="salary-item editable" onclick="editBasicSalary()">
+                        <div class="salary-item editable" data-permission="EDIT_PAYROLL" onclick="editBasicSalary()">
                             <span class="salary-label">Basic Salary</span>
                             <span class="salary-value" id="basicSalary">R 0.00</span>
                         </div>
@@ -321,11 +322,13 @@
                     <table>
                         <tr><td><strong>Gross Salary:</strong></td><td style="text-align: right;"><strong id="totalGross">R 0.00</strong></td></tr>
                         <tr><td>PAYE:</td><td style="text-align: right;" id="totalPAYE">R 0.00</td></tr>
+                        <tr id="medicalCreditRow" style="display: none;"><td>Medical Tax Credit:</td><td style="text-align: right; color: #28a745;" id="totalMedicalCredit">- R 0.00</td></tr>
                         <tr><td>UIF:</td><td style="text-align: right;" id="totalUIF">R 0.00</td></tr>
                         <tr><td>Deductions:</td><td style="text-align: right;" id="totalDeductions">R 0.00</td></tr>
                         <tr class="total-row"><td><strong>NET SALARY:</strong></td><td style="text-align: right;"><strong id="totalNet" style="font-size: 18px; color: #28a745;">R 0.00</strong></td></tr>
                     </table>
                     <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="calculatePayslip()">Calculate Payslip</button>
+                    <div id="negativeNetWarning" style="display: none; margin-top: 10px; padding: 12px 20px; background: #f8d7da; color: #721c24; border-radius: 8px; border-left: 4px solid #dc3545; font-weight: 600;">⚠ NEGATIVE NET PAY — Deductions exceed gross salary. Please review inputs before finalizing.</div>
                 </div>
 
                 <!-- PAYSLIP NARRATIVE -->
@@ -365,6 +368,8 @@
                         <div class="info-item"><div class="info-label">Department</div><div class="info-value" id="editDepartment">-</div></div>
                         <div class="info-item"><div class="info-label">Date Appointed</div><div class="info-value" id="editDateAppointed">-</div></div>
                         <div class="info-item"><div class="info-label">Payment Method</div><div class="info-value" id="editPayMethod">-</div></div>
+                        <div class="info-item"><div class="info-label">Medical Aid Members</div><div class="info-value" id="editMedicalMembers">0</div></div>
+                        <div class="info-item"><div class="info-label">Tax Directive (%)</div><div class="info-value" id="editTaxDirective">0</div></div>
                         <div class="info-item" id="editBankSection" style="display: none;">
                             <div class="info-label">Bank Details</div><div class="info-value" id="editBankDetails">-</div>
                         </div>
@@ -473,9 +478,15 @@
     <div id="addRegularModal" class="modal">
         <div class="modal-content">
             <div class="modal-header"><h3>Add Regular Input</h3><button class="btn btn-danger btn-sm" onclick="closeModal('addRegularModal')">Close</button></div>
-            <div class="form-group"><label>Type</label><select id="regularInputType"><option value="allowance">Allowance</option><option value="deduction">Deduction</option></select></div>
-            <div class="form-group"><label>Description</label><input type="text" id="regularInputDesc" placeholder="e.g. Housing Allowance"></div>
-            <div class="form-group"><label>Amount (per month)</label><input type="number" id="regularInputAmount" step="0.01" min="0"></div>
+            <div class="form-group"><label>Payroll Item</label><select id="regularItemSelect" onchange="onRegularItemSelect()"></select></div>
+            <div id="regularCustomFields">
+                <div class="form-group"><label>Type</label><select id="regularInputType"><option value="allowance">Allowance</option><option value="deduction">Deduction</option></select></div>
+                <div class="form-group"><label>Description</label><input type="text" id="regularInputDesc" placeholder="e.g. Housing Allowance"></div>
+                <div class="form-group"><label>Amount (per month)</label><input type="number" id="regularInputAmount" step="0.01" min="0"></div>
+            </div>
+            <div id="regularItemInfo" style="display:none; background:#f0f4ff; padding:10px; border-radius:8px; margin-bottom:15px; font-size:0.85rem;">
+                <span id="regularItemBadges"></span>
+            </div>
             <button class="btn btn-success" style="width:100%;" onclick="saveRegularInput()">Save</button>
         </div>
     </div>
@@ -484,9 +495,15 @@
     <div id="addCurrentModal" class="modal">
         <div class="modal-content">
             <div class="modal-header"><h3>Add Current Input</h3><button class="btn btn-danger btn-sm" onclick="closeModal('addCurrentModal')">Close</button></div>
-            <div class="form-group"><label>Type</label><select id="currentInputType"><option value="bonus">Bonus</option><option value="commission">Commission</option><option value="allowance">Allowance</option><option value="deduction">Deduction</option><option value="other">Other</option></select></div>
-            <div class="form-group"><label>Description</label><input type="text" id="currentInputDesc"></div>
-            <div class="form-group"><label>Amount</label><input type="number" id="currentInputAmount" step="0.01" min="0"></div>
+            <div class="form-group"><label>Payroll Item</label><select id="currentItemSelect" onchange="onCurrentItemSelect()"></select></div>
+            <div id="currentCustomFields">
+                <div class="form-group"><label>Type</label><select id="currentInputType"><option value="bonus">Bonus</option><option value="commission">Commission</option><option value="allowance">Allowance</option><option value="deduction">Deduction</option><option value="other">Other</option></select></div>
+                <div class="form-group"><label>Description</label><input type="text" id="currentInputDesc"></div>
+                <div class="form-group"><label>Amount</label><input type="number" id="currentInputAmount" step="0.01" min="0"></div>
+            </div>
+            <div id="currentItemInfo" style="display:none; background:#f0f4ff; padding:10px; border-radius:8px; margin-bottom:15px; font-size:0.85rem;">
+                <span id="currentItemBadges"></span>
+            </div>
             <button class="btn btn-success" style="width:100%;" onclick="saveCurrentInput()">Save</button>
         </div>
     </div>
@@ -549,6 +566,10 @@
                 <div class="form-group"><label>Payment Method</label><select id="editPayMethodInput"><option value="EFT">EFT</option><option value="Cash">Cash</option><option value="Cheque">Cheque</option></select></div>
                 <div class="form-group"><label>ID Number</label><input type="text" id="editIdNumberInput" maxlength="13"></div>
             </div>
+            <div class="form-row">
+                <div class="form-group"><label>Medical Aid Members</label><input type="number" id="editMedicalMembersInput" min="0" max="20" step="1" placeholder="0 = none"></div>
+                <div class="form-group"><label>Tax Directive (%)</label><input type="number" id="editTaxDirectiveInput" min="0" max="100" step="0.01" placeholder="0 = standard PAYE"></div>
+            </div>
             <h4 style="color: #667eea; margin: 15px 0 10px;">Bank Details</h4>
             <div class="form-row">
                 <div class="form-group"><label>Bank Name</label><input type="text" id="editBankName"></div>
@@ -589,7 +610,12 @@
         </div>
     </div>
 
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/payroll-engine.js"></script>
+    <script src="js/payroll-items-helper.js"></script>
     <script>
         let currentCompanyId = null;
         let currentEmployee = null;
@@ -616,22 +642,36 @@
         // ========== SIDEBAR ==========
         function loadCompaniesCarousel() {
             const session = AUTH.getSession();
-            const user = { role: session.role, company_id: session.company_id };
-            const companies = AUTH.getCompaniesForUser(user);
+            const companies = AUTH.getCompaniesForUser(session);
             const carousel = document.getElementById('companies-carousel');
             carousel.innerHTML = '';
-            companies.forEach(company => {
-                const div = document.createElement('div');
-                div.className = 'carousel-company';
-                div.textContent = company.name;
-                if (company.id === session.company_id) {
-                    div.style.background = '#667eea';
-                    div.style.color = 'white';
-                    div.style.fontWeight = '600';
-                }
-                div.onclick = () => switchToCompany(company.id);
-                carousel.appendChild(div);
-            });
+
+            if (companies.length === 0) {
+                carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
+            } else {
+                companies.forEach(company => {
+                    const div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = () => switchToCompany(company.id);
+                    carousel.appendChild(div);
+                });
+            }
+
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
         }
 
         function switchToCompany(companyId) {
@@ -669,6 +709,8 @@
             document.getElementById('editDepartment').textContent = currentEmployee.department || '-';
             document.getElementById('editDateAppointed').textContent = currentEmployee.date_appointed || '-';
             document.getElementById('editPayMethod').textContent = currentEmployee.payment_method || 'EFT';
+            document.getElementById('editMedicalMembers').textContent = currentEmployee.medical_aid_members || 0;
+            document.getElementById('editTaxDirective').textContent = currentEmployee.tax_directive || 0;
             if (currentEmployee.payment_method === 'EFT' && currentEmployee.bank_name) {
                 document.getElementById('editBankSection').style.display = '';
                 document.getElementById('editBankDetails').textContent = currentEmployee.bank_name + ' - ' + (currentEmployee.account_number || '') + ' (Branch: ' + (currentEmployee.branch_code || '') + ')';
@@ -747,28 +789,33 @@
             } else if (psStatus.status === 'finalized') {
                 // Finalized but no pay run yet = can unfinalize freely
                 statusBar.innerHTML = '<div class="payslip-status-bar finalized">✅ Payslip finalized on ' + new Date(psStatus.finalized_date).toLocaleDateString() + ' by ' + (psStatus.finalized_by || 'System') + '</div>';
-                btnArea.innerHTML = '<button class="btn-unfinalize" onclick="unfinalizePayslip()">↩ Unfinalize</button>';
+                btnArea.innerHTML = '<button class="btn-unfinalize" data-permission="UNFINALIZE_PAYSLIP" onclick="unfinalizePayslip()">↩ Unfinalize</button>';
                 content.classList.add('locked-overlay');
             } else {
                 // Draft
                 statusBar.innerHTML = '<div class="payslip-status-bar draft">📝 Draft — Finalize this payslip to include it in a pay run.</div>';
-                btnArea.innerHTML = '<button class="btn-finalize" onclick="finalizePayslip()">✓ Finalize Payslip</button>';
+                btnArea.innerHTML = '<button class="btn-finalize" data-permission="FINALIZE_PAYSLIP" onclick="finalizePayslip()">✓ Finalize Payslip</button>';
             }
+            Permissions.enforceUI();
         }
 
         function finalizePayslip() {
+            if (!Permissions.require('FINALIZE_PAYSLIP')) return;
             // Auto-calculate before finalizing
             calculatePayslip();
             const session = AUTH.getSession();
             if (!confirm('Finalize this payslip for ' + formatPeriodLabel(currentPeriod) + '? It will be locked for editing.')) return;
             const status = { status: 'finalized', finalized_date: new Date().toISOString(), finalized_by: session.name || session.email };
             localStorage.setItem(getPayslipStatusKey(), JSON.stringify(status));
+            AuditTrail.logFinalize(currentCompanyId, 'payslip', 'Finalized payslip for ' + (currentEmployee ? currentEmployee.first_name + ' ' + currentEmployee.last_name : currentEmpId) + ' - ' + formatPeriodLabel(currentPeriod));
             updatePayslipUI();
         }
 
         function unfinalizePayslip() {
+            if (!Permissions.require('UNFINALIZE_PAYSLIP')) return;
             if (!confirm('Unfinalize this payslip? It will be editable again.')) return;
             localStorage.removeItem(getPayslipStatusKey());
+            AuditTrail.logUnfinalize(currentCompanyId, 'payslip', 'Unfinalized payslip for ' + (currentEmployee ? currentEmployee.first_name + ' ' + currentEmployee.last_name : currentEmpId) + ' - ' + formatPeriodLabel(currentPeriod));
             updatePayslipUI();
         }
 
@@ -863,6 +910,7 @@
             const multiRate = JSON.parse(localStorage.getItem(getMultiRateKey()) || '[]');
             mrList.innerHTML = multiRate.length === 0 ? '<p style="color:#999;font-size:14px;">No multi-rate hours recorded</p>' :
                 multiRate.map(mr => '<div class="salary-item"><span class="salary-label">' + mr.description + ' - ' + mr.hours + 'hrs @ R' + parseFloat(mr.hourly_rate).toFixed(2) + '/hr</span><span><span class="salary-value">' + formatMoney(mr.hours * mr.hourly_rate) + '</span><button class="delete-btn" onclick="event.stopPropagation(); deleteMultiRate(\'' + mr.id + '\')">x</button></span></div>').join('');
+            Permissions.enforceUI();
         }
 
         // ========== BASIC SALARY ==========
@@ -873,37 +921,152 @@
         function saveBasicSalary() {
             payrollData.basic_salary = parseFloat(document.getElementById('editBasicValue').value) || 0;
             savePayrollData(); renderPayroll(); closeModal('editBasicModal');
+            AuditTrail.logUpdate(currentCompanyId, 'payroll', 'Updated basic salary to R' + payrollData.basic_salary.toFixed(2) + ' for ' + (currentEmployee ? currentEmployee.first_name + ' ' + currentEmployee.last_name : currentEmpId));
         }
 
         // ========== REGULAR INPUTS ==========
-        function openAddRegularInput() { document.getElementById('regularInputDesc').value = ''; document.getElementById('regularInputAmount').value = ''; document.getElementById('addRegularModal').classList.add('show'); }
+        function openAddRegularInput() {
+            document.getElementById('regularInputDesc').value = '';
+            document.getElementById('regularInputAmount').value = '';
+            // Populate payroll item selector
+            var select = document.getElementById('regularItemSelect');
+            select.innerHTML = PayrollItemsHelper.renderSelectOptions(currentCompanyId, ['allowance', 'deduction', 'income']);
+            select.value = '__custom__';
+            document.getElementById('regularCustomFields').style.display = '';
+            document.getElementById('regularItemInfo').style.display = 'none';
+            document.getElementById('addRegularModal').classList.add('show');
+        }
+        function onRegularItemSelect() {
+            var val = document.getElementById('regularItemSelect').value;
+            var customFields = document.getElementById('regularCustomFields');
+            var infoDiv = document.getElementById('regularItemInfo');
+            if (!val || val === '__custom__') {
+                customFields.style.display = '';
+                infoDiv.style.display = 'none';
+                return;
+            }
+            var item = PayrollItemsHelper.getById(currentCompanyId, val);
+            if (!item) return;
+            // Auto-fill form fields from master item
+            document.getElementById('regularInputType').value = PayrollItemsHelper.mapItemTypeToInputType(item.item_type);
+            document.getElementById('regularInputDesc').value = item.item_name;
+            var amt = PayrollItemsHelper.calculateAmount(item, payrollData.basic_salary);
+            document.getElementById('regularInputAmount').value = amt > 0 ? amt.toFixed(2) : (item.default_amount || '');
+            customFields.style.display = '';
+            // Show info badges
+            var badges = (item.irp5_code ? '<strong>IRP5: ' + item.irp5_code + '</strong> | ' : '') +
+                (item.is_taxable ? 'Taxable' : 'Non-Taxable') + ' | ' +
+                (item.affects_uif ? 'Affects UIF' : 'No UIF') + ' | ' +
+                'Code: ' + item.item_code;
+            document.getElementById('regularItemBadges').innerHTML = badges;
+            infoDiv.style.display = '';
+        }
         function saveRegularInput() {
             const desc = document.getElementById('regularInputDesc').value.trim();
             const amount = parseFloat(document.getElementById('regularInputAmount').value);
             if (!desc || !amount) { alert('Please fill in all fields'); return; }
-            payrollData.regular_inputs.push({ id: 'ri-' + Math.random().toString(36).substr(2, 9), type: document.getElementById('regularInputType').value, description: desc, amount: amount });
+            var input = {
+                id: 'ri-' + Math.random().toString(36).substr(2, 9),
+                type: document.getElementById('regularInputType').value,
+                description: desc,
+                amount: amount
+            };
+            // Enrich with payroll item metadata if selected
+            var selectedId = document.getElementById('regularItemSelect').value;
+            if (selectedId && selectedId !== '__custom__' && selectedId !== '') {
+                var item = PayrollItemsHelper.getById(currentCompanyId, selectedId);
+                if (item) {
+                    input.payroll_item_id = item.id;
+                    input.item_code = item.item_code;
+                    input.irp5_code = item.irp5_code || null;
+                    input.is_taxable = item.is_taxable !== false;
+                    input.affects_uif = item.affects_uif !== false;
+                }
+            }
+            payrollData.regular_inputs.push(input);
             savePayrollData(); renderPayroll(); closeModal('addRegularModal');
+            AuditTrail.logCreate(currentCompanyId, 'regular_input', 'Added regular input "' + desc + '" (' + input.type + ') R' + amount.toFixed(2) + ' for ' + (currentEmployee ? currentEmployee.first_name + ' ' + currentEmployee.last_name : currentEmpId));
         }
         function deleteRegularInput(id) {
             if (!confirm('Delete this regular input?')) return;
+            var deleted = payrollData.regular_inputs.find(r => r.id === id);
             payrollData.regular_inputs = payrollData.regular_inputs.filter(r => r.id !== id);
             savePayrollData(); renderPayroll();
+            AuditTrail.logDelete(currentCompanyId, 'regular_input', 'Deleted regular input "' + (deleted ? deleted.description : id) + '" for ' + (currentEmployee ? currentEmployee.first_name + ' ' + currentEmployee.last_name : currentEmpId));
         }
 
         // ========== CURRENT INPUTS ==========
-        function openAddCurrentInput() { document.getElementById('currentInputDesc').value = ''; document.getElementById('currentInputAmount').value = ''; document.getElementById('addCurrentModal').classList.add('show'); }
+        function openAddCurrentInput() {
+            document.getElementById('currentInputDesc').value = '';
+            document.getElementById('currentInputAmount').value = '';
+            // Populate payroll item selector
+            var select = document.getElementById('currentItemSelect');
+            select.innerHTML = PayrollItemsHelper.renderSelectOptions(currentCompanyId, ['income', 'allowance', 'deduction']);
+            select.value = '__custom__';
+            document.getElementById('currentCustomFields').style.display = '';
+            document.getElementById('currentItemInfo').style.display = 'none';
+            document.getElementById('addCurrentModal').classList.add('show');
+        }
+        function onCurrentItemSelect() {
+            var val = document.getElementById('currentItemSelect').value;
+            var customFields = document.getElementById('currentCustomFields');
+            var infoDiv = document.getElementById('currentItemInfo');
+            if (!val || val === '__custom__') {
+                customFields.style.display = '';
+                infoDiv.style.display = 'none';
+                return;
+            }
+            var item = PayrollItemsHelper.getById(currentCompanyId, val);
+            if (!item) return;
+            // Auto-fill form fields
+            var mappedType = PayrollItemsHelper.mapItemTypeToInputType(item.item_type);
+            document.getElementById('currentInputType').value = mappedType;
+            document.getElementById('currentInputDesc').value = item.item_name;
+            var amt = PayrollItemsHelper.calculateAmount(item, payrollData.basic_salary);
+            document.getElementById('currentInputAmount').value = amt > 0 ? amt.toFixed(2) : (item.default_amount || '');
+            customFields.style.display = '';
+            // Show info badges
+            var badges = (item.irp5_code ? '<strong>IRP5: ' + item.irp5_code + '</strong> | ' : '') +
+                (item.is_taxable ? 'Taxable' : 'Non-Taxable') + ' | ' +
+                (item.affects_uif ? 'Affects UIF' : 'No UIF') + ' | ' +
+                'Code: ' + item.item_code;
+            document.getElementById('currentItemBadges').innerHTML = badges;
+            infoDiv.style.display = '';
+        }
         function saveCurrentInput() {
             const desc = document.getElementById('currentInputDesc').value.trim();
             const amount = parseFloat(document.getElementById('currentInputAmount').value);
             if (!desc || !amount) { alert('Please fill in all fields'); return; }
+            var input = {
+                id: 'ci-' + Math.random().toString(36).substr(2, 9),
+                type: document.getElementById('currentInputType').value,
+                description: desc,
+                amount: amount
+            };
+            // Enrich with payroll item metadata if selected
+            var selectedId = document.getElementById('currentItemSelect').value;
+            if (selectedId && selectedId !== '__custom__' && selectedId !== '') {
+                var item = PayrollItemsHelper.getById(currentCompanyId, selectedId);
+                if (item) {
+                    input.payroll_item_id = item.id;
+                    input.item_code = item.item_code;
+                    input.irp5_code = item.irp5_code || null;
+                    input.is_taxable = item.is_taxable !== false;
+                    input.affects_uif = item.affects_uif !== false;
+                }
+            }
             const items = JSON.parse(localStorage.getItem(getCurrentKey()) || '[]');
-            items.push({ id: 'ci-' + Math.random().toString(36).substr(2, 9), type: document.getElementById('currentInputType').value, description: desc, amount: amount });
+            items.push(input);
             localStorage.setItem(getCurrentKey(), JSON.stringify(items)); renderPayroll(); closeModal('addCurrentModal');
+            AuditTrail.logCreate(currentCompanyId, 'current_input', 'Added current input "' + desc + '" (' + input.type + ') R' + amount.toFixed(2) + ' for ' + (currentEmployee ? currentEmployee.first_name + ' ' + currentEmployee.last_name : currentEmpId) + ' - ' + currentPeriod);
         }
         function deleteCurrentInput(id) {
             if (!confirm('Delete this current input?')) return;
-            const items = JSON.parse(localStorage.getItem(getCurrentKey()) || '[]').filter(i => i.id !== id);
+            var allItems = JSON.parse(localStorage.getItem(getCurrentKey()) || '[]');
+            var deleted = allItems.find(i => i.id === id);
+            const items = allItems.filter(i => i.id !== id);
             localStorage.setItem(getCurrentKey(), JSON.stringify(items)); renderPayroll();
+            AuditTrail.logDelete(currentCompanyId, 'current_input', 'Deleted current input "' + (deleted ? deleted.description : id) + '" for ' + (currentEmployee ? currentEmployee.first_name + ' ' + currentEmployee.last_name : currentEmpId) + ' - ' + currentPeriod);
         }
 
         // ========== OVERTIME ==========
@@ -949,43 +1112,58 @@
 
         // ========== CALCULATE PAYSLIP ==========
         function calculatePayslip() {
-            let gross = payrollData.basic_salary || 0;
-            payrollData.regular_inputs.forEach(ri => { if (ri.type !== 'deduction') gross += parseFloat(ri.amount) || 0; });
-            const currentInputs = JSON.parse(localStorage.getItem(getCurrentKey()) || '[]');
-            currentInputs.forEach(ci => { if (ci.type !== 'deduction') gross += parseFloat(ci.amount) || 0; });
-            const hourlyRate = payrollData.basic_salary ? payrollData.basic_salary / 173.33 : 0;
-            JSON.parse(localStorage.getItem(getOvertimeKey()) || '[]').forEach(ot => { gross += (parseFloat(ot.hours) || 0) * hourlyRate * (parseFloat(ot.rate_multiplier) || 1.5); });
-            JSON.parse(localStorage.getItem(getMultiRateKey()) || '[]').forEach(mr => { gross += (parseFloat(mr.hours) || 0) * (parseFloat(mr.hourly_rate) || 0); });
-            JSON.parse(localStorage.getItem(getShortTimeKey()) || '[]').forEach(st => { gross -= (parseFloat(st.hours_missed) || 0) * hourlyRate; });
-            if (gross < 0) gross = 0;
+            var currentInputs = JSON.parse(localStorage.getItem(getCurrentKey()) || '[]');
+            var overtime = JSON.parse(localStorage.getItem(getOvertimeKey()) || '[]');
+            var multiRate = JSON.parse(localStorage.getItem(getMultiRateKey()) || '[]');
+            var shortTime = JSON.parse(localStorage.getItem(getShortTimeKey()) || '[]');
 
-            // PAYE
-            const ag = gross * 12;
-            let ap = 0;
-            if (ag <= 237100) ap = ag * 0.18;
-            else if (ag <= 370500) ap = 42678 + (ag - 237100) * 0.26;
-            else if (ag <= 512800) ap = 77362 + (ag - 370500) * 0.31;
-            else if (ag <= 673000) ap = 121475 + (ag - 512800) * 0.36;
-            else if (ag <= 857900) ap = 179147 + (ag - 673000) * 0.39;
-            else if (ag <= 1817000) ap = 251258 + (ag - 857900) * 0.41;
-            else ap = 644489 + (ag - 1817000) * 0.45;
-            ap -= 17235; if (ap < 0) ap = 0;
-            const paye = Math.round(ap / 12 * 100) / 100;
-            const uif = Math.round(Math.min(gross * 0.01, 177.12) * 100) / 100;
+            // Build employee options for age/medical/directive
+            var employeeOptions = {};
+            if (currentEmployee) {
+                if (currentEmployee.id_number) {
+                    var parts = currentPeriod.split('-');
+                    var periodEnd = new Date(parseInt(parts[0]), parseInt(parts[1]), 0);
+                    employeeOptions.age = PayrollEngine.getAgeFromId(currentEmployee.id_number, periodEnd);
+                }
+                if (currentEmployee.medical_aid_members) {
+                    employeeOptions.medicalMembers = parseInt(currentEmployee.medical_aid_members) || 0;
+                }
+                if (currentEmployee.tax_directive) {
+                    employeeOptions.taxDirective = parseFloat(currentEmployee.tax_directive) || 0;
+                }
+            }
 
-            let deductions = 0;
-            payrollData.regular_inputs.forEach(ri => { if (ri.type === 'deduction') deductions += parseFloat(ri.amount) || 0; });
-            currentInputs.forEach(ci => { if (ci.type === 'deduction') deductions += parseFloat(ci.amount) || 0; });
+            var calc = PayrollEngine.calculateFromData(
+                payrollData, currentInputs, overtime, multiRate, shortTime, employeeOptions
+            );
 
-            const net = Math.max(gross - paye - uif - deductions, 0);
-            document.getElementById('totalGross').textContent = formatMoney(gross);
-            document.getElementById('totalPAYE').textContent = formatMoney(paye);
-            document.getElementById('totalUIF').textContent = formatMoney(uif);
-            document.getElementById('totalDeductions').textContent = formatMoney(deductions);
-            document.getElementById('totalNet').textContent = formatMoney(net);
+            document.getElementById('totalGross').textContent = formatMoney(calc.gross);
+            document.getElementById('totalPAYE').textContent = formatMoney(calc.paye);
+            document.getElementById('totalUIF').textContent = formatMoney(calc.uif);
+            document.getElementById('totalDeductions').textContent = formatMoney(calc.deductions);
+            document.getElementById('totalNet').textContent = formatMoney(calc.net);
+
+            // Medical credit display
+            if (calc.medicalCredit > 0) {
+                document.getElementById('medicalCreditRow').style.display = '';
+                document.getElementById('totalMedicalCredit').textContent = '- ' + formatMoney(calc.medicalCredit);
+            } else {
+                document.getElementById('medicalCreditRow').style.display = 'none';
+            }
+
+            // Negative net pay warning
+            var netEl = document.getElementById('totalNet');
+            var warningEl = document.getElementById('negativeNetWarning');
+            if (calc.negativeNetPay) {
+                netEl.style.color = '#dc3545';
+                warningEl.style.display = 'block';
+            } else {
+                netEl.style.color = '#28a745';
+                warningEl.style.display = 'none';
+            }
 
             // Trigger narrative generation
-            generateNarrative(gross, paye, uif, deductions, net);
+            generateNarrative(calc.gross, calc.paye, calc.uif, calc.deductions, calc.net);
         }
 
         // ========== NARRATIVE FUNCTIONS ==========
@@ -1023,36 +1201,15 @@
         }
 
         function calculatePeriodSilent(period) {
-            var pd = payrollData;
-            var gross = pd.basic_salary || 0;
-            pd.regular_inputs.forEach(function(ri) { if (ri.type !== 'deduction') gross += parseFloat(ri.amount) || 0; });
-            var ciKey = 'emp_current_' + currentCompanyId + '_' + currentEmpId + '_' + period;
-            JSON.parse(localStorage.getItem(ciKey) || '[]').forEach(function(ci) { if (ci.type !== 'deduction') gross += parseFloat(ci.amount) || 0; });
-            var hr = pd.basic_salary ? pd.basic_salary / 173.33 : 0;
+            var calc = PayrollEngine.calculateEmployeePeriod(currentCompanyId, currentEmpId, period, payrollData);
+            // Calculate overtime amount separately for narrative
+            var hr = payrollData.basic_salary ? payrollData.basic_salary / PayrollEngine.HOURLY_DIVISOR : 0;
             var otKey = 'emp_overtime_' + currentCompanyId + '_' + currentEmpId + '_' + period;
             var otAmount = 0;
-            JSON.parse(localStorage.getItem(otKey) || '[]').forEach(function(ot) { var a = (parseFloat(ot.hours)||0) * hr * (parseFloat(ot.rate_multiplier)||1.5); gross += a; otAmount += a; });
-            var mrKey = 'emp_multi_rate_' + currentCompanyId + '_' + currentEmpId + '_' + period;
-            JSON.parse(localStorage.getItem(mrKey) || '[]').forEach(function(mr) { gross += (parseFloat(mr.hours)||0) * (parseFloat(mr.hourly_rate)||0); });
-            var stKey = 'emp_short_time_' + currentCompanyId + '_' + currentEmpId + '_' + period;
-            JSON.parse(localStorage.getItem(stKey) || '[]').forEach(function(st) { gross -= (parseFloat(st.hours_missed)||0) * hr; });
-            if (gross < 0) gross = 0;
-            var ag = gross * 12, ap = 0;
-            if (ag <= 237100) ap = ag * 0.18;
-            else if (ag <= 370500) ap = 42678 + (ag - 237100) * 0.26;
-            else if (ag <= 512800) ap = 77362 + (ag - 370500) * 0.31;
-            else if (ag <= 673000) ap = 121475 + (ag - 512800) * 0.36;
-            else if (ag <= 857900) ap = 179147 + (ag - 673000) * 0.39;
-            else if (ag <= 1817000) ap = 251258 + (ag - 857900) * 0.41;
-            else ap = 644489 + (ag - 1817000) * 0.45;
-            ap -= 17235; if (ap < 0) ap = 0;
-            var paye = Math.round(ap / 12 * 100) / 100;
-            var uif = Math.round(Math.min(gross * 0.01, 177.12) * 100) / 100;
-            var deductions = 0;
-            pd.regular_inputs.forEach(function(ri) { if (ri.type === 'deduction') deductions += parseFloat(ri.amount) || 0; });
-            JSON.parse(localStorage.getItem(ciKey) || '[]').forEach(function(ci) { if (ci.type === 'deduction') deductions += parseFloat(ci.amount) || 0; });
-            var net = Math.max(gross - paye - uif - deductions, 0);
-            return { gross: gross, paye: paye, uif: uif, totalDeductions: deductions, net: net, basicSalary: pd.basic_salary || 0, overtimeAmount: otAmount, currentInputsTotal: 0 };
+            JSON.parse(localStorage.getItem(otKey) || '[]').forEach(function(ot) {
+                otAmount += (parseFloat(ot.hours)||0) * hr * (parseFloat(ot.rate_multiplier)||1.5);
+            });
+            return { gross: calc.gross, paye: calc.paye, uif: calc.uif, totalDeductions: calc.deductions, net: calc.net, basicSalary: payrollData.basic_salary || 0, overtimeAmount: otAmount, currentInputsTotal: 0 };
         }
 
         function getPreviousPeriod(period) {
@@ -1138,6 +1295,8 @@
             document.getElementById('editDateAppointedInput').value = e.date_appointed || '';
             document.getElementById('editPayMethodInput').value = e.payment_method || 'EFT';
             document.getElementById('editIdNumberInput').value = e.id_number || '';
+            document.getElementById('editMedicalMembersInput').value = e.medical_aid_members || '';
+            document.getElementById('editTaxDirectiveInput').value = e.tax_directive || '';
             document.getElementById('editBankName').value = e.bank_name || '';
             document.getElementById('editAccountHolder').value = e.account_holder || '';
             document.getElementById('editAccountNumber').value = e.account_number || '';
@@ -1155,6 +1314,8 @@
             currentEmployee.date_appointed = document.getElementById('editDateAppointedInput').value;
             currentEmployee.payment_method = document.getElementById('editPayMethodInput').value;
             currentEmployee.id_number = document.getElementById('editIdNumberInput').value.trim();
+            currentEmployee.medical_aid_members = parseInt(document.getElementById('editMedicalMembersInput').value) || 0;
+            currentEmployee.tax_directive = parseFloat(document.getElementById('editTaxDirectiveInput').value) || 0;
             currentEmployee.bank_name = document.getElementById('editBankName').value.trim();
             currentEmployee.account_holder = document.getElementById('editAccountHolder').value.trim();
             currentEmployee.account_number = document.getElementById('editAccountNumber').value.trim();
@@ -1164,6 +1325,7 @@
             const employees = stored ? JSON.parse(stored) : [];
             const idx = employees.findIndex(e => e.id === currentEmpId);
             if (idx !== -1) { employees[idx] = currentEmployee; localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(employees)); }
+            AuditTrail.logUpdate(currentCompanyId, 'employee', 'Updated employee info for ' + currentEmployee.first_name + ' ' + currentEmployee.last_name + ' (' + (currentEmployee.employee_number || currentEmpId) + ')');
             loadEmployee(); closeModal('editEmployeeModal'); alert('Employee information saved!');
         }
 
@@ -1232,8 +1394,73 @@
         function formatMoney(amount) { return 'R ' + (parseFloat(amount) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
         function closeModal(id) { document.getElementById(id).classList.remove('show'); }
         document.querySelectorAll('.modal').forEach(modal => { modal.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('show'); }); });
+
+        // ---- Add Company Modal ----
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
     </script>
     <script src="js/narrative-generator.js"></script>
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
     <nav class="mobile-bottom-nav">
         <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
         <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>

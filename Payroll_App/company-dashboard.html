@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Company Dashboard - Payroll System</title>
+    <title>Company Dashboard - Lorenco Paytime</title>
     <style>
         * {
             margin: 0;
@@ -333,6 +333,7 @@
                 <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
                 <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
                 <a href="reports.html" class="sidebar-link">📊 Reports</a>
+                <a href="historical-import.html" class="sidebar-link">📥 Historical Import</a>
                 <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
             </div>
 
@@ -397,6 +398,12 @@
                         <div class="card-title">Company Details</div>
                         <div class="card-subtitle">Company Information</div>
                     </a>
+
+                    <div class="card" id="addCompanyCard" style="display:none; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); cursor:pointer;" onclick="openAddCompanyModal()">
+                        <div class="card-icon">+</div>
+                        <div class="card-title">Add Company</div>
+                        <div class="card-subtitle">Create a new company</div>
+                    </div>
 
                 </div>
             </div>
@@ -517,6 +524,14 @@
                         <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Date Appointed</label>
                         <input type="date" id="date_appointed" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
                     </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Medical Aid Members</label>
+                        <input type="number" id="medical_aid_members" min="0" max="20" step="1" placeholder="0 = none" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Tax Directive (%)</label>
+                        <input type="number" id="tax_directive" min="0" max="100" step="0.01" placeholder="0 = standard PAYE" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
@@ -537,6 +552,9 @@
         </div>
     </div>
 
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let employees = [];
@@ -573,6 +591,11 @@
             // Update employee count from actual stored employees
             updateEmployeeCount();
 
+            // Show Add Company card for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                document.getElementById('addCompanyCard').style.display = '';
+            }
+
             // Load sidebar
             loadCompaniesCarousel();
             loadEmployeesFromStorage();
@@ -580,31 +603,36 @@
 
         function loadCompaniesCarousel() {
             const session = AUTH.getSession();
-            const user = {
-                role: session.role,
-                company_id: session.company_id
-            };
-            const companies = AUTH.getCompaniesForUser(user);
+            const companies = AUTH.getCompaniesForUser(session);
             const carousel = document.getElementById('companies-carousel');
             carousel.innerHTML = '';
 
             if (companies.length === 0) {
                 carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
-                return;
+            } else {
+                companies.forEach(company => {
+                    const div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = () => switchToCompany(company.id);
+                    carousel.appendChild(div);
+                });
             }
 
-            companies.slice(0, 5).forEach(company => {
-                const div = document.createElement('div');
-                div.className = 'carousel-company';
-                div.textContent = company.name;
-                if (company.id === session.company_id) {
-                    div.style.background = '#667eea';
-                    div.style.color = 'white';
-                    div.style.fontWeight = 'bold';
-                }
-                div.onclick = () => switchToCompany(company.id);
-                carousel.appendChild(div);
-            });
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
         }
 
         function switchToCompany(company_id) {
@@ -729,6 +757,8 @@
                 document.getElementById('account_number').value = emp.account_number || '';
                 document.getElementById('branch_code').value = emp.branch_code || '';
                 document.getElementById('date_appointed').value = emp.date_appointed || '';
+                document.getElementById('medical_aid_members').value = emp.medical_aid_members || '';
+                document.getElementById('tax_directive').value = emp.tax_directive || '';
                 document.getElementById('employeeModal').style.display = 'flex';
             }
         }
@@ -760,7 +790,9 @@
                 account_holder: document.getElementById('account_holder').value || null,
                 account_number: document.getElementById('account_number').value || null,
                 branch_code: document.getElementById('branch_code').value || null,
-                date_appointed: document.getElementById('date_appointed').value || null
+                date_appointed: document.getElementById('date_appointed').value || null,
+                medical_aid_members: parseInt(document.getElementById('medical_aid_members').value) || 0,
+                tax_directive: parseFloat(document.getElementById('tax_directive').value) || 0
             };
 
             if (isEdit) {
@@ -793,7 +825,74 @@
                 updateEmployeeCount();
             }
         }
+
+        // ---- Add Company Modal ----
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
     </script>
+
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
+
     <nav class="mobile-bottom-nav">
         <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
         <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
